@@ -38,9 +38,9 @@ class NewsMonitoringScheduler:
         self.last_calendar: Dict[str, Any] = {}
         self.last_news: list = []
 
-    def perform_full_cycle(self) -> Dict[str, Any]:
+    def perform_full_cycle(self, force_refresh: bool = False) -> Dict[str, Any]:
         """Runs calendar fetch, geopolitical intelligence, quant calculation, and returns full state."""
-        calendar_data = get_economic_calendar()
+        calendar_data = get_economic_calendar(force_refresh=force_refresh)
         self.last_calendar = calendar_data
         next_ev = calendar_data.get("next_event")
         

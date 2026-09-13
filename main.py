@@ -57,7 +57,7 @@ async def serve_index():
 async def get_state(force: bool = False):
     """Returns current state of calendar, next event, AI quant signal, and news."""
     if force or not scheduler.last_signal:
-        state = scheduler.perform_full_cycle()
+        state = scheduler.perform_full_cycle(force_refresh=force)
     else:
         # Re-fetch calendar to keep countdown seconds fresh
         cal = get_economic_calendar()
@@ -74,7 +74,7 @@ async def get_state(force: bool = False):
 @app.post("/api/refresh")
 async def refresh_data():
     """Forces fresh data fetch from feeds and AI recalculation."""
-    state = scheduler.perform_full_cycle()
+    state = scheduler.perform_full_cycle(force_refresh=True)
     return JSONResponse(content={"status": "success", "data": state})
 
 @app.post("/api/trigger-discord")
