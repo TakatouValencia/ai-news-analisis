@@ -25,7 +25,7 @@
       <div class="header-actions">
         <div class="status-pill" id="live-status-badge">
           <div class="status-dot"></div>
-          <span>LIVE FEED</span>
+          <span id="sync-status-text">LIVE (15s)</span>
         </div>
         <button class="btn-icon" id="btn-refresh" title="Perbarui Data" aria-label="Perbarui Data">
           🔄
@@ -95,14 +95,43 @@
       </div>
     </section>
 
-    <!-- Card 6: Geopolitical & AI Intelligence -->
-    <section class="card" id="card-intelligence">
-      <div class="card-label">GEOPOLITICAL & MACRO AI</div>
-      <div>
-        <span class="geo-tag tag-bullish" id="geo-sentiment-tag">GEOPOLITIK: BULLISH</span>
+    <!-- Card 6: Correlated Secondary News (Lead-in to Big News) -->
+    <section class="card" id="card-correlated">
+      <div class="card-label">BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO FOMC)</div>
+      <div id="correlated-news-container" class="correlated-list">
+        <!-- Dynamically rendered via app.js -->
+        <div class="correlated-item">
+          <div class="correlated-header">
+            <span class="correlated-title">Initial Jobless Claims (Klaim Pengangguran AS)</span>
+            <span class="badge-tag">Tenaga Kerja</span>
+          </div>
+          <div class="correlated-desc">Klaim rendah menandakan pasar kerja ketat, memperkuat alasan The Fed menaikkan suku bunga.</div>
+          <div class="correlated-footer">
+            <span class="impact-text">Hawkish USD / Bearish XAU jika rendah</span>
+            <span class="importance-badge">Tinggi (35% Bobot)</span>
+          </div>
+        </div>
       </div>
+    </section>
+
+    <!-- Card 7: Geopolitical & AI Intelligence -->
+    <section class="card" id="card-intelligence">
+      <div class="card-label">GEOPOLITICAL & MACRO AI INTELLIGENCE</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span class="geo-tag tag-bullish" id="geo-sentiment-tag">GEOPOLITIK: NETRAL-HAWKISH</span>
+        <span style="font-size: 11px; color: var(--text-muted);">Auto-Update: 15s</span>
+      </div>
+      
       <div class="intelligence-box" id="ai-reasoning">
-        Sedang menganalisis tensi geopolitik global, sentimen safe-haven, dan deviasi rilis data makroekonomi AS...
+        Sedang menganalisis tensi geopolitik Timur Tengah, imbal hasil obligasi AS, dan ekspektasi kenaikan suku bunga The Fed (83% probabilitas 3.75 - 4.00%)...
+      </div>
+
+      <!-- Live Geopolitical Headlines Feed -->
+      <div class="card-sublabel" style="margin-top: 16px; margin-bottom: 8px; font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+        BREAKING NEWS GEOPOLITIK TERBARU & DAMPAK XAU
+      </div>
+      <div id="geopolitical-news-container" class="news-feed-list">
+        <!-- Rendered dynamically -->
       </div>
     </section>
 

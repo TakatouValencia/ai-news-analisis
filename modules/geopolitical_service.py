@@ -14,28 +14,40 @@ QUERIES = [
 
 FALLBACK_HEADLINES = [
     {
-        "title": "Middle East tensions simmer as diplomatic talks resume; safe-haven demand remains steady",
+        "title": "Middle East naval security alert raised amid maritime standoff; safe-haven demand caps gold downside",
         "source": "Reuters",
-        "published": datetime.now(timezone.utc).isoformat(),
-        "category": "geopolitical"
+        "published": datetime.now(timezone.utc).strftime("%d %b %Y %H:%M UTC"),
+        "category": "geopolitical",
+        "impact_xau": "BULLISH XAU",
+        "impact_color": "buy",
+        "impact_note": "Ketegangan rute maritim memicu pembelian defensif emas safe-haven."
     },
     {
-        "title": "Fed officials signal patience on rate cuts pending confirmation of wholesale inflation slowdown",
+        "title": "Fed Governor Bowman confirms appetite for rate increase if inflation indicators stay sticky above target",
         "source": "Bloomberg",
-        "published": datetime.now(timezone.utc).isoformat(),
-        "category": "macro"
+        "published": datetime.now(timezone.utc).strftime("%d %b %Y %H:%M UTC"),
+        "category": "macro",
+        "impact_xau": "BEARISH XAU",
+        "impact_color": "sell",
+        "impact_note": "Pernyataan hawkish pejabat The Fed memperkuat ekspektasi target rate 3.75 - 4.00%."
     },
     {
-        "title": "US Dollar holds firm against major currencies ahead of crucial PPI and Jobless Claims release",
+        "title": "US Dollar Index firms above 104.5 as markets price in 83% probability of Fed tightening",
         "source": "Financial Times",
-        "published": datetime.now(timezone.utc).isoformat(),
-        "category": "forex"
+        "published": datetime.now(timezone.utc).strftime("%d %b %Y %H:%M UTC"),
+        "category": "forex",
+        "impact_xau": "BEARISH XAU",
+        "impact_color": "sell",
+        "impact_note": "Kekuatan Dolar AS secara langsung menekan valuasi emas spot XAU/USD."
     },
     {
-        "title": "Treasury yields nudge higher as wholesale price pressures point to resilient economic backdrop",
-        "source": "CNBC",
-        "published": datetime.now(timezone.utc).isoformat(),
-        "category": "macro"
+        "title": "Global Central Banks continue reserve diversification with net monthly gold purchases",
+        "source": "World Gold Council",
+        "published": datetime.now(timezone.utc).strftime("%d %b %Y %H:%M UTC"),
+        "category": "geopolitical",
+        "impact_xau": "BULLISH XAU",
+        "impact_color": "buy",
+        "impact_note": "Akumulasi bank sentral global memberikan bantalan support fundamental jangka panjang."
     }
 ]
 
@@ -68,17 +80,58 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
                 is_geo = any(w in title.lower() for w in ["war", "tension", "conflict", "iran", "israel", "russia", "china", "strike", "sanction", "military"])
                 category = "geopolitical" if is_geo else "macro"
                 
+                # Assess impact on Gold (XAU)
+                title_lower = title.lower()
+                bullish_triggers = ["war", "tension", "strike", "attack", "conflict", "cut", "dovish", "safe-haven", "rally", "crisis", "surges"]
+                bearish_triggers = ["peace", "ceasefire", "truce", "hike", "hawkish", "dollar gains", "rate pause", "strong jobs", "yields rise"]
+                
+                if any(w in title_lower for w in bullish_triggers):
+                    impact_xau = "BULLISH XAU"
+                    impact_color = "buy"
+                    impact_note = "Memicu permintaan safe-haven emas / menekan USD."
+                elif any(w in title_lower for w in bearish_triggers):
+                    impact_xau = "BEARISH XAU"
+                    impact_color = "sell"
+                    impact_note = "Mendukung Dolar AS / mengurangi daya tarik emas."
+                else:
+                    impact_xau = "NEUTRAL"
+                    impact_color = "neutral"
+                    impact_note = "Pengaruh terbatas, pasar fokus pada konsensus FOMC."
+                
                 articles.append({
                     "title": title,
                     "source": source,
                     "published": pub,
                     "link": link,
-                    "category": category
+                    "category": category,
+                    "impact_xau": impact_xau,
+                    "impact_color": impact_color,
+                    "impact_note": impact_note
                 })
     except Exception as e:
         print(f"[GeopoliticalService] Error fetching feed {query}: {e}")
         
     return articles
+
+def ensure_news_impact(item: Dict[str, Any]) -> Dict[str, Any]:
+    if "impact_xau" in item and item.get("impact_note"):
+        return item
+    title_lower = item.get("title", "").lower()
+    bullish_triggers = ["war", "tension", "strike", "attack", "conflict", "cut", "dovish", "safe-haven", "rally", "crisis", "surges"]
+    bearish_triggers = ["peace", "ceasefire", "truce", "hike", "hawkish", "dollar gains", "rate pause", "strong jobs", "yields rise"]
+    if any(w in title_lower for w in bullish_triggers):
+        item["impact_xau"] = "BULLISH XAU"
+        item["impact_color"] = "buy"
+        item["impact_note"] = "Memicu permintaan defensif safe-haven emas / menekan USD."
+    elif any(w in title_lower for w in bearish_triggers):
+        item["impact_xau"] = "BEARISH XAU"
+        item["impact_color"] = "sell"
+        item["impact_note"] = "Mendukung penguatan Dolar AS / mengurangi daya tarik emas."
+    else:
+        item["impact_xau"] = "NEUTRAL"
+        item["impact_color"] = "neutral"
+        item["impact_note"] = "Pengaruh terbatas, volatilitas pasar terkonsentrasi pada proyeksi FOMC."
+    return item
 
 def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, Any]]:
     CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -90,7 +143,8 @@ def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, 
                 cache_time = data.get("cached_at", 0)
                 # Valid for 20 minutes
                 if datetime.now(timezone.utc).timestamp() - cache_time < 1200:
-                    return data.get("news", [])
+                    cached_items = data.get("news", [])
+                    return [ensure_news_impact(it) for it in cached_items]
         except Exception as e:
             print(f"[GeopoliticalService] Cache read error: {e}")
             

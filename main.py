@@ -1,5 +1,6 @@
 import os
 import asyncio
+from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
@@ -66,8 +67,10 @@ async def get_state(force: bool = False):
         state = {
             "calendar": cal,
             "next_event": next_ev,
+            "correlated_news": cal.get("correlated_news", []),
             "news": scheduler.last_news,
-            "signal": scheduler.last_signal
+            "signal": scheduler.last_signal,
+            "server_time": datetime.now(timezone.utc).isoformat()
         }
     return JSONResponse(content=state)
 

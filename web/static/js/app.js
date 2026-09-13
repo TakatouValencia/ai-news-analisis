@@ -119,6 +119,74 @@ function updateUI(data) {
   geoTagEl.className = `geo-tag tag-${geoSentiment}`;
   geoTagEl.textContent = `GEOPOLITIK: ${geoSentiment.toUpperCase()}`;
   reasoningEl.textContent = signal.ai_reasoning || "Analisis geopolitik dan deviasi fundamental sedang aktif.";
+
+  // 7. Correlated Secondary News (Lead-in to Big News)
+  const correlatedContainer = document.getElementById("correlated-news-container");
+  if (correlatedContainer) {
+    const correlatedList = data.correlated_news || [];
+    if (correlatedList.length > 0) {
+      correlatedContainer.innerHTML = "";
+      correlatedList.forEach(item => {
+        const itemEl = document.createElement("div");
+        itemEl.className = "correlated-item";
+        
+        const impactClass = item.impact_type === "buy" ? "impact-buy" : (item.impact_type === "sell" ? "impact-sell" : "impact-neutral");
+        const impactIcon = item.impact_type === "buy" ? "🟢" : (item.impact_type === "sell" ? "🔴" : "🟡");
+        
+        itemEl.innerHTML = `
+          <div class="correlated-header">
+            <span class="correlated-title">${item.title}</span>
+            <span class="badge-tag">${item.category}</span>
+          </div>
+          ${item.latest_data ? `<div class="correlated-data-row">📊 ${item.latest_data} · ${item.status || ''}</div>` : ''}
+          <div class="correlated-desc">${item.relation_note}</div>
+          <div class="correlated-footer">
+            <span class="impact-text ${impactClass}">${impactIcon} ${item.bias_impact}</span>
+            <span class="importance-badge">${item.importance}</span>
+          </div>
+        `;
+        correlatedContainer.appendChild(itemEl);
+      });
+    }
+  }
+
+  // 8. Breaking Geopolitical News Feed
+  const geoContainer = document.getElementById("geopolitical-news-container");
+  if (geoContainer) {
+    const newsList = data.news || [];
+    if (newsList.length > 0) {
+      geoContainer.innerHTML = "";
+      newsList.slice(0, 6).forEach(news => {
+        const newsEl = document.createElement("div");
+        newsEl.className = "news-feed-item";
+        
+        const impact = news.impact_xau || "NEUTRAL";
+        const impactClass = impact.includes("BUY") ? "badge-impact-buy" : (impact.includes("SELL") ? "badge-impact-sell" : "badge-impact-neutral");
+        
+        newsEl.innerHTML = `
+          <div class="news-feed-header">
+            <div class="news-headline">${news.title}</div>
+            <span class="badge-impact ${impactClass}">${impact}</span>
+          </div>
+          ${news.impact_note ? `<div class="news-ai-note">💡 <strong>Analisa XAU:</strong> ${news.impact_note}</div>` : ''}
+          <div class="news-meta-row">
+            <span class="news-source-tag">${news.source || 'Global Wire'}</span>
+            <span class="news-time-tag">${news.published || 'Terbaru'}</span>
+          </div>
+        `;
+        geoContainer.appendChild(newsEl);
+      });
+    }
+  }
+
+  // 9. Sync indicator pulse
+  const syncBadge = document.getElementById("live-status-badge");
+  if (syncBadge) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const syncText = document.getElementById("sync-status-text");
+    if (syncText) syncText.textContent = `LIVE (${timeStr} WIB)`;
+  }
 }
 
 // Fetch live state from API

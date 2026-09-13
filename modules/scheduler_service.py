@@ -56,6 +56,7 @@ class NewsMonitoringScheduler:
         return {
             "calendar": calendar_data,
             "next_event": next_ev,
+            "correlated_news": calendar_data.get("correlated_news", []),
             "news": news_data,
             "signal": signal
         }
@@ -95,9 +96,15 @@ class NewsMonitoringScheduler:
     async def run_loop(self):
         self.is_running = True
         print("[Scheduler] News Monitoring Scheduler started.")
+        cycle_count = 0
         while self.is_running:
             try:
                 self.check_and_send_scheduled_alerts()
+                cycle_count += 1
+                # Periodically re-sync geopolitical feeds every 5 minutes
+                if cycle_count >= 5:
+                    cycle_count = 0
+                    self.perform_full_cycle(force_refresh=False)
             except Exception as e:
                 print(f"[Scheduler] Error in monitoring cycle: {e}")
             # Check every 60 seconds
