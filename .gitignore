@@ -1,0 +1,22 @@
+# Environment and sensitive keys
+.env
+settings.json
+
+# Cache and temporary data
+data/*.json
+!data/.gitkeep
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

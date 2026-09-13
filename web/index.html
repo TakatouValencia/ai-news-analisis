@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EANews AI Analisis • XAU/USD Fundamental Intelligence</title>
+  <meta name="description" content="AI Quantitative Fundamental News Analysis untuk XAU/USD: Bias arah rilis berita High Impact, potensi spike, probabilitas one-way vs two-way, dan sinyal otomatis Discord.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo" id="app-logo">⚡</div>
+        <div>
+          <h1 class="brand-title">EANews AI</h1>
+          <div class="brand-sub">Fundamental Engine</div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <div class="status-pill" id="live-status-badge">
+          <div class="status-dot"></div>
+          <span>LIVE FEED</span>
+        </div>
+        <button class="btn-icon" id="btn-refresh" title="Perbarui Data" aria-label="Perbarui Data">
+          🔄
+        </button>
+      </div>
+    </header>
+
+    <!-- Card 1: Expected Bias -->
+    <section class="card card-bias" id="card-bias">
+      <div class="card-label">EXPECTED XAUUSD BIAS</div>
+      <div class="bias-headline" id="bias-value">XAU SELL</div>
+      
+      <div class="bias-stats-row">
+        <div>
+          <div class="stat-item-label">CONTEXT</div>
+          <div class="stat-item-value" id="context-value">88%</div>
+        </div>
+        <div>
+          <div class="stat-item-label">XAU SCORE</div>
+          <div class="stat-item-value" id="score-value">-9.56</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card 2: Next USD News -->
+    <section class="card card-news" id="card-next-news">
+      <div class="card-label">NEXT USD NEWS</div>
+      <div class="news-title" id="next-news-title">PPI</div>
+      <div class="countdown-timer" id="countdown-value">41m 57s</div>
+      
+      <div class="news-items-list" id="news-items-list">
+        <div class="news-item-row">
+          <span class="news-item-name">PPI m/m</span>
+          <span class="news-item-figures">F -0.3 · P 0</span>
+        </div>
+        <div class="news-item-row">
+          <span class="news-item-name">Initial Jobless Claims</span>
+          <span class="news-item-figures">F 211 · P 206</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Card 3: Spike Potential -->
+    <section class="card" id="card-spike">
+      <div class="card-label">SPIKE POTENTIAL</div>
+      <div class="metric-value-large" id="spike-value">90%</div>
+      <div class="progress-track">
+        <div class="progress-fill fill-spike" id="spike-bar" style="width: 90%;"></div>
+      </div>
+    </section>
+
+    <!-- Card 4: One-Way Probability -->
+    <section class="card" id="card-oneway">
+      <div class="card-label">ONE-WAY</div>
+      <div class="metric-value-large" id="oneway-value">54%</div>
+      <div class="progress-track">
+        <div class="progress-fill fill-oneway" id="oneway-bar" style="width: 54%;"></div>
+      </div>
+    </section>
+
+    <!-- Card 5: Two-Way Probability -->
+    <section class="card" id="card-twoway">
+      <div class="card-label">TWO-WAY</div>
+      <div class="metric-value-large" id="twoway-value">46%</div>
+      <div class="progress-track">
+        <div class="progress-fill fill-twoway" id="twoway-bar" style="width: 46%;"></div>
+      </div>
+    </section>
+
+    <!-- Card 6: Geopolitical & AI Intelligence -->
+    <section class="card" id="card-intelligence">
+      <div class="card-label">GEOPOLITICAL & MACRO AI</div>
+      <div>
+        <span class="geo-tag tag-bullish" id="geo-sentiment-tag">GEOPOLITIK: BULLISH</span>
+      </div>
+      <div class="intelligence-box" id="ai-reasoning">
+        Sedang menganalisis tensi geopolitik global, sentimen safe-haven, dan deviasi rilis data makroekonomi AS...
+      </div>
+    </section>
+
+    <!-- Action Bar -->
+    <div style="margin-top: 8px;">
+      <button class="btn-primary" id="btn-send-discord" style="width: 100%;">
+        <span>🚀 Kirim Sinyal Manual ke Discord (@everyone)</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      EANews Fundamental Engine • High Impact Specialist (FOMC, NFP, CPI, PPI)
+    </footer>
+
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
