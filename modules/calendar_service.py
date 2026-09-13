@@ -70,8 +70,8 @@ def get_simulated_fallback_events() -> List[Dict[str, Any]]:
             "country": "USD",
             "date": fomc_time.isoformat(),
             "impact": "High",
-            "forecast": "5.25%",
-            "previous": "5.50%",
+            "forecast": "3.50%",
+            "previous": "3.75%",
             "actual": ""
         },
         {
