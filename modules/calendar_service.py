@@ -50,46 +50,27 @@ def fetch_raw_events() -> List[Dict[str, Any]]:
     return events
 
 def get_simulated_fallback_events() -> List[Dict[str, Any]]:
-    """Provides realistic upcoming Tier-1 events (FOMC, Retail Sales, Unemployment) when weekend/off-hours."""
-    now = datetime.now(timezone.utc)
-    # Next upcoming FOMC is typically Wednesday 18:00 UTC (3 days from Sunday)
-    days_to_wed = (2 - now.weekday()) % 7
-    if days_to_wed == 0 and now.hour >= 18:
-        days_to_wed = 7
-    elif days_to_wed == 0:
-        days_to_wed = 3  # Target next mid-week cycle
-    if days_to_wed < 2:
-        days_to_wed += 7
-        
-    fomc_time = (now + timedelta(days=days_to_wed)).replace(hour=18, minute=0, second=0, microsecond=0)
-    claims_time = fomc_time + timedelta(days=1, hours=-5, minutes=30)
+    """Provides upcoming FOMC meeting aligned exactly with Fed Rate Monitor (Sep 17, 2026, 01:00 GMT+7 / Sep 16 18:00 UTC)."""
+    # Exact FOMC meeting date from Fed Rate Monitor: Sep 17, 2026, 1:00 AM GMT+7 (Sep 16, 2026, 18:00 UTC)
+    fomc_time = datetime(2026, 9, 16, 18, 0, 0, tzinfo=timezone.utc)
     
     return [
         {
-            "title": "FOMC Statement & Federal Funds Rate",
+            "title": "Federal Funds Rate Decision",
             "country": "USD",
             "date": fomc_time.isoformat(),
             "impact": "High",
-            "forecast": "3.50%",
-            "previous": "3.75%",
+            "forecast": "3.75% - 4.00%",
+            "previous": "3.50% - 3.75%",
             "actual": ""
         },
         {
-            "title": "FOMC Press Conference & Projections",
+            "title": "FOMC Statement & Projections",
             "country": "USD",
             "date": fomc_time.isoformat(),
             "impact": "High",
-            "forecast": "Dovish Lean",
+            "forecast": "Hawkish (83% Prob)",
             "previous": "Neutral",
-            "actual": ""
-        },
-        {
-            "title": "Initial Jobless Claims",
-            "country": "USD",
-            "date": claims_time.isoformat(),
-            "impact": "High",
-            "forecast": "220K",
-            "previous": "228K",
             "actual": ""
         }
     ]
