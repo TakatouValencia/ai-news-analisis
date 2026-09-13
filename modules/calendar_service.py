@@ -50,57 +50,46 @@ def fetch_raw_events() -> List[Dict[str, Any]]:
     return events
 
 def get_simulated_fallback_events() -> List[Dict[str, Any]]:
-    """Provides realistic fallback/upcoming events if live feeds are unreachable or weekend."""
+    """Provides realistic upcoming Tier-1 events (FOMC, Retail Sales, Unemployment) when weekend/off-hours."""
     now = datetime.now(timezone.utc)
-    # Schedule simulated high-impact events for demonstration / offline use
-    e1_time = now + timedelta(minutes=42)
-    e2_time = now + timedelta(hours=24)
-    e3_time = now + timedelta(days=2, hours=4)
+    # Next upcoming FOMC is typically Wednesday 18:00 UTC (3 days from Sunday)
+    days_to_wed = (2 - now.weekday()) % 7
+    if days_to_wed == 0 and now.hour >= 18:
+        days_to_wed = 7
+    elif days_to_wed == 0:
+        days_to_wed = 3  # Target next mid-week cycle
+    if days_to_wed < 2:
+        days_to_wed += 7
+        
+    fomc_time = (now + timedelta(days=days_to_wed)).replace(hour=18, minute=0, second=0, microsecond=0)
+    claims_time = fomc_time + timedelta(days=1, hours=-5, minutes=30)
     
     return [
         {
-            "title": "PPI m/m",
+            "title": "FOMC Statement & Federal Funds Rate",
             "country": "USD",
-            "date": e1_time.isoformat(),
+            "date": fomc_time.isoformat(),
             "impact": "High",
-            "forecast": "-0.3%",
-            "previous": "0.0%",
+            "forecast": "5.25%",
+            "previous": "5.50%",
+            "actual": ""
+        },
+        {
+            "title": "FOMC Press Conference & Projections",
+            "country": "USD",
+            "date": fomc_time.isoformat(),
+            "impact": "High",
+            "forecast": "Dovish Lean",
+            "previous": "Neutral",
             "actual": ""
         },
         {
             "title": "Initial Jobless Claims",
             "country": "USD",
-            "date": e1_time.isoformat(),
+            "date": claims_time.isoformat(),
             "impact": "High",
-            "forecast": "211K",
-            "previous": "206K",
-            "actual": ""
-        },
-        {
-            "title": "CPI m/m",
-            "country": "USD",
-            "date": e2_time.isoformat(),
-            "impact": "High",
-            "forecast": "0.2%",
-            "previous": "0.2%",
-            "actual": ""
-        },
-        {
-            "title": "Core CPI m/m",
-            "country": "USD",
-            "date": e2_time.isoformat(),
-            "impact": "High",
-            "forecast": "0.3%",
-            "previous": "0.3%",
-            "actual": ""
-        },
-        {
-            "title": "FOMC Statement & Federal Funds Rate",
-            "country": "USD",
-            "date": e3_time.isoformat(),
-            "impact": "High",
-            "forecast": "5.25%",
-            "previous": "5.50%",
+            "forecast": "220K",
+            "previous": "228K",
             "actual": ""
         }
     ]
