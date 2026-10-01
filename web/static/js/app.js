@@ -192,7 +192,10 @@ function updateUI(data) {
   twowayValEl.textContent = `${twoway}%`;
   twowayBar.style.width = `${twoway}%`;
 
-  // 6. Correlated Lead-In Indicators
+  // 6. Fundamental Dossier: Alasan Bias & Interpretasi Pasar (NFP / CPI / FOMC)
+  renderFundamentalDossier(data);
+
+  // 7. Correlated Lead-In Indicators
   const correlatedLabel = document.getElementById("correlated-card-label");
   if (correlatedLabel) {
     correlatedLabel.textContent = `BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO ${nextEvent.group_name || 'NEWS'})`;
@@ -308,6 +311,135 @@ function updateUI(data) {
     const now = new Date();
     const timeStr = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
     syncText.textContent = `LIVE (${timeStr} WIB)`;
+  }
+}
+
+// Render dedicated fundamental dossier (Reason, Transmission, Deviation rules, Watch points)
+function renderFundamentalDossier(data) {
+  const signal = data.signal || {};
+  const nextEvent = data.next_event || {};
+  const dossier = signal.fundamental_dossier || {};
+  const groupName = nextEvent.group_name || "HIGH IMPACT USD";
+  const bias = signal.expected_bias || "XAU NEUTRAL";
+  const isBuy = bias.includes("BUY");
+  const isSell = bias.includes("SELL");
+
+  const dossierCard = document.getElementById("card-fundamental-dossier");
+  if (!dossierCard) return;
+
+  dossierCard.classList.remove("buy", "sell");
+  if (isBuy) dossierCard.classList.add("buy");
+  if (isSell) dossierCard.classList.add("sell");
+
+  // Badges & Headers
+  const eventBadge = document.getElementById("dossier-event-badge");
+  const eventNameTag = document.getElementById("dossier-event-name-tag");
+  const dossierTitle = document.getElementById("dossier-title");
+  const dossierHeadline = document.getElementById("dossier-headline");
+  const biasPill = document.getElementById("dossier-bias-indicator");
+  const biasText = document.getElementById("dossier-bias-text");
+
+  if (eventBadge) eventBadge.textContent = dossier.event_badge || "🔴 TIER-1 ULTRA HIGH IMPACT";
+  if (eventNameTag) eventNameTag.textContent = `${groupName.toUpperCase()} DOSSIER`;
+  if (dossierTitle) dossierTitle.textContent = `Alasan Bias & Interpretasi Fundamental ${groupName}`;
+  if (dossierHeadline) {
+    dossierHeadline.textContent = dossier.headline_summary || `Laporan transmisi makroekonomi dan respon deviasi konsensus rilis ${groupName}.`;
+  }
+
+  if (biasPill && biasText) {
+    biasPill.className = `dossier-bias-pill ${isSell ? 'pill-sell' : ''}`;
+    biasText.textContent = `BIAS: ${bias}`;
+  }
+
+  // 1. Why Bias Reason
+  const whyReasonEl = document.getElementById("dossier-why-reason");
+  if (whyReasonEl) {
+    const rawReason = signal.why_bias_reason || dossier.why_bias_reason;
+    if (rawReason) {
+      whyReasonEl.textContent = rawReason;
+    } else {
+      whyReasonEl.textContent = "Sedang mengkalkulasi komparasi data konsensus...";
+    }
+  }
+
+  // 2. Market Transmission
+  const transmissionBody = document.getElementById("dossier-transmission-body");
+  if (transmissionBody) {
+    const rawTransmission = signal.market_interpretation || dossier.market_interpretation || "";
+    if (rawTransmission) {
+      const lines = rawTransmission.split("\n").filter(l => l.trim().length > 0);
+      let html = "";
+      lines.forEach(line => {
+        let formatted = line;
+        if (line.includes(":")) {
+          const colonIdx = line.indexOf(":");
+          const prefix = line.substring(0, colonIdx);
+          const rest = line.substring(colonIdx + 1);
+          formatted = `<strong>${prefix}:</strong>${rest}`;
+        }
+        html += `<div class="transmission-step-item"><p class="dossier-text">${formatted}</p></div>`;
+      });
+      transmissionBody.innerHTML = html;
+    } else {
+      transmissionBody.innerHTML = `<p class="dossier-text">Mekanisme transmisi data ke DXY, Yield US 10Y, dan Emas sedang dianalisis.</p>`;
+    }
+  }
+
+  // 3. Consensus Rules Matrix (Deviation Scenarios)
+  const rulesGrid = document.getElementById("dossier-rules-grid");
+  const rules = signal.consensus_rules || dossier.consensus_rules || [];
+  if (rulesGrid && rules.length > 0) {
+    rulesGrid.innerHTML = "";
+    rules.forEach(r => {
+      const isBullish = r.condition.toLowerCase().includes("bullish") || r.condition.toLowerCase().includes("dovish");
+      const isBearish = r.condition.toLowerCase().includes("bearish") || r.condition.toLowerCase().includes("hawkish");
+      const cardClass = isBullish ? "card-bullish" : (isBearish ? "card-bearish" : "card-mixed");
+
+      const card = document.createElement("div");
+      card.className = `rule-scenario-card ${cardClass}`;
+      card.innerHTML = `
+        <div class="rule-cond-tag">${r.condition}</div>
+        <div class="rule-trigger-box">🎯 <strong>Pemicu:</strong> ${r.trigger}</div>
+        <div class="rule-detail-line"><strong>DXY & Yields:</strong> ${r.dxy_yield_reaction}</div>
+        <div class="rule-reaction-badge">${r.xau_reaction}</div>
+        <div class="rule-meta-foot">
+          <span class="rule-pips font-mono">⚡ ${r.expected_pips}</span>
+          <span class="rule-action-pill">${r.action}</span>
+        </div>
+      `;
+      rulesGrid.appendChild(card);
+    });
+  }
+
+  // 4. Key Watch Factors
+  const watchFactorsContainer = document.getElementById("dossier-watch-factors");
+  const factors = signal.key_watch_factors || dossier.key_watch_factors || [];
+  if (watchFactorsContainer && factors.length > 0) {
+    watchFactorsContainer.innerHTML = "";
+    factors.forEach(f => {
+      const item = document.createElement("div");
+      item.className = "watch-factor-item";
+      item.innerHTML = `
+        <div>
+          <span class="wf-name">${f.factor}</span>
+          <span class="wf-importance"> · ${f.importance}</span>
+        </div>
+        <span class="wf-bench font-mono">${f.benchmark}</span>
+      `;
+      watchFactorsContainer.appendChild(item);
+    });
+  }
+
+  // 5. Tactical Guidance
+  const tacticalEl = document.getElementById("dossier-tactical-guidance");
+  if (tacticalEl) {
+    tacticalEl.textContent = signal.tactical_guidance || dossier.tactical_guidance || "Pasang SL minimal 40-60 pips sebelum rilis untuk mengantisipasi pelebaran spread broker.";
+  }
+
+  // 6. Also sync Tab 4 Playbook dynamically
+  const playbookTitle = document.getElementById("playbook-tab-title");
+  if (playbookTitle) {
+    playbookTitle.textContent = `Panduan 3 Skenario Reaksi Pasar Menjelang & Saat Rilis ${groupName}`;
   }
 }
 

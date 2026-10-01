@@ -1677,6 +1677,367 @@ body.terminal-body {
 }
 
 /* ==========================================================================
+   Fundamental Dossier & Market Interpretation (NFP / CPI / FOMC)
+   ========================================================================== */
+.card-fundamental-dossier {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(14, 23, 42, 0.92), rgba(9, 14, 28, 0.96));
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  border-radius: var(--r-xl);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.dossier-ambient-glow {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.chip-gold {
+  background: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.dossier-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.dossier-main-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+}
+
+.dossier-sub-summary {
+  font-size: 13.5px;
+  color: var(--text-mid);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.dossier-bias-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.dossier-bias-pill.pill-sell {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+}
+
+.dossier-bias-pill .pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse-ring 2s infinite;
+}
+
+.dossier-core-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.dossier-block {
+  background: rgba(10, 16, 32, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dossier-block:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.block-reason {
+  border-left: 3px solid #10b981;
+}
+
+.card-fundamental-dossier.sell .block-reason {
+  border-left-color: #f43f5e;
+}
+
+.block-transmission {
+  border-left: 3px solid #38bdf8;
+}
+
+.dossier-block-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dossier-block-icon {
+  font-size: 16px;
+}
+
+.dossier-block-title {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--text-high);
+  text-transform: uppercase;
+}
+
+.dossier-text {
+  font-size: 13.5px;
+  color: #cbd5e1;
+  line-height: 1.65;
+}
+
+.transmission-step-item {
+  margin-bottom: 10px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(56, 189, 248, 0.35);
+}
+
+.transmission-step-item strong {
+  color: #f1f5f9;
+}
+
+/* Consensus Deviation Rules Matrix */
+.dossier-rules-section {
+  margin-top: 6px;
+  margin-bottom: 20px;
+  background: rgba(6, 10, 22, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-lg);
+  padding: 18px;
+}
+
+.rules-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.rules-title {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--color-cyan);
+  text-transform: uppercase;
+}
+
+.rules-subtitle {
+  font-size: 12px;
+  color: var(--text-low);
+}
+
+.rules-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.rule-scenario-card {
+  background: rgba(13, 20, 38, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.rule-scenario-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.rule-scenario-card.card-bullish {
+  border-top: 3px solid #10b981;
+}
+
+.rule-scenario-card.card-bearish {
+  border-top: 3px solid #f43f5e;
+}
+
+.rule-scenario-card.card-mixed {
+  border-top: 3px solid #a855f7;
+}
+
+.rule-cond-tag {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.card-bullish .rule-cond-tag { color: #10b981; }
+.card-bearish .rule-cond-tag { color: #f43f5e; }
+.card-mixed .rule-cond-tag { color: #c084fc; }
+
+.rule-trigger-box {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #f8fafc;
+  line-height: 1.4;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rule-detail-line {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.45;
+}
+
+.rule-reaction-badge {
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.card-bullish .rule-reaction-badge { color: #34d399; }
+.card-bearish .rule-reaction-badge { color: #fb7185; }
+.card-mixed .rule-reaction-badge { color: #e879f9; }
+
+.rule-meta-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+}
+
+.rule-pips {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.rule-action-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.card-bullish .rule-action-pill { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.card-bearish .rule-action-pill { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+.card-mixed .rule-action-pill { background: rgba(168, 85, 247, 0.2); color: #e879f9; }
+
+/* Watch Factors & Tactical Footer */
+.dossier-footer-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-block-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.watch-factors-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.watch-factor-item {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--r-sm);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.wf-name {
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.wf-bench {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-cyan);
+}
+
+.wf-importance {
+  font-size: 11px;
+  color: var(--text-mid);
+}
+
+.tactical-guidance-col {
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+
+.tactical-note {
+  font-size: 12.5px;
+  color: #fde68a;
+  line-height: 1.55;
+}
+
+/* ==========================================================================
    Responsive Adaptations
    ========================================================================== */
 @media (max-width: 960px) {
@@ -1684,6 +2045,9 @@ body.terminal-body {
   .metrics-trio-grid,
   .overview-split-grid,
   .playbook-scenarios-grid,
+  .dossier-core-grid,
+  .rules-cards-grid,
+  .dossier-footer-grid,
   .radar-body {
     grid-template-columns: 1fr;
   }

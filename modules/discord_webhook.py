@@ -63,6 +63,9 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
                 items_text.append(f"• **{it.get('title')}**: Forecast `{f}` | Previous `{p}`")
     consensus_val = "\n".join(items_text) if items_text else "Data konsensus belum tersedia."
 
+    why_reason = signal.get("why_bias_reason", "")
+    market_interp = signal.get("market_interpretation", "")
+
     fields = [
         {
             "name": "🎯 EXPECTED XAUUSD BIAS",
@@ -93,13 +96,28 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
             "name": "🔄 PROBABILITAS TRAJEKTORI",
             "value": f"**One-Way:** `{one_way}%`\n**Two-Way:** `{two_way}%`",
             "inline": True
-        },
-        {
-            "name": "🌍 INTELEJEN GEOPOLITIK & MAKRO",
-            "value": f"> {reasoning}",
-            "inline": False
         }
     ]
+
+    if why_reason:
+        fields.append({
+            "name": f"💡 ALASAN BIAS FUNDAMENTAL ({group_name})",
+            "value": why_reason[:1024],
+            "inline": False
+        })
+
+    if market_interp:
+        fields.append({
+            "name": "🔍 TRANSMISI PASAR (DXY • YIELDS • XAU)",
+            "value": market_interp[:1024],
+            "inline": False
+        })
+
+    fields.append({
+        "name": "🌍 INTELEJEN GEOPOLITIK & MAKRO",
+        "value": f"> {reasoning}",
+        "inline": False
+    })
 
     embed = {
         "title": stage_title,

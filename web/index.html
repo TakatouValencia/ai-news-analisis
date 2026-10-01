@@ -329,6 +329,91 @@
 
       </div>
 
+      <!-- DEDICATED FUNDAMENTAL DOSSIER: Alasan Bias & Interpretasi Pasar (NFP / CPI / FOMC) -->
+      <section class="card-fundamental-dossier" id="card-fundamental-dossier">
+        <div class="dossier-ambient-glow"></div>
+        <div class="card-top-bar">
+          <div class="badge-cluster">
+            <span class="status-chip chip-cyan" id="dossier-event-badge">🔴 TIER-1 ULTRA HIGH IMPACT</span>
+            <span class="status-chip chip-gold" id="dossier-model-badge">INSTITUTIONAL MACRO DOSSIER</span>
+          </div>
+          <span class="live-clock-badge font-mono" id="dossier-event-name-tag">NFP ANALYSIS</span>
+        </div>
+
+        <div class="dossier-header-row">
+          <div>
+            <h3 class="dossier-main-title" id="dossier-title">Alasan Bias &amp; Interpretasi Fundamental NFP</h3>
+            <p class="dossier-sub-summary" id="dossier-headline">
+              Laporan Ketenagakerjaan AS (NFP, Pengangguran, &amp; Upah) dengan potensi lonjakan volatilitas 97% terhadap XAU/USD.
+            </p>
+          </div>
+          <div class="dossier-bias-pill" id="dossier-bias-indicator">
+            <span class="pill-dot"></span>
+            <span class="pill-text" id="dossier-bias-text">BIAS: XAU BUY</span>
+          </div>
+        </div>
+
+        <!-- 2-Column Split: Alasan Bias (Why Bias) vs Transmisi Pasar (Market Transmission) -->
+        <div class="dossier-core-grid">
+          
+          <!-- Column 1: Alasan Bias Fundamental -->
+          <div class="dossier-block block-reason">
+            <div class="dossier-block-head">
+              <span class="dossier-block-icon">💡</span>
+              <span class="dossier-block-title">ALASAN BIAS KUANTITATIF &amp; FUNDAMENTAL</span>
+            </div>
+            <div class="dossier-block-body">
+              <p class="dossier-text" id="dossier-why-reason">
+                Memuat analisis fundamental mendalam...
+              </p>
+            </div>
+          </div>
+
+          <!-- Column 2: Transmisi Pasar (DXY, Yields, Gold) -->
+          <div class="dossier-block block-transmission">
+            <div class="dossier-block-head">
+              <span class="dossier-block-icon">🔍</span>
+              <span class="dossier-block-title">MEKANISME TRANSMISI PASAR (DXY • YIELDS • XAU)</span>
+            </div>
+            <div class="dossier-block-body" id="dossier-transmission-body">
+              <p class="dossier-text" id="dossier-transmission-text">
+                Memuat transmisi makroekonomi...
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Consensus Deviation Rules Matrix -->
+        <div class="dossier-rules-section">
+          <div class="rules-section-header">
+            <span class="rules-title">⚡ MATRIKS ATURAN DEVIASI &amp; RESPON REAKSI HARGA (ACTUAL vs FORECAST)</span>
+            <span class="rules-subtitle">Panduan respon pasar seketika saat angka rilis resmi keluar</span>
+          </div>
+          
+          <div class="rules-cards-grid" id="dossier-rules-grid">
+            <!-- Dynamically populated from consensus_rules -->
+          </div>
+        </div>
+
+        <!-- Key Watch Factors & Tactical Guidance Footer -->
+        <div class="dossier-footer-grid">
+          <div class="watch-factors-col">
+            <span class="footer-block-label">🎯 FAKTOR KUNCI YANG WAJIB DIPANTAU SAAT RILIS:</span>
+            <div class="watch-factors-pills" id="dossier-watch-factors">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+          <div class="tactical-guidance-col">
+            <span class="footer-block-label">🛡️ PANDUAN TAKTIS &amp; MANAJEMEN RISIKO:</span>
+            <p class="tactical-note" id="dossier-tactical-guidance">
+              Pasang SL minimal 40-60 pips sebelum rilis untuk mengantisipasi pelebaran spread broker.
+            </p>
+          </div>
+        </div>
+
+      </section>
+
       <!-- Bottom Overview Split: Correlated Indicators & AI Intelligence -->
       <div class="overview-split-grid">
         
@@ -439,12 +524,12 @@
         <div class="card-top-bar">
           <div>
             <span class="card-tagline">TRADE PLAYBOOK</span>
-            <h3 class="tab-section-title">Panduan 3 Skenario Reaksi Pasar Menjelang & Saat Rilis NFP</h3>
+            <h3 class="tab-section-title" id="playbook-tab-title">Panduan 3 Skenario Reaksi Pasar Menjelang & Saat Rilis NFP</h3>
           </div>
           <span class="status-chip chip-purple">STRATEGI RESIKO</span>
         </div>
 
-        <div class="playbook-scenarios-grid">
+        <div class="playbook-scenarios-grid" id="playbook-scenarios-grid">
           
           <!-- Skenario A -->
           <div class="scenario-card card-bearish">
