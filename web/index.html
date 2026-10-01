@@ -3,154 +3,342 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EANews AI Analisis • XAU/USD Fundamental Intelligence</title>
-  <meta name="description" content="AI Quantitative Fundamental News Analysis untuk XAU/USD: Bias arah rilis berita High Impact, potensi spike, probabilitas one-way vs two-way, dan sinyal otomatis Discord.">
+  <title>EANews AI • XAU/USD Fundamental Intelligence & Quant Engine</title>
+  <meta name="description" content="Platform AI Quantitative Fundamental Analysis untuk XAU/USD: Prediksi arah berita High Impact (NFP, CPI, FOMC), probabilitas spike volatilitas, dan automasi sinyal Discord.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 </head>
 <body>
 
-  <div class="container">
+  <!-- Background decorative ambient lights -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+  <div class="ambient-glow glow-center"></div>
+
+  <div class="app-layout">
     
-    <!-- Top Header -->
+    <!-- Top Navigation Header -->
     <header class="app-header">
       <div class="brand-section">
-        <div class="brand-logo" id="app-logo">⚡</div>
-        <div>
-          <h1 class="brand-title">EANews AI</h1>
-          <div class="brand-sub">Fundamental Engine</div>
+        <div class="brand-logo">⚡</div>
+        <div class="brand-info">
+          <div class="brand-badge">INSTITUTIONAL QUANT</div>
+          <h1 class="brand-title">EANews <span class="accent-text">AI</span></h1>
+        </div>
+      </div>
+
+      <!-- Real-time Clocks -->
+      <div class="header-clocks">
+        <div class="clock-item">
+          <span class="clock-label">WIB (JAKARTA)</span>
+          <span class="clock-val" id="clock-wib">--:--:--</span>
+        </div>
+        <div class="clock-divider"></div>
+        <div class="clock-item">
+          <span class="clock-label">UTC (LONDON)</span>
+          <span class="clock-val" id="clock-utc">--:--:--</span>
         </div>
       </div>
       
+      <!-- Top Action Controls -->
       <div class="header-actions">
         <div class="status-pill" id="live-status-badge">
-          <div class="status-dot"></div>
-          <span id="sync-status-text">LIVE (15s)</span>
+          <span class="status-dot"></span>
+          <span id="sync-status-text">LIVE SYNC</span>
         </div>
-        <button class="btn-icon" id="btn-refresh" title="Perbarui Data" aria-label="Perbarui Data">
+        <button class="btn-icon" id="btn-refresh" title="Perbarui Data Sekarang" aria-label="Refresh Data">
           🔄
+        </button>
+        <button class="btn-icon" id="btn-open-settings" title="Pengaturan API & Discord" aria-label="Settings">
+          ⚙️
         </button>
       </div>
     </header>
 
-    <!-- Card 1: Expected Bias -->
-    <section class="card card-bias sell" id="card-bias">
-      <div class="card-label">EXPECTED XAUUSD BIAS</div>
-      <div class="bias-headline" id="bias-value">XAU SELL</div>
+    <!-- Main Grid Content -->
+    <main class="dashboard-grid">
       
-      <div class="bias-stats-row">
-        <div>
-          <div class="stat-item-label">CONTEXT</div>
-          <div class="stat-item-value" id="context-value">88%</div>
-        </div>
-        <div>
-          <div class="stat-item-label">XAU SCORE</div>
-          <div class="stat-item-value" id="score-value">-9.56</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Card 2: Next USD News -->
-    <section class="card card-news" id="card-next-news">
-      <div class="card-label">NEXT USD NEWS</div>
-      <div class="news-title" id="next-news-title">FOMC</div>
-      <div class="countdown-timer" id="countdown-value">3d 15h 15m</div>
-      
-      <div class="news-items-list" id="news-items-list">
-        <div class="news-item-row">
-          <span class="news-item-name">Federal Funds Rate</span>
-          <span class="news-item-figures">F 3.75-4.00 (83%) · P 3.50-3.75 (17%)</span>
-        </div>
-        <div class="news-item-row">
-          <span class="news-item-name">FOMC Statement & Projections</span>
-          <span class="news-item-figures">F Hawkish (83%) · P Neutral</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Card 3: Spike Potential -->
-    <section class="card" id="card-spike">
-      <div class="card-label">SPIKE POTENTIAL</div>
-      <div class="metric-value-large" id="spike-value">98%</div>
-      <div class="progress-track">
-        <div class="progress-fill fill-spike" id="spike-bar" style="width: 98%;"></div>
-      </div>
-    </section>
-
-    <!-- Card 4: One-Way Probability -->
-    <section class="card" id="card-oneway">
-      <div class="card-label">ONE-WAY</div>
-      <div class="metric-value-large" id="oneway-value">60%</div>
-      <div class="progress-track">
-        <div class="progress-fill fill-oneway" id="oneway-bar" style="width: 60%;"></div>
-      </div>
-    </section>
-
-    <!-- Card 5: Two-Way Probability -->
-    <section class="card" id="card-twoway">
-      <div class="card-label">TWO-WAY</div>
-      <div class="metric-value-large" id="twoway-value">40%</div>
-      <div class="progress-track">
-        <div class="progress-fill fill-twoway" id="twoway-bar" style="width: 40%;"></div>
-      </div>
-    </section>
-
-    <!-- Card 6: Correlated Secondary News (Lead-in to Big News) -->
-    <section class="card" id="card-correlated">
-      <div class="card-label">BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO FOMC)</div>
-      <div id="correlated-news-container" class="correlated-list">
-        <!-- Dynamically rendered via app.js -->
-        <div class="correlated-item">
-          <div class="correlated-header">
-            <span class="correlated-title">Initial Jobless Claims (Klaim Pengangguran AS)</span>
-            <span class="badge-tag">Tenaga Kerja</span>
+      <!-- HERO ROW: BIAS + NEXT NEWS CLUSTER -->
+      <div class="hero-row">
+        
+        <!-- Card 1: Expected Bias Hero -->
+        <section class="card card-bias" id="card-bias">
+          <div class="card-glow-aura"></div>
+          <div class="card-header-line">
+            <span class="card-eyebrow">PREDICTIVE QUANT BIAS</span>
+            <span class="pill-tag tag-engine" id="engine-mode-tag">AI QUANT MODEL</span>
           </div>
-          <div class="correlated-desc">Klaim rendah menandakan pasar kerja ketat, memperkuat alasan The Fed menaikkan suku bunga.</div>
-          <div class="correlated-footer">
-            <span class="impact-text">Hawkish USD / Bearish XAU jika rendah</span>
-            <span class="importance-badge">Tinggi (35% Bobot)</span>
+          
+          <div class="bias-center">
+            <div class="bias-symbol" id="bias-symbol">🔺</div>
+            <div class="bias-headline" id="bias-value">XAU BUY</div>
+          </div>
+
+          <div class="bias-meters-grid">
+            <div class="meter-box">
+              <div class="meter-top">
+                <span class="meter-label">CONFIDENCE CONTEXT</span>
+                <span class="meter-val" id="context-value">86%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-context" id="context-bar" style="width: 86%;"></div>
+              </div>
+            </div>
+
+            <div class="meter-box">
+              <div class="meter-top">
+                <span class="meter-label">XAU QUANT SCORE</span>
+                <span class="meter-val font-mono" id="score-value">+4.24</span>
+              </div>
+              <div class="progress-track score-track">
+                <div class="score-center-marker"></div>
+                <div class="score-fill" id="score-bar" style="width: 71%;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Card 2: Next USD News Primary Focus -->
+        <section class="card card-next-event" id="card-next-news">
+          <div class="card-header-line">
+            <div class="event-badge-row">
+              <span class="pill-tag tag-high-impact">🔴 HIGH IMPACT USD</span>
+              <span class="pill-tag tag-imminent">TARGET RELEASE</span>
+            </div>
+            <span class="countdown-badge-live">LIVE TICKER</span>
+          </div>
+
+          <h2 class="event-headline" id="next-news-title">Non-Farm Employment Change (NFP)</h2>
+          
+          <div class="event-schedule-banner" id="next-news-schedule-box">
+            <span class="cal-icon">📅</span>
+            <span class="schedule-text" id="next-news-schedule">Memuat jadwal resmi...</span>
+          </div>
+
+          <div class="countdown-display">
+            <div class="countdown-unit">
+              <span class="cd-num" id="cd-days">00</span>
+              <span class="cd-lbl">DAYS</span>
+            </div>
+            <span class="cd-colon">:</span>
+            <div class="countdown-unit">
+              <span class="cd-num" id="cd-hours">00</span>
+              <span class="cd-lbl">HOURS</span>
+            </div>
+            <span class="cd-colon">:</span>
+            <div class="countdown-unit">
+              <span class="cd-num" id="cd-minutes">00</span>
+              <span class="cd-lbl">MIN</span>
+            </div>
+            <span class="cd-colon">:</span>
+            <div class="countdown-unit">
+              <span class="cd-num" id="cd-seconds">00</span>
+              <span class="cd-lbl">SEC</span>
+            </div>
+          </div>
+          
+          <div class="consensus-table-container">
+            <div class="table-header">DATA KONSENSUS (FORECAST vs PREVIOUS)</div>
+            <div class="news-items-list" id="news-items-list">
+              <div class="news-item-row">
+                <span class="news-item-name">Menghubungkan kalender...</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- METRICS ROW: VOLATILITY & TRAJECTORY -->
+      <div class="metrics-row">
+        
+        <!-- Metric 1: Spike Potential -->
+        <section class="card metric-card" id="card-spike">
+          <div class="metric-header">
+            <span class="card-eyebrow">POTENSI SPIKE VOLATILITAS</span>
+            <span class="status-indicator-badge" id="spike-tier-badge">EXTREME</span>
+          </div>
+          <div class="metric-large-row">
+            <span class="metric-value-large font-mono" id="spike-value">97%</span>
+            <span class="metric-icon-decor">⚡</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill fill-spike" id="spike-bar" style="width: 97%;"></div>
+          </div>
+          <div class="metric-caption">Probabilitas pergerakan ekspansif &gt;60 pips saat detik rilis.</div>
+        </section>
+
+        <!-- Metric 2: One-Way Trajectory -->
+        <section class="card metric-card" id="card-oneway">
+          <div class="metric-header">
+            <span class="card-eyebrow">ONE-WAY TRAJECTORY</span>
+            <span class="status-indicator-badge badge-cyan">TRENDING</span>
+          </div>
+          <div class="metric-large-row">
+            <span class="metric-value-large font-mono" id="oneway-value">72%</span>
+            <span class="metric-icon-decor">🎯</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill fill-oneway" id="oneway-bar" style="width: 72%;"></div>
+          </div>
+          <div class="metric-caption">Peluang harga langsung lari satu arah tanpa false breakout.</div>
+        </section>
+
+        <!-- Metric 3: Two-Way Trajectory -->
+        <section class="card metric-card" id="card-twoway">
+          <div class="metric-header">
+            <span class="card-eyebrow">TWO-WAY RETRACEMENT</span>
+            <span class="status-indicator-badge badge-purple">WHIPSAW</span>
+          </div>
+          <div class="metric-large-row">
+            <span class="metric-value-large font-mono" id="twoway-value">28%</span>
+            <span class="metric-icon-decor">🔄</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill fill-twoway" id="twoway-bar" style="width: 28%;"></div>
+          </div>
+          <div class="metric-caption">Peluang sapu likuiditas atas-bawah sebelum menentukan arah.</div>
+        </section>
+
+      </div>
+
+      <!-- MAIN SPLIT: CORRELATED LEAD-IN & UPCOMING CALENDAR vs GEOPOLITICS -->
+      <div class="details-split-row">
+        
+        <!-- LEFT COLUMN: CORRELATED INDICATORS & CALENDAR -->
+        <div class="details-col">
+          
+          <!-- Card: Correlated Lead-in News -->
+          <section class="card" id="card-correlated">
+            <div class="card-header-line">
+              <span class="card-eyebrow" id="correlated-card-label">BERITA PENDUKUNG & INDIKATOR TERKAIT</span>
+              <span class="pill-tag tag-neutral">LEAD-IN INTELLIGENCE</span>
+            </div>
+            <div id="correlated-news-container" class="correlated-list">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </section>
+
+          <!-- Card: Upcoming High Impact Calendar -->
+          <section class="card" id="card-upcoming-calendar">
+            <div class="card-header-line">
+              <span class="card-eyebrow">JADWAL HIGH IMPACT NEWS MENDATANG</span>
+              <span class="pill-tag tag-engine">CALENDAR FEED</span>
+            </div>
+            <div id="upcoming-calendar-list" class="calendar-events-list">
+              <div class="news-item-row"><span class="news-item-name">Memuat jadwal berita ekonomi...</span></div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- RIGHT COLUMN: GEOPOLITICAL & AI INTELLIGENCE -->
+        <div class="details-col">
+          
+          <!-- Card: Geopolitical AI Synthesis -->
+          <section class="card" id="card-intelligence">
+            <div class="card-header-line">
+              <span class="card-eyebrow">GEOPOLITICAL & MACRO AI SYNTHESIS</span>
+              <span class="geo-tag" id="geo-sentiment-tag">GEOPOLITIK: MEMUAT...</span>
+            </div>
+            
+            <div class="ai-synthesis-box">
+              <div class="synthesis-quote-icon">“</div>
+              <p class="synthesis-text" id="ai-reasoning">
+                Sedang menganalisis sentimen makroekonomi, tensi geopolitik Timur Tengah, dan proyeksi rilis data High Impact...
+              </p>
+            </div>
+
+            <!-- Breaking Geopolitical Headlines -->
+            <div class="feed-header-line">
+              <span class="feed-title">BREAKING INTELLIGENCE HEADLINES</span>
+              <span class="feed-source-note">LIVE REUTERS / BLOOMBERG WIRE</span>
+            </div>
+            <div id="geopolitical-news-container" class="news-feed-list">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </section>
+
+        </div>
+
+      </div>
+
+      <!-- BOTTOM CONTROL BAR: DISCORD TRIGGER -->
+      <section class="card discord-trigger-bar">
+        <div class="trigger-bar-content">
+          <div class="trigger-info">
+            <div class="trigger-title">Kirim Sinyal Otomatis ke Discord Webhook</div>
+            <div class="trigger-sub">Format alert lengkap dengan Jadwal Resmi WIB, XAU Bias, Skor Deviasi, dan Potensi Spike.</div>
+          </div>
+          
+          <div class="trigger-actions">
+            <select class="form-select" id="select-discord-stage">
+              <option value="pre_news">📢 Sinyal Pre-News (T-30m)</option>
+              <option value="imminent">⚡ Sinyal Imminent (T-5m)</option>
+              <option value="flash_release">🔥 Flash Reaction Rilis</option>
+            </select>
+            <button class="btn-discord" id="btn-send-discord">
+              <span>🚀 Kirim Sekarang (@everyone)</span>
+            </button>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Card 7: Geopolitical & AI Intelligence -->
-    <section class="card" id="card-intelligence">
-      <div class="card-label">GEOPOLITICAL & MACRO AI INTELLIGENCE</div>
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <span class="geo-tag tag-bullish" id="geo-sentiment-tag">GEOPOLITIK: NETRAL-HAWKISH</span>
-        <span style="font-size: 11px; color: var(--text-muted);">Auto-Update: 15s</span>
-      </div>
-      
-      <div class="intelligence-box" id="ai-reasoning">
-        Sedang menganalisis tensi geopolitik Timur Tengah, imbal hasil obligasi AS, dan ekspektasi kenaikan suku bunga The Fed (83% probabilitas 3.75 - 4.00%)...
-      </div>
-
-      <!-- Live Geopolitical Headlines Feed -->
-      <div class="card-sublabel" style="margin-top: 16px; margin-bottom: 8px; font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
-        BREAKING NEWS GEOPOLITIK TERBARU & DAMPAK XAU
-      </div>
-      <div id="geopolitical-news-container" class="news-feed-list">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-    <!-- Action Bar -->
-    <div style="margin-top: 8px;">
-      <button class="btn-primary" id="btn-send-discord" style="width: 100%;">
-        <span>🚀 Kirim Sinyal Manual ke Discord (@everyone)</span>
-      </button>
-    </div>
+    </main>
 
     <!-- Footer -->
     <footer class="app-footer">
-      EANews Fundamental Engine • High Impact Specialist (FOMC, NFP, CPI, PPI)
+      <div class="footer-content">
+        <span>EANews AI Platform • XAU/USD Fundamental Specialist Engine</span>
+        <span>•</span>
+        <span>Data: ForexFactory, FairEconomy & FinanceCalendar Multi-Source Feed</span>
+      </div>
     </footer>
 
   </div>
 
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span class="modal-icon">⚙️</span>
+          <h3 class="modal-title">Pengaturan Sistem & Integrasi</h3>
+        </div>
+        <button class="close-btn" id="btn-close-settings" aria-label="Tutup Modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="setting-discord-url">Discord Webhook URL</label>
+          <input type="url" class="form-input" id="setting-discord-url" placeholder="https://discord.com/api/webhooks/..." autocomplete="off">
+          <span class="form-help">Webhook channel Discord tempat sinyal otomatis dan alert akan diposting.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="setting-ai-key">AI API Key (OpenRouter / Gemini)</label>
+          <input type="password" class="form-input" id="setting-ai-key" placeholder="sk-..." autocomplete="new-password">
+          <span class="form-help" id="setting-ai-key-hint">Kunci tersimpan aman di server (.env).</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="setting-ai-model">AI Model Selection</label>
+          <input type="text" class="form-input" id="setting-ai-model" placeholder="google/gemini-2.5-flash">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-cancel-settings">Batal</button>
+        <button class="btn-primary" id="btn-save-settings">Simpan Pengaturan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
-  <div class="toast-container" id="toast-container"></div>
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
   <script src="/static/js/app.js"></script>
 </body>

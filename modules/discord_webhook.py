@@ -29,20 +29,26 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
         
     group_name = next_event.get("group_name", "USD News") if next_event else "USD News"
     countdown_str = next_event.get("countdown_str", "Imminent") if next_event else "Imminent"
+    datetime_wib = next_event.get("datetime_wib", "") if next_event else ""
+    if not datetime_wib and next_event and "datetime" in next_event:
+        from modules.calendar_service import format_wib_datetime
+        datetime_wib = format_wib_datetime(next_event["datetime"])
+    if not datetime_wib:
+        datetime_wib = "Jadwal live ekonomi"
     
     # Header title depending on stage
     if stage == "pre_news":
         stage_title = f"📢 PRE-NEWS SIGNAL: {group_name}"
-        stage_desc = f"**Peringatan rilis berita ekonomi High Impact USD dalam {countdown_str}.**"
+        stage_desc = f"**Peringatan rilis berita {group_name} dalam `{countdown_str}`.**\n📅 **Jadwal Rilis:** `{datetime_wib}`"
     elif stage == "imminent":
         stage_title = f"⚡ IMMINENT NEWS ALERT: {group_name}"
-        stage_desc = f"**Rilis berita dalam hitungan menit ({countdown_str})! Siapkan manajemen risiko.**"
+        stage_desc = f"**Rilis berita dalam hitungan menit ({countdown_str})! Siapkan manajemen risiko.**\n📅 **Jadwal Rilis:** `{datetime_wib}`"
     elif stage == "flash_release":
         stage_title = f"🔥 FLASH REACTION: {group_name} RELEASED"
-        stage_desc = "**Data resmi telah dirilis. Analisis deviasi instan aktif.**"
+        stage_desc = f"**Data resmi {group_name} telah dirilis. Analisis deviasi instan aktif.**\n📅 **Rilis:** `{datetime_wib}`"
     else:
         stage_title = f"📊 XAU/USD NEWS ANALYSIS: {group_name}"
-        stage_desc = "**Update terkini fundamental & geopolitik XAU/USD.**"
+        stage_desc = f"**Update terkini fundamental & geopolitik XAU/USD.**\n📅 **Jadwal Rilis:** `{datetime_wib}`"
 
     # Format event items
     items_text = []
@@ -69,8 +75,8 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
             "inline": True
         },
         {
-            "name": "⏱️ COUNTDOWN & EVENT",
-            "value": f"**{group_name}** (`{countdown_str}`)",
+            "name": "⏱️ JADWAL & COUNTDOWN",
+            "value": f"**{group_name}**\n⏳ `{countdown_str}`\n📅 `{datetime_wib}`",
             "inline": True
         },
         {
@@ -101,7 +107,7 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
         "color": color,
         "fields": fields,
         "footer": {
-            "text": "EANews Intelligence • XAU/USD Fundamental Specialist"
+            "text": f"EANews Intelligence • Jadwal: {datetime_wib}"
         },
         "timestamp": datetime.now(timezone.utc).isoformat()
     }

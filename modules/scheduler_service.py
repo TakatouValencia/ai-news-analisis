@@ -48,7 +48,16 @@ class NewsMonitoringScheduler:
         self.last_news = news_data
         
         group_name = next_ev.get("group_name", "USD News") if next_ev else "USD News"
-        ai_res = analyze_with_llm(news_data, group_name)
+        
+        # Cache AI analysis for 15 minutes if event group hasn't changed
+        now_ts = datetime.now(timezone.utc).timestamp()
+        if not force_refresh and self.last_signal and (now_ts - getattr(self, "last_ai_time", 0) < 900) and getattr(self, "last_ai_group", "") == group_name:
+            ai_res = getattr(self, "last_ai_res", {})
+        else:
+            ai_res = analyze_with_llm(news_data, group_name)
+            self.last_ai_res = ai_res
+            self.last_ai_time = now_ts
+            self.last_ai_group = group_name
         
         signal = compute_full_quant_signal(next_ev, ai_res)
         self.last_signal = signal
@@ -73,23 +82,28 @@ class NewsMonitoringScheduler:
         if not webhook_url:
             return
             
-        seconds = next_ev.get("seconds_until", 99999)
+        seconds = next_ev.get("seconds_until", -1)
+        # CRITICAL SAFETY: Never send alerts for past events
+        if seconds <= 0 or next_ev.get("is_past", True):
+            return
+            
         event_time_str = next_ev.get("datetime", "")
+        group_name = next_ev.get("group_name", "USD News")
         sent_keys = get_sent_alert_keys()
         
         # T-30m window: between 25m and 32m (1500s - 1920s)
         if 1500 <= seconds <= 1920:
-            alert_key = f"{event_time_str}_pre30"
+            alert_key = f"{event_time_str}_{group_name}_pre30"
             if alert_key not in sent_keys:
-                print(f"[Scheduler] Sending T-30m alert for {next_ev.get('group_name')}")
+                print(f"[Scheduler] Sending T-30m alert for {group_name} ({next_ev.get('datetime_wib')})")
                 send_discord_webhook(webhook_url, state["signal"], next_ev, stage="pre_news")
                 mark_alert_as_sent(alert_key)
                 
         # T-5m window: between 1m and 6m (60s - 360s)
         elif 60 <= seconds <= 360:
-            alert_key = f"{event_time_str}_imminent5"
+            alert_key = f"{event_time_str}_{group_name}_imminent5"
             if alert_key not in sent_keys:
-                print(f"[Scheduler] Sending T-5m alert for {next_ev.get('group_name')}")
+                print(f"[Scheduler] Sending T-5m alert for {group_name} ({next_ev.get('datetime_wib')})")
                 send_discord_webhook(webhook_url, state["signal"], next_ev, stage="imminent")
                 mark_alert_as_sent(alert_key)
 
@@ -116,6 +130,12 @@ class NewsMonitoringScheduler:
         settings = load_settings()
         webhook_url = settings.get("discord_webhook_url", "").strip()
         
+        if not state.get("next_event"):
+            return {
+                "success": False,
+                "error": "Tidak ada jadwal event berita ekonomi mendatang yang terdeteksi."
+            }
+            
         return send_discord_webhook(webhook_url, state["signal"], state["next_event"], stage=stage)
 
 # Global singleton
