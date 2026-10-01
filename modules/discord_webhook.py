@@ -123,9 +123,14 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
         "title": stage_title,
         "description": stage_desc,
         "color": color,
+        "author": {
+            "name": "EANews Novaire • Fundamental Signal Engine",
+            "icon_url": "https://raw.githubusercontent.com/TakatouValencia/ai-news-analisis/main/web/static/img/novaire_logo.jpg"
+        },
         "fields": fields,
         "footer": {
-            "text": f"EANews Intelligence • Jadwal: {datetime_wib}"
+            "text": f"EANews Novaire Intelligence • Jadwal: {datetime_wib}",
+            "icon_url": "https://raw.githubusercontent.com/TakatouValencia/ai-news-analisis/main/web/static/img/novaire_logo.jpg"
         },
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
@@ -141,9 +146,9 @@ def send_discord_webhook(webhook_url: str, signal: Dict[str, Any], next_event: O
         
     embed = format_embed(signal, next_event, stage)
     payload = {
-        "content": "@everyone 🚨 **HIGH IMPACT NEWS SIGNAL ALERT**",
-        "username": "EANews AI Analisis",
-        "avatar_url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=128&auto=format&fit=crop&q=80",
+        "content": "@everyone 🚨 **HIGH IMPACT NEWS SIGNAL ALERT • EANEWS NOVAIRE**",
+        "username": "EANews Novaire",
+        "avatar_url": "https://raw.githubusercontent.com/TakatouValencia/ai-news-analisis/main/web/static/img/novaire_logo.jpg",
         "embeds": [embed],
         "allowed_mentions": {
             "parse": ["everyone"]
@@ -153,7 +158,7 @@ def send_discord_webhook(webhook_url: str, signal: Dict[str, Any], next_event: O
     data = json.dumps(payload).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
-        "User-Agent": "EANewsBot/2.0"
+        "User-Agent": "EANewsNovaireBot/3.2"
     }
     
     req = urllib.request.Request(webhook_url.strip(), data=data, headers=headers)

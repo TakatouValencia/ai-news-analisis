@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     task.cancel()
     print("[Main] EANews Analisis server stopped.")
 
-app = FastAPI(title="EANews Analisis AI", lifespan=lifespan)
+app = FastAPI(title="EANews Novaire AI", lifespan=lifespan)
 
 # Mount static directory
 if STATIC_DIR.exists():
