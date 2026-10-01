@@ -1,11 +1,11 @@
 // ==========================================================================
-// EANews AI Analisis - Executive Frontend Engine Logic
+// EANews Pro Terminal - Frontend Engine Logic (v3.2)
 // ==========================================================================
 
 let state = null;
 let secondsRemaining = 0;
 
-// Format seconds into breakdown { days, hours, minutes, seconds }
+// Countdown parts helper
 function getCountdownParts(sec) {
   if (sec <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   const days = Math.floor(sec / 86400);
@@ -19,7 +19,7 @@ function padZero(num) {
   return String(num).padStart(2, '0');
 }
 
-// Toast notification helper
+// Toast notification
 function showToast(message, isError = false) {
   const container = document.getElementById("toast-container");
   if (!container) return;
@@ -32,11 +32,11 @@ function showToast(message, isError = false) {
   
   setTimeout(() => {
     toast.style.opacity = "0";
-    setTimeout(() => toast.remove(), 300);
-  }, 4500);
+    setTimeout(() => toast.remove(), 250);
+  }, 4000);
 }
 
-// Update Real-Time Digital Clocks in Header
+// Live Dual Clocks
 function updateClocks() {
   const now = new Date();
   
@@ -50,7 +50,7 @@ function updateClocks() {
   const clockWibEl = document.getElementById("clock-wib");
   if (clockWibEl) clockWibEl.textContent = `${wibStr} WIB`;
 
-  // UTC
+  // UTC (London)
   const utcHours = String(now.getUTCHours()).padStart(2, '0');
   const utcMinutes = String(now.getUTCMinutes()).padStart(2, '0');
   const utcSeconds = String(now.getUTCSeconds()).padStart(2, '0');
@@ -58,13 +58,48 @@ function updateClocks() {
   if (clockUtcEl) clockUtcEl.textContent = `${utcHours}:${utcMinutes}:${utcSeconds} UTC`;
 }
 
-// Update UI elements from live state data
+// Main UI updater
 function updateUI(data) {
   state = data;
   const signal = data.signal || {};
   const nextEvent = data.next_event || {};
+  const calendar = data.calendar || {};
   
-  // 1. Expected Bias Card
+  secondsRemaining = nextEvent.seconds_until || 0;
+  
+  // 1. Ticker Tape Updates
+  const tickerSchedule = document.getElementById("ticker-schedule");
+  const tickerSpike = document.getElementById("ticker-spike");
+  if (tickerSchedule && nextEvent.datetime_wib) {
+    tickerSchedule.textContent = nextEvent.datetime_wib;
+  }
+  if (tickerSpike && signal.spike_potential) {
+    tickerSpike.textContent = `${signal.spike_potential}% (${signal.spike_potential >= 90 ? 'Ekstrem' : 'Tinggi'})`;
+  }
+
+  // 2. 24-Hour Pre-News Radar Banner
+  const radarBanner = document.getElementById("radar-banner");
+  const radarCountdownVal = document.getElementById("radar-countdown-val");
+  const radarEventName = document.getElementById("radar-event-name");
+  const radarEventScheduleText = document.getElementById("radar-event-schedule-text");
+  
+  if (radarBanner) {
+    // Show radar banner if event is within 36 hours (129,600s)
+    if (secondsRemaining > 0 && secondsRemaining <= 129600) {
+      radarBanner.style.display = "block";
+    }
+  }
+  if (radarEventName) {
+    radarEventName.textContent = nextEvent.group_name || "High Impact USD Release";
+  }
+  if (radarEventScheduleText) {
+    radarEventScheduleText.textContent = nextEvent.datetime_wib 
+      ? `${nextEvent.datetime_wib} (12:30 UTC)` 
+      : "Jadwal resmi terkonfirmasi";
+  }
+  updateCountdownDigits(secondsRemaining);
+
+  // 3. Hero Bias Card
   const biasCard = document.getElementById("card-bias");
   const biasEl = document.getElementById("bias-value");
   const symbolEl = document.getElementById("bias-symbol");
@@ -88,14 +123,14 @@ function updateUI(data) {
     symbolEl.textContent = "⚠️";
   }
   
-  const contextPct = signal.context_percent || 75;
+  const contextPct = signal.context_percent || 80;
   contextEl.textContent = `${contextPct}%`;
   contextBar.style.width = `${contextPct}%`;
   
   const score = signal.xau_score || 0.0;
   scoreEl.textContent = score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2);
   
-  // Center-split score bar (-10.0 to +10.0 mapped to 0% - 100%)
+  // Center-split score bar (-10.0 to +10.0 mapped to 5% - 95%)
   const scorePct = Math.max(5, Math.min(95, ((score + 10.0) / 20.0) * 100));
   scoreBar.style.width = `${scorePct}%`;
   
@@ -103,105 +138,61 @@ function updateUI(data) {
     engineModeTag.textContent = signal.analysis_mode.toUpperCase().replace("LLM_", "AI ");
   }
 
-  // 2. Next USD News Primary Focus Card
+  // 4. Primary Event Focus Card
   const newsTitleEl = document.getElementById("next-news-title");
   const scheduleEl = document.getElementById("next-news-schedule");
   const itemsContainer = document.getElementById("news-items-list");
   
-  newsTitleEl.textContent = nextEvent.group_name || "USD High Impact News";
+  newsTitleEl.textContent = nextEvent.group_name || "High Impact USD News";
   if (scheduleEl) {
-    scheduleEl.textContent = nextEvent.datetime_wib ? `Jadwal: ${nextEvent.datetime_wib}` : "Jadwal Resmi Sedang Dikonfirmasi";
+    scheduleEl.textContent = nextEvent.datetime_wib ? nextEvent.datetime_wib : "Jadwal Resmi Sedang Dikonfirmasi";
   }
-  
-  secondsRemaining = nextEvent.seconds_until || 0;
-  updateCountdownBoxes(secondsRemaining);
   
   itemsContainer.innerHTML = "";
   if (nextEvent.items && nextEvent.items.length > 0) {
     nextEvent.items.forEach(it => {
       const row = document.createElement("div");
-      row.className = "news-item-row";
+      row.className = "breakdown-item";
       
       const figures = it.actual 
         ? `A: ${it.actual} · F: ${it.forecast} · P: ${it.previous}`
         : `F: ${it.forecast} · P: ${it.previous}`;
         
       row.innerHTML = `
-        <span class="news-item-name">${it.title}</span>
-        <span class="news-item-figures">${figures}</span>
+        <span class="item-name">${it.title}</span>
+        <span class="item-figures">${figures}</span>
       `;
       itemsContainer.appendChild(row);
     });
   } else {
-    itemsContainer.innerHTML = `<div class="news-item-row"><span class="news-item-name">Menunggu rilis data konsensus...</span></div>`;
+    itemsContainer.innerHTML = `<div class="breakdown-item"><span class="item-name">Menunggu rilis data konsensus...</span></div>`;
   }
-  
-  // 3. Spike Potential Card
+
+  // 5. Quant Metrics Trio
   const spikeValEl = document.getElementById("spike-value");
   const spikeBar = document.getElementById("spike-bar");
   const spikeTierBadge = document.getElementById("spike-tier-badge");
-  const spike = signal.spike_potential || 50;
+  const spike = signal.spike_potential || 90;
   
   spikeValEl.textContent = `${spike}%`;
   spikeBar.style.width = `${spike}%`;
   if (spikeTierBadge) {
-    if (spike >= 90) {
-      spikeTierBadge.textContent = "EXTREME";
-      spikeTierBadge.className = "status-indicator-badge";
-    } else if (spike >= 80) {
-      spikeTierBadge.textContent = "VERY HIGH";
-      spikeTierBadge.className = "status-indicator-badge badge-cyan";
-    } else {
-      spikeTierBadge.textContent = "HIGH";
-      spikeTierBadge.className = "status-indicator-badge badge-purple";
-    }
+    spikeTierBadge.textContent = spike >= 90 ? "EXTREME" : (spike >= 80 ? "VERY HIGH" : "HIGH");
   }
   
-  // 4. One-Way Card
   const onewayValEl = document.getElementById("oneway-value");
   const onewayBar = document.getElementById("oneway-bar");
-  const oneway = signal.one_way || 50;
+  const oneway = signal.one_way || 70;
   onewayValEl.textContent = `${oneway}%`;
   onewayBar.style.width = `${oneway}%`;
   
-  // 5. Two-Way Card
   const twowayValEl = document.getElementById("twoway-value");
   const twowayBar = document.getElementById("twoway-bar");
-  const twoway = signal.two_way || 50;
+  const twoway = signal.two_way || 30;
   twowayValEl.textContent = `${twoway}%`;
   twowayBar.style.width = `${twoway}%`;
 
-  // 6. Upcoming Calendar List
-  const upcomingListContainer = document.getElementById("upcoming-calendar-list");
-  if (upcomingListContainer && data.calendar && data.calendar.upcoming_events) {
-    const upcomingEvents = data.calendar.upcoming_events;
-    if (upcomingEvents.length > 0) {
-      upcomingListContainer.innerHTML = "";
-      upcomingEvents.slice(0, 5).forEach((ev, idx) => {
-        const itemEl = document.createElement("div");
-        itemEl.className = "calendar-event-item" + (idx === 0 ? " event-active" : "");
-        const figures = ev.items && ev.items.length > 0 && ev.items[0].forecast !== "-" 
-          ? `F: ${ev.items[0].forecast} | P: ${ev.items[0].previous}` 
-          : "";
-        itemEl.innerHTML = `
-          <div class="cal-event-top">
-            <span class="cal-event-title">${ev.group_name}</span>
-            <span class="pill-tag tag-high-impact">HIGH IMPACT</span>
-          </div>
-          <div class="cal-event-meta">
-            <span class="cal-event-time">📅 ${ev.datetime_wib || ev.datetime}</span>
-            <span class="cal-event-countdown">⏳ ${ev.countdown_str || ''}</span>
-          </div>
-          ${figures ? `<div class="cal-event-figures">📊 ${figures}</div>` : ''}
-        `;
-        upcomingListContainer.appendChild(itemEl);
-      });
-    } else {
-      upcomingListContainer.innerHTML = `<div class="news-item-row"><span class="news-item-name">Tidak ada rilis berita High Impact mendatang minggu ini.</span></div>`;
-    }
-  }
-
-  // 7. Correlated Secondary News (Lead-in to Big News)
+  // 6. Correlated Lead-In Indicators
   const correlatedLabel = document.getElementById("correlated-card-label");
   if (correlatedLabel) {
     correlatedLabel.textContent = `BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO ${nextEvent.group_name || 'NEWS'})`;
@@ -212,68 +203,106 @@ function updateUI(data) {
     if (correlatedList.length > 0) {
       correlatedContainer.innerHTML = "";
       correlatedList.forEach(item => {
-        const itemEl = document.createElement("div");
-        itemEl.className = "correlated-item";
+        const row = document.createElement("div");
+        row.className = "correlated-row";
         
         const impactClass = item.impact_type === "buy" ? "impact-buy" : (item.impact_type === "sell" ? "impact-sell" : "impact-neutral");
         const impactIcon = item.impact_type === "buy" ? "🟢" : (item.impact_type === "sell" ? "🔴" : "🟡");
         
-        itemEl.innerHTML = `
-          <div class="correlated-header">
-            <span class="correlated-title">${item.title}</span>
-            <span class="pill-tag tag-engine">${item.category}</span>
+        row.innerHTML = `
+          <div class="corr-top">
+            <span class="corr-title">${item.title}</span>
+            <span class="corr-tag">${item.category}</span>
           </div>
-          ${item.latest_data ? `<div class="correlated-data-row">📊 ${item.latest_data} · ${item.status || ''}</div>` : ''}
-          <div class="correlated-desc">${item.relation_note}</div>
-          <div class="correlated-footer">
+          ${item.latest_data ? `<div class="corr-data-line font-mono">📊 ${item.latest_data} · ${item.status || ''}</div>` : ''}
+          <div class="corr-note">${item.relation_note}</div>
+          <div class="corr-bottom">
             <span class="impact-text ${impactClass}">${impactIcon} ${item.bias_impact}</span>
-            <span class="importance-badge">${item.importance}</span>
+            <span class="importance-badge font-mono">${item.importance}</span>
           </div>
         `;
-        correlatedContainer.appendChild(itemEl);
+        correlatedContainer.appendChild(row);
       });
     }
   }
-  
-  // 8. Geopolitical Sentiment & Synthesis
+
+  // 7. Full Economic Calendar (Tab 2)
+  const fullCalendarList = document.getElementById("upcoming-calendar-list");
+  if (fullCalendarList && calendar.upcoming_events) {
+    const upcomingEvents = calendar.upcoming_events;
+    if (upcomingEvents.length > 0) {
+      fullCalendarList.innerHTML = "";
+      upcomingEvents.forEach((ev, idx) => {
+        const row = document.createElement("div");
+        const is24h = ev.seconds_until > 0 && ev.seconds_until <= 86400;
+        row.className = "calendar-row-card" + (is24h ? " highlight-24h" : "");
+        
+        const figures = ev.items && ev.items.length > 0 && ev.items[0].forecast !== "-"
+          ? `F: ${ev.items[0].forecast} | P: ${ev.items[0].previous}`
+          : "Konsensus Sedang Diperbarui";
+          
+        row.innerHTML = `
+          <div class="col-event-name">
+            <span class="ev-name-title">${ev.group_name}</span>
+            <span class="status-chip chip-red" style="width: fit-content;">HIGH IMPACT</span>
+          </div>
+          <div class="col-schedule font-mono">
+            <span class="ev-date-str">📅 ${ev.datetime_wib || ev.datetime}</span>
+            <span class="ev-countdown-str">⏳ ${ev.countdown_str || ''}</span>
+          </div>
+          <div class="col-figures font-mono">
+            <span>📊 ${figures}</span>
+          </div>
+          <div class="col-status-badge">
+            ${is24h ? '<span class="badge-24h">⚡ SIAGA 24H</span>' : '<span class="status-chip chip-cyan">MENDATANG</span>'}
+          </div>
+        `;
+        fullCalendarList.appendChild(row);
+      });
+    } else {
+      fullCalendarList.innerHTML = `<div class="table-loading-row">Tidak ada event berita High Impact mendatang minggu ini.</div>`;
+    }
+  }
+
+  // 8. Geopolitical AI Synthesis & Headlines
   const geoTagEl = document.getElementById("geo-sentiment-tag");
   const reasoningEl = document.getElementById("ai-reasoning");
   const geoSentiment = signal.geo_sentiment || "neutral";
   
-  geoTagEl.className = `geo-tag tag-${geoSentiment}`;
-  geoTagEl.textContent = `GEOPOLITIK: ${geoSentiment.toUpperCase()}`;
-  reasoningEl.textContent = signal.ai_reasoning || "Analisis geopolitik dan deviasi fundamental sedang aktif.";
-
-  // 9. Breaking Geopolitical Headlines
-  const geoContainer = document.getElementById("geopolitical-news-container");
-  if (geoContainer) {
-    const newsList = data.news || [];
-    if (newsList.length > 0) {
-      geoContainer.innerHTML = "";
-      newsList.slice(0, 5).forEach(news => {
-        const newsEl = document.createElement("div");
-        newsEl.className = "news-feed-item";
-        
-        const impact = news.impact_xau || "NEUTRAL";
-        const impactClass = impact.includes("BUY") ? "badge-impact-buy" : (impact.includes("SELL") ? "badge-impact-sell" : "badge-impact-neutral");
-        
-        newsEl.innerHTML = `
-          <div class="news-feed-header">
-            <div class="news-headline">${news.title}</div>
-            <span class="badge-impact ${impactClass}">${impact}</span>
-          </div>
-          ${news.impact_note ? `<div class="news-ai-note">💡 <strong>Analisa XAU:</strong> ${news.impact_note}</div>` : ''}
-          <div class="news-meta-row">
-            <span class="news-source-tag">${news.source || 'Global Wire'}</span>
-            <span class="news-time-tag">${news.published || 'Terbaru'}</span>
-          </div>
-        `;
-        geoContainer.appendChild(newsEl);
-      });
-    }
+  if (geoTagEl) {
+    geoTagEl.className = `status-chip ${geoSentiment === 'bullish' ? 'chip-cyan' : (geoSentiment === 'bearish' ? 'chip-red' : 'chip-amber')}`;
+    geoTagEl.textContent = `GEOPOLITIK: ${geoSentiment.toUpperCase()}`;
+  }
+  if (reasoningEl) {
+    reasoningEl.textContent = signal.ai_reasoning || "Analisis geopolitik dan deviasi fundamental sedang aktif.";
   }
 
-  // 10. Sync indicator status
+  const newsFeedContainer = document.getElementById("geopolitical-news-container");
+  if (newsFeedContainer && data.news) {
+    newsFeedContainer.innerHTML = "";
+    data.news.slice(0, 5).forEach(news => {
+      const item = document.createElement("div");
+      item.className = "wire-item";
+      
+      const impact = news.impact_xau || "NEUTRAL";
+      const impactClass = impact.includes("BUY") ? "chip-cyan" : (impact.includes("SELL") ? "chip-red" : "chip-amber");
+      
+      item.innerHTML = `
+        <div class="wire-item-head">
+          <span class="wire-headline">${news.title}</span>
+          <span class="status-chip ${impactClass}">${impact}</span>
+        </div>
+        ${news.impact_note ? `<div class="news-ai-note">💡 ${news.impact_note}</div>` : ''}
+        <div class="wire-foot">
+          <span class="font-mono">${news.source || 'Wire'}</span>
+          <span class="font-mono">${news.published || 'Terbaru'}</span>
+        </div>
+      `;
+      newsFeedContainer.appendChild(item);
+    });
+  }
+
+  // 9. Sync indicator text
   const syncText = document.getElementById("sync-status-text");
   if (syncText) {
     const now = new Date();
@@ -282,9 +311,10 @@ function updateUI(data) {
   }
 }
 
-// Update the 4 digital blocks: DAYS : HOURS : MIN : SEC
-function updateCountdownBoxes(sec) {
+// Update the 4 digital clock segments and radar countdown
+function updateCountdownDigits(sec) {
   const parts = getCountdownParts(sec);
+  
   const daysEl = document.getElementById("cd-days");
   const hoursEl = document.getElementById("cd-hours");
   const minEl = document.getElementById("cd-minutes");
@@ -294,12 +324,25 @@ function updateCountdownBoxes(sec) {
   if (hoursEl) hoursEl.textContent = padZero(parts.hours);
   if (minEl) minEl.textContent = padZero(parts.minutes);
   if (secEl) secEl.textContent = padZero(parts.seconds);
+
+  const radarVal = document.getElementById("radar-countdown-val");
+  if (radarVal) {
+    if (sec > 0) {
+      if (parts.days > 0) {
+        radarVal.textContent = `${parts.days} hari ${parts.hours} jam ${parts.minutes} menit`;
+      } else {
+        radarVal.textContent = `${parts.hours} jam ${parts.minutes} menit ${parts.seconds} detik`;
+      }
+    } else {
+      radarVal.textContent = "Data Telah Dirilis (Released)";
+    }
+  }
 }
 
 // Fetch live state from API
 async function fetchState(force = false) {
   try {
-    const res = await fetch(`/api/state?force=${force}`);
+    const res = await fetch(`/api/state?force=${force}&t=${Date.now()}`);
     if (res.ok) {
       const data = await res.json();
       updateUI(data);
@@ -309,18 +352,18 @@ async function fetchState(force = false) {
   }
 }
 
-// Manual force refresh button
+// Manual force refresh
 async function handleRefresh() {
   const btn = document.getElementById("btn-refresh");
   btn.style.transform = "rotate(180deg)";
-  showToast("Menghubungkan & menyinkronkan data...");
+  showToast("Menghubungkan kalender & menyinkronkan data...");
   
   try {
     const res = await fetch("/api/refresh", { method: "POST" });
     if (res.ok) {
       const resp = await res.json();
       updateUI(resp.data);
-      showToast("Data kalender & sinyal berhasil diperbarui!");
+      showToast("Data kalender & sinyal berhasil disinkronkan!");
     }
   } catch (err) {
     showToast("Gagal memperbarui: " + err, true);
@@ -329,14 +372,14 @@ async function handleRefresh() {
   }
 }
 
-// Send signal to Discord Webhook with stage selection
+// Execute Discord Dispatch
 async function handleSendDiscord() {
   const btn = document.getElementById("btn-send-discord");
   const stageSelect = document.getElementById("select-discord-stage");
   const stage = stageSelect ? stageSelect.value : "pre_news";
   
-  const originalText = btn.innerHTML;
-  btn.innerHTML = `<span>⏳ Mengirim ke Discord (@everyone)...</span>`;
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = `<span>⏳ Mengirim sinyal...</span>`;
   btn.disabled = true;
   
   try {
@@ -350,14 +393,38 @@ async function handleSendDiscord() {
     if (result.success) {
       showToast("Sinyal & ping @everyone berhasil terkirim ke Discord!");
     } else {
-      showToast("Gagal kirim: " + (result.error || "Periksa Webhook URL"), true);
+      showToast("Gagal: " + (result.error || "Periksa Webhook URL di Pengaturan"), true);
     }
   } catch (err) {
     showToast("Kesalahan jaringan: " + err, true);
   } finally {
-    btn.innerHTML = originalText;
+    btn.innerHTML = originalHtml;
     btn.disabled = false;
   }
+}
+
+// Tab Switching
+function setupTabs() {
+  const tabBtns = document.querySelectorAll(".tab-btn");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-tab");
+      
+      tabBtns.forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
+      tabPanels.forEach(p => p.classList.remove("active"));
+      
+      btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
+      
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) targetPanel.classList.add("active");
+    });
+  });
 }
 
 // Settings Modal Management
@@ -367,18 +434,18 @@ async function openSettingsModal() {
   modal.classList.add("active");
   
   try {
-    const res = await fetch("/api/settings");
+    const res = await fetch(`/api/settings?t=${Date.now()}`);
     if (res.ok) {
       const s = await res.json();
       document.getElementById("setting-discord-url").value = s.discord_webhook_url || "";
       document.getElementById("setting-ai-model").value = s.ai_model || "google/gemini-2.5-flash";
       const hintEl = document.getElementById("setting-ai-key-hint");
       if (hintEl && s.ai_api_key_masked) {
-        hintEl.textContent = `API Key saat ini: ${s.ai_api_key_masked} (Kosongkan jika tidak ingin mengubah)`;
+        hintEl.textContent = `API Key saat ini: ${s.ai_api_key_masked} (Kosongkan jika tidak diubah)`;
       }
     }
   } catch (e) {
-    console.error("Gagal membaca pengaturan:", e);
+    console.error("Gagal membaca settings:", e);
   }
 }
 
@@ -411,33 +478,34 @@ async function handleSaveSettings() {
       showToast("Pengaturan berhasil disimpan!");
       closeSettingsModal();
     } else {
-      showToast("Gagal menyimpan: " + (result.message || "Unknown error"), true);
+      showToast("Gagal: " + (result.message || "Unknown error"), true);
     }
   } catch (err) {
-    showToast("Error jaringan saat menyimpan pengaturan", true);
+    showToast("Error jaringan saat menyimpan", true);
   } finally {
-    saveBtn.textContent = "Simpan Pengaturan";
+    saveBtn.textContent = "Simpan Perubahan";
     saveBtn.disabled = false;
   }
 }
 
-// Second-by-second local ticker
+// Real-time second countdown ticker
 setInterval(() => {
   if (secondsRemaining > 0) {
     secondsRemaining -= 1;
-    updateCountdownBoxes(secondsRemaining);
+    updateCountdownDigits(secondsRemaining);
   }
   updateClocks();
 }, 1000);
 
-// Auto-sync state every 20 seconds
+// Auto-sync polling every 20 seconds
 setInterval(() => {
   fetchState(false);
 }, 20000);
 
-// Setup Event Listeners on DOM Ready
+// Initial Load & Event Binding
 document.addEventListener("DOMContentLoaded", () => {
   updateClocks();
+  setupTabs();
   
   document.getElementById("btn-refresh").addEventListener("click", handleRefresh);
   document.getElementById("btn-send-discord").addEventListener("click", handleSendDiscord);
@@ -447,11 +515,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-cancel-settings").addEventListener("click", closeSettingsModal);
   document.getElementById("btn-save-settings").addEventListener("click", handleSaveSettings);
   
-  // Close modal when clicking outside
+  // Close modal when clicking backdrop
   document.getElementById("settings-modal").addEventListener("click", (e) => {
     if (e.target.id === "settings-modal") closeSettingsModal();
   });
   
-  // Initial load
+  // Initial data load
   fetchState(true);
 });

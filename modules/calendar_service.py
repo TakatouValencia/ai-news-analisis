@@ -154,35 +154,51 @@ def fetch_from_financecalendar() -> List[Dict[str, Any]]:
     return mapped
 
 def fetch_raw_events() -> List[Dict[str, Any]]:
-    """Multi-source resilient fetcher: ForexFactory XML -> ForexFactory JSON -> FinanceCalendar."""
-    # 1. Try ForexFactory XML (more resilient against rate limits)
+    """Multi-source resilient fetcher: ForexFactory (detailed weekly) merged with FinanceCalendar (multi-week upcoming)."""
+    all_events = []
+    seen = set()
+
+    # 1. Primary: ForexFactory XML (this week's high impact with rich consensus)
     try:
-        events = fetch_from_forexfactory_xml()
-        if events:
-            print(f"[CalendarService] Successfully loaded {len(events)} events from ForexFactory XML.")
-            return events
+        evs = fetch_from_forexfactory_xml()
+        for e in evs:
+            key = (e['date'][:13], e['title'].lower()[:10])
+            if key not in seen:
+                seen.add(key)
+                all_events.append(e)
+        if evs:
+            print(f"[CalendarService] Successfully loaded {len(evs)} events from ForexFactory XML.")
     except Exception as e:
         print(f"[CalendarService] ForexFactory XML unavailable: {e}")
+        # Try JSON if XML failed
+        try:
+            evs_json = fetch_from_forexfactory_json()
+            for e in evs_json:
+                key = (e.get('date', '')[:13], e.get('title', '').lower()[:10])
+                if key not in seen:
+                    seen.add(key)
+                    all_events.append(e)
+            if evs_json:
+                print(f"[CalendarService] Successfully loaded {len(evs_json)} events from ForexFactory JSON.")
+        except Exception as e2:
+            print(f"[CalendarService] ForexFactory JSON unavailable: {e2}")
 
-    # 2. Try ForexFactory JSON
+    # 2. Multi-week upcoming complement / backup: FinanceCalendar API
     try:
-        events = fetch_from_forexfactory_json()
-        if events:
-            print(f"[CalendarService] Successfully loaded {len(events)} events from ForexFactory JSON.")
-            return events
-    except Exception as e:
-        print(f"[CalendarService] ForexFactory JSON unavailable: {e}")
-
-    # 3. Seamless Backup: FinanceCalendar API (free, open, no rate-limit)
-    try:
-        events = fetch_from_financecalendar()
-        if events:
-            print(f"[CalendarService] Successfully loaded {len(events)} events from FinanceCalendar.")
-            return events
+        evs_fc = fetch_from_financecalendar()
+        added_fc = 0
+        for e in evs_fc:
+            key = (e['date'][:13], e['title'].lower()[:10])
+            if key not in seen:
+                seen.add(key)
+                all_events.append(e)
+                added_fc += 1
+        if evs_fc:
+            print(f"[CalendarService] Loaded {added_fc} additional upcoming events from FinanceCalendar.")
     except Exception as e:
         print(f"[CalendarService] FinanceCalendar backup unavailable: {e}")
 
-    return []
+    return all_events
 
 def get_simulated_fallback_events() -> List[Dict[str, Any]]:
     """Provides a dynamic upcoming USD event relative to current time if all live feeds are down."""

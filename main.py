@@ -52,7 +52,11 @@ async def serve_index():
     index_file = WEB_DIR / "index.html"
     if not index_file.exists():
         raise HTTPException(status_code=404, detail="index.html not found")
-    return FileResponse(str(index_file))
+    response = FileResponse(str(index_file))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/state")
 async def get_state(force: bool = False):
