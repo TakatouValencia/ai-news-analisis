@@ -2072,8 +2072,10 @@ body.terminal-body {
 }
 
 /* ==========================================================================
-   Responsive Adaptations
+   Responsive Adaptations & Mobile Experience (Tablet & Phone)
    ========================================================================== */
+
+/* Tablet & Medium Screens */
 @media (max-width: 960px) {
   .panel-grid-top,
   .metrics-trio-grid,
@@ -2085,23 +2087,922 @@ body.terminal-body {
   .radar-body {
     grid-template-columns: 1fr;
   }
-  .dual-clocks-wrapper {
-    display: none;
-  }
+
   .calendar-row-card {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
+
   .execution-dock {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
+    align-items: stretch;
+    gap: 12px;
   }
+
   .dock-controls {
     width: 100%;
-    flex-direction: column;
+    display: flex;
+    gap: 10px;
   }
-  .custom-select, .btn-execute-discord {
+
+  .stage-selector-wrap {
+    flex: 1;
+  }
+
+  .custom-select {
     width: 100%;
   }
+
+  .btn-execute-discord {
+    flex-shrink: 0;
+  }
 }
+
+/* Standard Mobile Phone (<= 768px) */
+@media (max-width: 768px) {
+  /* Safe-area insets & Body adjustments */
+  body.terminal-body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .terminal-container {
+    padding: 10px 12px 90px;
+    gap: 12px;
+    max-width: 100%;
+  }
+
+  /* Optimized Mobile Header */
+  .terminal-header {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 10px;
+    border-radius: var(--r-md);
+  }
+
+  .header-left {
+    order: 1;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .logo-novaire {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .terminal-branding {
+    min-width: 0;
+  }
+
+  .branding-top {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .pro-pill, .gold-pill {
+    font-size: 8px;
+    padding: 1px 5px;
+    letter-spacing: 0.5px;
+  }
+
+  .version-tag {
+    font-size: 8px;
+  }
+
+  .branding-title {
+    font-size: 16px;
+    letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-controls {
+    order: 2;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .live-pill {
+    padding: 3px 8px;
+    font-size: 10px;
+    gap: 5px;
+  }
+
+  .nav-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Sleek Full-Width Dual Clocks Bar on Mobile */
+  .dual-clocks-wrapper {
+    order: 3;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    margin-top: 2px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--r-sm);
+  }
+
+  .clock-box {
+    align-items: flex-start;
+  }
+
+  .clock-box:last-child {
+    align-items: flex-end;
+  }
+
+  .clock-label-row {
+    font-size: 9.5px;
+    gap: 4px;
+  }
+
+  .clock-flag {
+    font-size: 11px;
+  }
+
+  .clock-digits {
+    font-size: 11.5px;
+  }
+
+  .clock-separator {
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Ticker Tape Ribbon */
+  .ticker-tape-bar {
+    padding: 5px 8px;
+    gap: 8px;
+    border-radius: var(--r-sm);
+  }
+
+  .ticker-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .ticker-content {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ticker-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 24-Hour Pre-News Radar Banner */
+  .radar-24h-banner {
+    padding: 14px 12px;
+    border-radius: var(--r-lg);
+  }
+
+  .radar-watermark {
+    display: none;
+  }
+
+  .radar-inner {
+    gap: 12px;
+  }
+
+  .radar-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .radar-status-badge {
+    font-size: 9.5px;
+    padding: 3px 8px;
+    align-self: flex-start;
+  }
+
+  .radar-status-text {
+    font-size: 9.5px;
+    letter-spacing: 0.5px;
+  }
+
+  .radar-time-remaining {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+  }
+
+  .radar-countdown-highlight {
+    font-size: 13px;
+  }
+
+  .radar-body {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .radar-event-title {
+    font-size: 18px;
+    line-height: 1.25;
+    margin-bottom: 4px;
+  }
+
+  .radar-event-schedule {
+    font-size: 11px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  .radar-event-desc {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  /* Smooth Swipeable 24H Stepper on Mobile */
+  .stepper-24h {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 10px 8px;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+
+  .stepper-24h::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stepper-item {
+    flex-shrink: 0;
+    min-width: 68px;
+    gap: 3px;
+  }
+
+  .step-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .step-time {
+    font-size: 8.5px;
+  }
+
+  .step-name {
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .stepper-bar {
+    min-width: 16px;
+    flex-shrink: 0;
+    margin: 0 2px 14px;
+  }
+
+  /* Navigation Tabs */
+  .view-tabs {
+    gap: 6px;
+    padding: 2px 2px 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .view-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 7px 12px;
+    font-size: 11.5px;
+    min-height: 38px;
+    border-radius: var(--r-md);
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .tab-icon {
+    font-size: 13px;
+  }
+
+  .tab-panel.active {
+    gap: 14px;
+  }
+
+  /* Hero Cards */
+  .panel-grid-top {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .terminal-card {
+    padding: 14px 12px;
+    border-radius: var(--r-lg);
+  }
+
+  .card-top-bar {
+    margin-bottom: 12px;
+  }
+
+  .card-tagline {
+    font-size: 9.5px;
+  }
+
+  /* Hero Bias Card */
+  .card-bias-hero {
+    padding: 16px 14px;
+  }
+
+  .bias-main-display {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .bias-indicator-symbol {
+    font-size: 32px;
+  }
+
+  .bias-primary-text {
+    font-size: 24px;
+    letter-spacing: -0.5px;
+  }
+
+  .bias-sub-label {
+    font-size: 10.5px;
+  }
+
+  .bias-meters-wrapper {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .meter-title {
+    font-size: 9.5px;
+  }
+
+  .meter-percent {
+    font-size: 12px;
+  }
+
+  /* Primary Event & Split Countdown Timer */
+  .card-primary-event {
+    padding: 16px 14px;
+  }
+
+  .primary-event-title {
+    font-size: 16px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .official-schedule-ribbon {
+    width: 100%;
+    font-size: 11px;
+    padding: 4px 8px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+
+  .digital-clock-cluster {
+    width: 100%;
+    justify-content: space-between;
+    gap: 3px;
+    margin-bottom: 12px;
+  }
+
+  .clock-segment {
+    min-width: 0;
+    flex: 1;
+    padding: 6px 2px;
+    border-radius: 6px;
+  }
+
+  .segment-number {
+    font-size: 18px;
+  }
+
+  .segment-label {
+    font-size: 7.5px;
+    margin-top: 2px;
+    letter-spacing: 0.2px;
+  }
+
+  .segment-divider {
+    font-size: 15px;
+    margin: 0 1px;
+  }
+
+  .consensus-breakdown-box {
+    padding-top: 8px;
+  }
+
+  .breakdown-header {
+    font-size: 9px;
+  }
+
+  .breakdown-item {
+    font-size: 11px;
+    padding: 6px 8px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Quant Metrics Trio Grid */
+  .metrics-trio-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metric-tile {
+    padding: 12px 14px;
+    gap: 6px;
+  }
+
+  .tile-eyebrow {
+    font-size: 9.5px;
+  }
+
+  .tile-large-num {
+    font-size: 22px;
+  }
+
+  .tile-footnote {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  /* Dedicated Institutional Macro Dossier */
+  .card-fundamental-dossier {
+    padding: 14px 12px;
+    border-radius: var(--r-lg);
+  }
+
+  .dossier-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .dossier-main-title {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .dossier-sub-summary {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  .dossier-bias-pill {
+    align-self: flex-start;
+    font-size: 10.5px;
+    padding: 4px 10px;
+  }
+
+  .dossier-core-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .dossier-block {
+    padding: 12px;
+  }
+
+  .dossier-block-title {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .dossier-text {
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .dossier-rules-section {
+    margin-bottom: 12px;
+    padding-top: 10px;
+  }
+
+  .rules-section-header {
+    margin-bottom: 8px;
+  }
+
+  .rules-title {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .rules-subtitle {
+    font-size: 10px;
+  }
+
+  .rules-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .rule-scenario-card {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .rule-trigger-box {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+
+  .rule-detail-line {
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+
+  .rule-reaction-badge {
+    font-size: 11.5px;
+  }
+
+  .rule-pips {
+    font-size: 11px;
+  }
+
+  .rule-action-pill {
+    font-size: 9.5px;
+  }
+
+  .dossier-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  .footer-block-label {
+    font-size: 9.5px;
+    margin-bottom: 6px;
+  }
+
+  .watch-factors-pills {
+    gap: 6px;
+  }
+
+  .watch-factor-item {
+    font-size: 11px;
+    padding: 6px 10px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tactical-guidance-col {
+    padding: 12px;
+  }
+
+  .tactical-note {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  /* Overview Split (Correlated & Geopolitical Wire) */
+  .overview-split-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .executive-synthesis-card {
+    padding: 12px;
+  }
+
+  .synthesis-paragraph {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .wire-feed-title-bar {
+    padding-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .wire-title {
+    font-size: 10px;
+  }
+
+  .wire-sub {
+    font-size: 9px;
+  }
+
+  .wire-item {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .wire-headline {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* Full Economic Calendar Cards on Mobile */
+  .calendar-row-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 8px;
+    border-radius: var(--r-md);
+  }
+
+  .calendar-row-card .col-event-name {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .calendar-row-card .ev-name-title {
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+
+  .calendar-row-card .col-schedule {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+  }
+
+  .calendar-row-card .col-figures {
+    font-size: 11px;
+    background: rgba(56, 189, 248, 0.05);
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+    border: 1px solid rgba(56, 189, 248, 0.12);
+  }
+
+  .calendar-row-card .col-status-badge {
+    text-align: left;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* Playbook Scenarios (Tab 4) */
+  .playbook-scenarios-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .scenario-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .scenario-trigger {
+    font-size: 11.5px;
+    padding: 6px 8px;
+  }
+
+  .scenario-desc {
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+
+  .scenario-action {
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  /* Macro Stats Row (Tab 3) */
+  .macro-stats-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stat-pill {
+    width: 100%;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+
+  .intelligence-full-text {
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  /* Sticky Execution Dock (Discord Dispatcher) */
+  .execution-dock {
+    position: sticky;
+    bottom: 10px;
+    z-index: 100;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(14, 21, 37, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(88, 101, 242, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 16px rgba(88, 101, 242, 0.2);
+    border-radius: var(--r-lg);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .dock-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dock-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+  }
+
+  .dock-sub {
+    display: none;
+  }
+
+  .dock-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .stage-selector-wrap {
+    width: 100%;
+  }
+
+  .custom-select {
+    width: 100%;
+    height: 42px;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .btn-execute-discord {
+    width: 100%;
+    height: 44px;
+    font-size: 13px;
+    font-weight: 700;
+    justify-content: center;
+    padding: 0 16px;
+  }
+
+  .btn-execute-discord:active {
+    transform: scale(0.98);
+  }
+
+  /* Modal Dialog on Mobile */
+  .modal-backdrop {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .modal-window {
+    max-height: calc(100vh - 20px);
+    border-radius: 18px 18px 12px 12px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-head {
+    padding: 14px 16px;
+  }
+
+  .modal-content-body {
+    padding: 14px 16px;
+    gap: 12px;
+    overflow-y: auto;
+  }
+
+  .field-input {
+    height: 44px;
+    font-size: 13.5px;
+    padding: 8px 12px;
+  }
+
+  .modal-foot {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .btn-cancel, .btn-save {
+    flex: 1;
+    height: 44px;
+    font-size: 13px;
+  }
+
+  /* Toast Shelf on Mobile */
+  .toast-shelf {
+    left: 12px;
+    right: 12px;
+    bottom: 85px;
+    max-width: none;
+  }
+
+  .toast {
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+
+  /* Footer */
+  .terminal-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+    font-size: 10px;
+    padding: 6px 4px 20px;
+  }
+
+  .footer-right {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Ambient Glow Performance Optimization */
+  .ambient-glow {
+    filter: blur(75px);
+    opacity: 0.3;
+  }
+
+  .glow-cyan {
+    width: 260px;
+    height: 260px;
+    top: -50px;
+    left: -40px;
+  }
+
+  .glow-crimson {
+    width: 260px;
+    height: 260px;
+    top: 35%;
+    right: -50px;
+  }
+
+  .glow-emerald {
+    width: 280px;
+    height: 280px;
+    bottom: -50px;
+    left: 10%;
+  }
+}
+
+/* Extra Small Phones (<= 380px) */
+@media (max-width: 380px) {
+  .terminal-container {
+    padding: 8px 8px 84px;
+    gap: 10px;
+  }
+
+  .branding-title {
+    font-size: 14.5px;
+  }
+
+  .live-pill .live-text {
+    display: none;
+  }
+
+  .segment-number {
+    font-size: 16px;
+  }
+
+  .clock-digits {
+    font-size: 10.5px;
+  }
+
+  .clock-label-row {
+    font-size: 8.5px;
+  }
+
+  .radar-event-title {
+    font-size: 16px;
+  }
+
+  .bias-primary-text {
+    font-size: 21px;
+  }
+}
+
