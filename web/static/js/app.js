@@ -68,8 +68,13 @@ function updateUI(data) {
   secondsRemaining = nextEvent.seconds_until || 0;
   
   // 1. Ticker Tape Updates
+  const tickerHeadline = document.getElementById("ticker-headline");
   const tickerSchedule = document.getElementById("ticker-schedule");
   const tickerSpike = document.getElementById("ticker-spike");
+  if (tickerHeadline) {
+    const gName = nextEvent.group_name || "High Impact USD";
+    tickerHeadline.textContent = `Siaga Penuh Menjelang Rilis ${gName}`;
+  }
   if (tickerSchedule && nextEvent.datetime_wib) {
     tickerSchedule.textContent = nextEvent.datetime_wib;
   }
@@ -445,6 +450,39 @@ function renderFundamentalDossier(data) {
   const playbookTitle = document.getElementById("playbook-tab-title");
   if (playbookTitle) {
     playbookTitle.textContent = `Panduan 3 Skenario Reaksi Pasar Menjelang & Saat Rilis ${groupName}`;
+  }
+  const playbookTabBtn = document.getElementById("tab-playbook-title");
+  if (playbookTabBtn) {
+    playbookTabBtn.textContent = `Skenario Trading ${groupName}`;
+  }
+
+  const playbookGrid = document.getElementById("playbook-scenarios-grid");
+  if (playbookGrid && rules.length > 0) {
+    playbookGrid.innerHTML = "";
+    rules.forEach((r, idx) => {
+      const isBullish = r.condition.toLowerCase().includes("bullish") || r.condition.toLowerCase().includes("dovish");
+      const isBearish = r.condition.toLowerCase().includes("bearish") || r.condition.toLowerCase().includes("hawkish");
+      const cardClass = isBullish ? "card-bullish" : (isBearish ? "card-bearish" : "card-mixed");
+      const impactText = isBullish ? "🔺 BULLISH XAU (BUY)" : (isBearish ? "🔻 BEARISH XAU (SELL)" : "🔄 TWO-WAY SPIKE");
+
+      const card = document.createElement("div");
+      card.className = `scenario-card ${cardClass}`;
+      card.innerHTML = `
+        <div class="scenario-header">
+          <span class="scenario-badge">SKENARIO ${idx + 1}: ${r.condition.toUpperCase()}</span>
+          <span class="scenario-impact">${impactText}</span>
+        </div>
+        <div class="scenario-trigger">
+          <strong>Kondisi:</strong> ${r.trigger}
+        </div>
+        <p class="scenario-desc">${r.dxy_yield_reaction}. ${r.xau_reaction}.</p>
+        <div class="scenario-action">
+          <span>🎯 <strong>Rekomendasi Arah:</strong> ${r.action}</span>
+          <span>⚡ <strong>Target Spike:</strong> ${r.expected_pips}</span>
+        </div>
+      `;
+      playbookGrid.appendChild(card);
+    });
   }
 }
 
