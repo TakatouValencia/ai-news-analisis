@@ -58,6 +58,92 @@ function updateClocks() {
   if (clockUtcEl) clockUtcEl.textContent = `${utcHours}:${utcMinutes}:${utcSeconds} UTC`;
 }
 
+let lastSeenTopNewsTitle = "";
+
+// Dynamic Airport / Terminal Style Continuous Marquee Ticker
+function updateTicker(data) {
+  const tickerContent = document.getElementById("ticker-content");
+  const tickerClone = document.getElementById("ticker-content-clone");
+  const tickerBar = document.getElementById("ticker-bar");
+  if (!tickerContent) return;
+
+  const signal = data.signal || {};
+  const nextEvent = data.next_event || {};
+  const newsList = data.news || [];
+  
+  const bias = signal.expected_bias || "XAU NEUTRAL";
+  const score = signal.xau_score || 0.0;
+  const spike = signal.spike_potential || 90;
+  const groupName = nextEvent.group_name || "High Impact USD";
+  const scheduleStr = nextEvent.datetime_wib || "Jadwal resmi";
+  const geoSentiment = signal.geo_sentiment ? signal.geo_sentiment.toUpperCase() : "DEFENSIVE";
+
+  // Detect if new geopolitical news arrived
+  const topNewsTitle = newsList.length > 0 ? newsList[0].title : "";
+  let isNewNews = false;
+  if (topNewsTitle && topNewsTitle !== lastSeenTopNewsTitle) {
+    if (lastSeenTopNewsTitle !== "") {
+      isNewNews = true;
+      if (tickerBar) {
+        tickerBar.classList.add("ticker-flash-new");
+        setTimeout(() => tickerBar.classList.remove("ticker-flash-new"), 4000);
+      }
+      showToast(`📢 Berita Geopolitik Baru: ${topNewsTitle.substring(0, 50)}...`);
+    }
+    lastSeenTopNewsTitle = topNewsTitle;
+  }
+
+  // Construct items
+  const biasColor = bias.includes("BUY") ? "cyan-text" : (bias.includes("SELL") ? "red-text" : "gold-text");
+  
+  let html = `
+    <span class="ticker-item">
+      <span class="ticker-tag-chip chip-breaking">SIGNAL</span>
+      <strong class="${biasColor}">XAU/USD: ${bias}</strong> <span class="font-mono">(${score > 0 ? '+' : ''}${score.toFixed(2)})</span>
+    </span>
+    <span class="ticker-bullet">•</span>
+    <span class="ticker-item">
+      <span class="ticker-tag-chip chip-event">RADAR</span>
+      <strong class="gold-text">${groupName}:</strong> <span>${scheduleStr}</span>
+    </span>
+    <span class="ticker-bullet">•</span>
+    <span class="ticker-item">
+      <strong class="red-text">SPIKE VOLATILITY:</strong> <span class="font-mono">${spike}% (${spike >= 90 ? 'Ekstrem' : 'Tinggi'})</span>
+    </span>
+    <span class="ticker-bullet">•</span>
+    <span class="ticker-item">
+      <span class="ticker-tag-chip chip-geo">GEOPOLITIK</span>
+      <strong class="cyan-text">${geoSentiment}</strong>
+    </span>
+    <span class="ticker-bullet">•</span>
+  `;
+
+  // Append Top Geopolitical News
+  if (newsList.length > 0) {
+    newsList.slice(0, 6).forEach((n, idx) => {
+      const isTopBreaking = idx === 0 && isNewNews;
+      const chipBadge = isTopBreaking 
+        ? '<span class="ticker-tag-chip chip-breaking">BARU 🔥</span>' 
+        : '<span class="ticker-tag-chip chip-geo">WIRE</span>';
+      const impactClass = n.impact_xau && n.impact_xau.includes("BUY") ? "cyan-text" : (n.impact_xau && n.impact_xau.includes("SELL") ? "red-text" : "gold-text");
+      const impactTag = n.impact_xau ? `<strong class="${impactClass}">[${n.impact_xau}]</strong> ` : "";
+
+      html += `
+        <span class="ticker-item">
+          ${chipBadge}
+          <span>${n.title} ${impactTag}</span>
+        </span>
+        <span class="ticker-bullet">•</span>
+      `;
+    });
+  }
+
+  tickerContent.innerHTML = html;
+  if (tickerClone) {
+    tickerClone.innerHTML = html;
+  }
+}
+
 // Main UI updater
 function updateUI(data) {
   state = data;
@@ -67,20 +153,8 @@ function updateUI(data) {
   
   secondsRemaining = nextEvent.seconds_until || 0;
   
-  // 1. Ticker Tape Updates
-  const tickerHeadline = document.getElementById("ticker-headline");
-  const tickerSchedule = document.getElementById("ticker-schedule");
-  const tickerSpike = document.getElementById("ticker-spike");
-  if (tickerHeadline) {
-    const gName = nextEvent.group_name || "High Impact USD";
-    tickerHeadline.textContent = `Siaga Penuh Menjelang Rilis ${gName}`;
-  }
-  if (tickerSchedule && nextEvent.datetime_wib) {
-    tickerSchedule.textContent = nextEvent.datetime_wib;
-  }
-  if (tickerSpike && signal.spike_potential) {
-    tickerSpike.textContent = `${signal.spike_potential}% (${signal.spike_potential >= 90 ? 'Ekstrem' : 'Tinggi'})`;
-  }
+  // 1. Airport-Style Continuous Marquee Ticker
+  updateTicker(data);
 
   // 2. 24-Hour Pre-News Radar Banner
   const radarBanner = document.getElementById("radar-banner");

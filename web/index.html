@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/style.css?v=4.2.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=4.3.0">
   <link rel="icon" type="image/jpeg" href="/static/img/novaire_logo.jpg">
 </head>
 <body class="terminal-body">
@@ -75,17 +75,21 @@
       </div>
     </header>
 
-    <!-- Ticker Tape Ribbon -->
-    <div class="ticker-tape-bar">
-      <div class="ticker-badge">LIVE RADAR</div>
-      <div class="ticker-content" id="ticker-content">
-        <span class="ticker-item"><strong class="gold-text">XAU/USD:</strong> <span id="ticker-headline">Siaga Penuh Menjelang Rilis Berita High Impact</span></span>
-        <span class="ticker-bullet">•</span>
-        <span class="ticker-item"><strong class="cyan-text">JADWAL RESMI:</strong> <span id="ticker-schedule">Jumat, 02 Oktober 2026 • 19:30 WIB</span></span>
-        <span class="ticker-bullet">•</span>
-        <span class="ticker-item"><strong class="red-text">SPIKE VOLATILITY:</strong> <span id="ticker-spike">97% (Ekstrem)</span></span>
-        <span class="ticker-bullet">•</span>
-        <span class="ticker-item">Mode AI Quant: Multimodal Macro-Deviasi Aktif</span>
+    <!-- Ticker Tape Ribbon (Terminal / Airport Crawler) -->
+    <div class="ticker-tape-bar" id="ticker-bar">
+      <div class="ticker-badge">
+        <span class="ticker-live-dot"></span>
+        <span>LIVE RADAR</span>
+      </div>
+      <div class="ticker-marquee-wrapper" id="ticker-marquee-wrapper">
+        <div class="ticker-content" id="ticker-content">
+          <span class="ticker-item"><strong class="gold-text">XAU/USD:</strong> Siaga Penuh Menjelang Rilis Berita High Impact</span>
+          <span class="ticker-bullet">•</span>
+          <span class="ticker-item"><strong class="cyan-text">JADWAL RESMI:</strong> Memuat kalender...</span>
+          <span class="ticker-bullet">•</span>
+          <span class="ticker-item"><strong class="red-text">SPIKE VOLATILITY:</strong> 97%</span>
+        </div>
+        <div class="ticker-content ticker-content-clone" id="ticker-content-clone" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -679,6 +683,6 @@
   <!-- Toast Notification System -->
   <div class="toast-shelf" id="toast-container" aria-live="polite"></div>
 
-  <script src="/static/js/app.js?v=4.2.0"></script>
+  <script src="/static/js/app.js?v=4.3.0"></script>
 </body>
 </html>
