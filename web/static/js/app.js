@@ -84,18 +84,23 @@ function updateUI(data) {
   const radarEventScheduleText = document.getElementById("radar-event-schedule-text");
   
   if (radarBanner) {
-    // Show radar banner if event is within 36 hours (129,600s)
-    if (secondsRemaining > 0 && secondsRemaining <= 129600) {
-      radarBanner.style.display = "block";
+    const statusTextEl = radarBanner.querySelector(".radar-status-text");
+    if (statusTextEl) {
+      if (secondsRemaining <= 86400 && secondsRemaining > 0) {
+        statusTextEl.textContent = "SIAGA 24 JAM PRA-RILIS BERITA AKTIF";
+      } else if (secondsRemaining > 86400) {
+        const days = Math.ceil(secondsRemaining / 86400);
+        statusTextEl.textContent = `RADAR BERITA MENDATANG (${days} HARI LAGI)`;
+      } else {
+        statusTextEl.textContent = "DATA TELAH DIRILIS (POST-EVENT)";
+      }
     }
   }
   if (radarEventName) {
     radarEventName.textContent = nextEvent.group_name || "High Impact USD Release";
   }
   if (radarEventScheduleText) {
-    radarEventScheduleText.textContent = nextEvent.datetime_wib 
-      ? `${nextEvent.datetime_wib} (12:30 UTC)` 
-      : "Jadwal resmi terkonfirmasi";
+    radarEventScheduleText.textContent = nextEvent.datetime_wib || "Jadwal resmi terkonfirmasi";
   }
   updateCountdownDigits(secondsRemaining);
 
@@ -461,12 +466,12 @@ function updateCountdownDigits(sec) {
   if (radarVal) {
     if (sec > 0) {
       if (parts.days > 0) {
-        radarVal.textContent = `${parts.days} hari ${parts.hours} jam ${parts.minutes} menit`;
+        radarVal.textContent = `${parts.days}d ${padZero(parts.hours)}h ${padZero(parts.minutes)}m ${padZero(parts.seconds)}s`;
       } else {
-        radarVal.textContent = `${parts.hours} jam ${parts.minutes} menit ${parts.seconds} detik`;
+        radarVal.textContent = `${padZero(parts.hours)}h ${padZero(parts.minutes)}m ${padZero(parts.seconds)}s`;
       }
     } else {
-      radarVal.textContent = "Data Telah Dirilis (Released)";
+      radarVal.textContent = "Data Telah Dirilis";
     }
   }
 }
