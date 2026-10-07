@@ -15,7 +15,7 @@ DEFAULT_SETTINGS = {
     "discord_webhook_url": os.getenv("DISCORD_WEBHOOK_URL", ""),
     "ai_api_key": os.getenv("AI_API_KEY", ""),
     "ai_base_url": os.getenv("AI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai"),
-    "ai_model": os.getenv("AI_MODEL", "gemini-3.5-flash-lite"),
+    "ai_model": os.getenv("AI_MODEL", "gemini-3.8-flash"),
     "server_port": int(os.getenv("SERVER_PORT", 8000)),
     "refresh_interval_minutes": int(os.getenv("REFRESH_INTERVAL_MINUTES", 5)),
     "auto_alert_pre_news_minutes": [30, 5],

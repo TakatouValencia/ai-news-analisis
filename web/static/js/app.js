@@ -656,7 +656,7 @@ async function openSettingsModal() {
     if (res.ok) {
       const s = await res.json();
       document.getElementById("setting-discord-url").value = s.discord_webhook_url || "";
-      document.getElementById("setting-ai-model").value = s.ai_model || "gemini-3.5-flash-lite";
+      document.getElementById("setting-ai-model").value = s.ai_model || "gemini-3.8-flash";
       const hintEl = document.getElementById("setting-ai-key-hint");
       if (hintEl && s.ai_api_key_masked) {
         hintEl.textContent = `API Key saat ini: ${s.ai_api_key_masked} (Kosongkan jika tidak diubah)`;

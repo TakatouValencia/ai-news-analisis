@@ -58,12 +58,35 @@ def rule_based_sentiment_analysis(headlines: List[Dict[str, Any]]) -> Dict[str, 
         "mode": "rule_based_engine"
     }
 
+def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, timeout: int = 8) -> Dict[str, Any] | None:
+    payload = {
+        "model": model_name,
+        "messages": messages,
+        "temperature": 0.2
+    }
+    try:
+        req = urllib.request.Request(
+            f"{base_url}/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            content = data["choices"][0]["message"]["content"]
+            content = content.replace("```json", "").replace("```", "").strip()
+            parsed = json.loads(content)
+            parsed["mode"] = f"llm_{model_name}"
+            return parsed
+    except Exception as e:
+        print(f"[AI Analyzer] Model '{model_name}' tidak merespons ({e}), mencoba fallback...")
+        return None
+
 def analyze_with_llm(headlines: List[Dict[str, Any]], next_event_title: str) -> Dict[str, Any]:
-    """Attempts LLM analysis via configured API (OpenRouter/OpenAI), with automated fallback."""
+    """Attempts LLM analysis with configured model (gemini-3.8-flash) and automated smart fallback."""
     settings = load_settings()
     api_key = settings.get("ai_api_key", "").strip()
-    base_url = settings.get("ai_base_url", "https://openrouter.ai/api/v1").rstrip("/")
-    model = settings.get("ai_model", "google/gemini-2.5-flash")
+    base_url = settings.get("ai_base_url", "https://generativelanguage.googleapis.com/v1beta/openai").rstrip("/")
+    primary_model = settings.get("ai_model", "gemini-3.8-flash").strip()
     
     if not api_key:
         return rule_based_sentiment_analysis(headlines)
@@ -91,35 +114,21 @@ Hanya kembalikan JSON murni tanpa markdown formatting atau backtick.
         "HTTP-Referer": "https://localhost",
         "X-Title": "EANews Analisis"
     }
-    
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": "You are a professional financial AI quant analyst. Output only valid JSON."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.2,
-        "response_format": {"type": "json_object"} if "gemini" not in model else None
-    }
-    
-    # Remove None values
-    payload = {k: v for k, v in payload.items() if v is not None}
-    
-    try:
-        req = urllib.request.Request(
-            f"{base_url}/chat/completions",
-            data=json.dumps(payload).encode("utf-8"),
-            headers=headers
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            content = data["choices"][0]["message"]["content"]
-            # Clean possible markdown wrapping
-            content = content.replace("```json", "").replace("```", "").strip()
-            parsed = json.loads(content)
-            parsed["mode"] = f"llm_{model}"
-            return parsed
-    except Exception as e:
-        print(f"[AI Analyzer] LLM call exception: {e}")
-        # Graceful fallback
-        return rule_based_sentiment_analysis(headlines)
+
+    messages = [
+        {"role": "system", "content": "You are a professional financial AI quant analyst. Output only valid JSON."},
+        {"role": "user", "content": prompt}
+    ]
+
+    # Models to attempt in priority order
+    candidate_models = [primary_model]
+    if primary_model != "gemini-3.5-flash-lite":
+        candidate_models.append("gemini-3.5-flash-lite")
+
+    for m in candidate_models:
+        result = _request_llm(base_url, m, messages, headers, timeout=8)
+        if result:
+            return result
+
+    # If all models fail / timeout, fall back to robust rule-based NLP engine
+    return rule_based_sentiment_analysis(headlines)
