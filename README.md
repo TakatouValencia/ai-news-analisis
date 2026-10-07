@@ -37,7 +37,7 @@ Sistem AI analisis fundamental dan berita ekonomi *High Impact* (FOMC, NFP, CPI,
 3. **Hubungkan Discord**:
    - Klik tombol **⚙️ Setup Webhook** di Web Dashboard.
    - Masukkan URL Discord Webhook dari channel Discord Anda.
-   - Klik **Simpan**, lalu uji kirim sinyal dengan klik **🚀 Kirim Sinyal Discord**.
+   - Klik **Simpan**. Sinyal analisis akan dikirimkan otomatis ke Discord saat memasuki fase pra-rilis (T-30m dan T-5m).
 
 ---
 

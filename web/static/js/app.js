@@ -621,37 +621,6 @@ async function handleRefresh() {
   }
 }
 
-// Execute Discord Dispatch
-async function handleSendDiscord() {
-  const btn = document.getElementById("btn-send-discord");
-  const stageSelect = document.getElementById("select-discord-stage");
-  const stage = stageSelect ? stageSelect.value : "pre_news";
-  
-  const originalHtml = btn.innerHTML;
-  btn.innerHTML = `<span>⏳ Mengirim sinyal...</span>`;
-  btn.disabled = true;
-  
-  try {
-    const res = await fetch("/api/trigger-discord", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage: stage })
-    });
-    const result = await res.json();
-    
-    if (result.success) {
-      showToast("Sinyal & ping @everyone berhasil terkirim ke Discord!");
-    } else {
-      showToast("Gagal: " + (result.error || "Periksa Webhook URL di Pengaturan"), true);
-    }
-  } catch (err) {
-    showToast("Kesalahan jaringan: " + err, true);
-  } finally {
-    btn.innerHTML = originalHtml;
-    btn.disabled = false;
-  }
-}
-
 // Tab Switching
 function setupTabs() {
   const tabBtns = document.querySelectorAll(".tab-btn");
@@ -687,7 +656,7 @@ async function openSettingsModal() {
     if (res.ok) {
       const s = await res.json();
       document.getElementById("setting-discord-url").value = s.discord_webhook_url || "";
-      document.getElementById("setting-ai-model").value = s.ai_model || "google/gemini-2.5-flash";
+      document.getElementById("setting-ai-model").value = s.ai_model || "gemini-3.5-flash-lite";
       const hintEl = document.getElementById("setting-ai-key-hint");
       if (hintEl && s.ai_api_key_masked) {
         hintEl.textContent = `API Key saat ini: ${s.ai_api_key_masked} (Kosongkan jika tidak diubah)`;
@@ -757,7 +726,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupTabs();
   
   document.getElementById("btn-refresh").addEventListener("click", handleRefresh);
-  document.getElementById("btn-send-discord").addEventListener("click", handleSendDiscord);
   
   document.getElementById("btn-open-settings").addEventListener("click", openSettingsModal);
   document.getElementById("btn-close-settings").addEventListener("click", closeSettingsModal);

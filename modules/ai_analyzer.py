@@ -111,7 +111,7 @@ Hanya kembalikan JSON murni tanpa markdown formatting atau backtick.
             data=json.dumps(payload).encode("utf-8"),
             headers=headers
         )
-        with urllib.request.urlopen(req, timeout=8) as resp:
+        with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             content = data["choices"][0]["message"]["content"]
             # Clean possible markdown wrapping
@@ -120,5 +120,6 @@ Hanya kembalikan JSON murni tanpa markdown formatting atau backtick.
             parsed["mode"] = f"llm_{model}"
             return parsed
     except Exception as e:
+        print(f"[AI Analyzer] LLM call exception: {e}")
         # Graceful fallback
         return rule_based_sentiment_analysis(headlines)

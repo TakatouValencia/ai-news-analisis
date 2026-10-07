@@ -1510,99 +1510,6 @@ body.terminal-body {
   color: var(--text-high);
 }
 
-/* ==========================================================================
-   Execution Dock (Bottom Bar)
-   ========================================================================== */
-.execution-dock {
-  background: linear-gradient(135deg, rgba(22, 33, 56, 0.8), rgba(12, 18, 34, 0.95));
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: var(--r-xl);
-  padding: 16px 22px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-}
-
-.dock-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.dock-indicator-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 12px #10b981;
-}
-
-.dock-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.dock-title {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.dock-sub {
-  font-size: 11.5px;
-  color: var(--text-mid);
-}
-
-.dock-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.custom-select {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
-  font-size: 12.5px;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.custom-select:focus { border-color: var(--color-cyan); }
-
-.btn-execute-discord {
-  background: linear-gradient(135deg, #5865f2, #4752c4);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 20px;
-  border-radius: var(--r-md);
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.45);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.btn-execute-discord:hover {
-  background: linear-gradient(135deg, #6774f7, #5865f2);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
-}
-
-.btn-execute-discord:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
 
 /* ==========================================================================
    Footer
@@ -2186,29 +2093,6 @@ body.terminal-body {
     gap: 12px;
   }
 
-  .execution-dock {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .dock-controls {
-    width: 100%;
-    display: flex;
-    gap: 10px;
-  }
-
-  .stage-selector-wrap {
-    flex: 1;
-  }
-
-  .custom-select {
-    width: 100%;
-  }
-
-  .btn-execute-discord {
-    flex-shrink: 0;
-  }
 }
 
 /* Standard Mobile Phone (<= 768px) */
@@ -2948,70 +2832,6 @@ body.terminal-body {
     line-height: 1.55;
   }
 
-  /* Sticky Execution Dock (Discord Dispatcher) */
-  .execution-dock {
-    position: sticky;
-    bottom: max(10px, env(safe-area-inset-bottom, 10px));
-    z-index: 100;
-    margin-top: 12px;
-    padding: 10px 12px;
-    background: rgba(14, 21, 37, 0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(88, 101, 242, 0.4);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 16px rgba(88, 101, 242, 0.2);
-    border-radius: var(--r-lg);
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .dock-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .dock-title {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.4px;
-  }
-
-  .dock-sub {
-    display: none;
-  }
-
-  .dock-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-  }
-
-  .stage-selector-wrap {
-    width: 100%;
-  }
-
-  .custom-select {
-    width: 100%;
-    height: 42px;
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-
-  .btn-execute-discord {
-    width: 100%;
-    height: 44px;
-    font-size: 13px;
-    font-weight: 700;
-    justify-content: center;
-    padding: 0 16px;
-  }
-
-  .btn-execute-discord:active {
-    transform: scale(0.98);
-  }
 
   /* Modal Dialog on Mobile */
   .modal-backdrop {

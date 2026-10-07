@@ -14,7 +14,6 @@ from modules.calendar_service import get_economic_calendar
 from modules.geopolitical_service import get_latest_geopolitical_news
 from modules.ai_analyzer import analyze_with_llm
 from modules.quant_engine import compute_full_quant_signal
-from modules.discord_webhook import send_discord_webhook
 
 BASE_DIR = Path(__file__).resolve().parent
 WEB_DIR = BASE_DIR / "web"
@@ -50,11 +49,8 @@ if STATIC_DIR.exists():
 class SettingsPayload(BaseModel):
     discord_webhook_url: str = ""
     ai_api_key: str = ""
-    ai_base_url: str = "https://openrouter.ai/api/v1"
-    ai_model: str = "google/gemini-2.5-flash"
-
-class TriggerDiscordPayload(BaseModel):
-    stage: str = "pre_news"
+    ai_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai"
+    ai_model: str = "gemini-3.5-flash-lite"
 
 @app.get("/")
 async def serve_index():
@@ -110,8 +106,8 @@ async def get_settings():
     return JSONResponse(content={
         "discord_webhook_url": s.get("discord_webhook_url", ""),
         "ai_api_key_masked": masked_key,
-        "ai_base_url": s.get("ai_base_url", "https://openrouter.ai/api/v1"),
-        "ai_model": s.get("ai_model", "google/gemini-2.5-flash")
+        "ai_base_url": s.get("ai_base_url", "https://generativelanguage.googleapis.com/v1beta/openai"),
+        "ai_model": s.get("ai_model", "gemini-3.5-flash-lite")
     })
 
 @app.post("/api/settings")
@@ -126,12 +122,6 @@ async def update_settings(payload: SettingsPayload):
         to_update["ai_api_key"] = payload.ai_api_key.strip()
     saved = save_settings(to_update)
     return JSONResponse(content={"status": "success", "message": "Pengaturan berhasil disimpan!"})
-
-@app.post("/api/trigger-discord")
-async def trigger_discord(payload: TriggerDiscordPayload):
-    """Manually test sends a formatted signal to Discord Webhook."""
-    res = scheduler.trigger_test_alert(stage=payload.stage)
-    return JSONResponse(content=res)
 
 if __name__ == "__main__":
     import uvicorn

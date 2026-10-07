@@ -598,33 +598,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Bottom Execution Dock: Discord Dispatcher -->
-    <section class="execution-dock">
-      <div class="dock-left">
-        <div class="dock-indicator-dot"></div>
-        <div class="dock-text">
-          <span class="dock-title">DISCORD WEBHOOK BROADCASTER</span>
-          <span class="dock-sub">Kirim analisis terformat otomatis ke channel Discord (@everyone)</span>
-        </div>
-      </div>
-
-      <div class="dock-controls">
-        <div class="stage-selector-wrap">
-          <select class="custom-select font-mono" id="select-discord-stage">
-            <option value="pre_news">📢 Sinyal Pre-News (T-30m)</option>
-            <option value="imminent">⚡ Sinyal Imminent (T-5m)</option>
-            <option value="flash_release">🔥 Flash Reaction Rilis</option>
-          </select>
-        </div>
-
-        <button class="btn-execute-discord" id="btn-send-discord">
-          <span class="btn-icon-plane">🚀</span>
-          <span>Kirim Sinyal Sekarang</span>
-        </button>
-      </div>
-    </section>
-
     <!-- Footer -->
     <footer class="terminal-footer">
       <div class="footer-left">
@@ -661,15 +634,15 @@
         </div>
 
         <div class="input-field-group">
-          <label class="field-label" for="setting-ai-key">AI API Key (OpenRouter / Gemini)</label>
-          <input type="password" class="field-input font-mono" id="setting-ai-key" placeholder="sk-..." autocomplete="new-password">
+          <label class="field-label" for="setting-ai-key">AI API Key (Google Gemini / OpenRouter)</label>
+          <input type="password" class="field-input font-mono" id="setting-ai-key" placeholder="AQ... / sk-..." autocomplete="new-password">
           <span class="field-hint" id="setting-ai-key-hint">Kunci tersimpan aman di server (.env).</span>
         </div>
 
         <div class="input-field-group">
           <label class="field-label" for="setting-ai-model">AI Model Identifier</label>
-          <input type="text" class="field-input font-mono" id="setting-ai-model" placeholder="google/gemini-2.5-flash">
-          <span class="field-hint">Model spesialis financial reasoning via OpenRouter.</span>
+          <input type="text" class="field-input font-mono" id="setting-ai-model" placeholder="gemini-3.5-flash-lite">
+          <span class="field-hint">Model spesialis financial reasoning via Google Gemini / OpenRouter.</span>
         </div>
       </div>
 
