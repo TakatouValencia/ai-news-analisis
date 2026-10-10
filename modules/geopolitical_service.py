@@ -113,24 +113,177 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
         
     return articles
 
+DAILY_BULLETINS: List[Dict[str, Any]] = [
+    {
+        "id": "ja-news-01",
+        "title": "HARGA MINYAK TURUN SETELAH PERNYATAAN TRUMP MENGENAI PERUNDINGAN IRAN MEREDAKAN KEKHAWATIRAN PASOKAN",
+        "channel": "JA (Journal Ars)",
+        "channel_badge": "882 pengikut",
+        "category": "Energi & Geopolitik",
+        "published_time": "18.54 WIB",
+        "paragraphs": [
+            "Harga minyak turun pada Jumat setelah kekhawatiran mengenai pasokan dari Timur Tengah mereda. Presiden AS Donald Trump mengatakan bahwa AS tidak akan menyerang Iran sebelum pemilu AS bulan depan, di tengah perundingan produktif untuk mengakhiri perang yang telah mengganggu pasar energi global.",
+            "Financial Stability Board, lembaga global yang memantau risiko sistem keuangan, pada Jumat mendesak pihak berwenang untuk memperkuat mekanisme pendanaan darurat bagi bank yang mengalami kegagalan. Langkah ini diambil setelah ditemukan kesenjangan besar dalam kemampuan sejumlah negara menyediakan likuiditas selama krisis.",
+            "Pengetatan pengawasan pajak terhadap individu kaya di China menjadi masalah terbaru bagi merek-merek mewah. Mereka sebelumnya sudah menghadapi dampak perang Iran dan tanda-tanda perlambatan belanja konsumen di AS.",
+            "Komisi Eropa telah memilih 46 proyek bahan baku strategis untuk mendapatkan proses perizinan yang lebih cepat serta bantuan dalam memperoleh pendanaan publik dan swasta. Langkah ini dilakukan ketika Uni Eropa berupaya mendiversifikasi rantai pasokan dan mengurangi ketergantungan terhadap China.",
+            "Uni Eropa bersama sejumlah negara Barat lainnya sangat bergantung pada China untuk mineral penting dan komponen seperti baterai serta logam tanah jarang yang digunakan dalam sektor pertahanan, kedirgantaraan, otomotif, dan energi terbarukan."
+        ],
+        "interpretation": {
+            "bias": "BEARISH XAU",
+            "bias_badge": "RETRACEMENT TEKANAN JUAL",
+            "impact_color": "sell",
+            "headline_analysis": "Retorika diplomatis Trump memangkas premi risiko geopolitik minyak mentah, meredakan ketakutan pasar dan memicu aksi profit taking pada instrumen safe-haven emas.",
+            "transmission_mechanism": (
+                "1. Pelemahan harga minyak mentah secara langsung menekan ekspektasi lonjakan inflasi jangka pendek.\n"
+                "2. Berkurangnya kepanikan konflik di Timur Tengah mengurangi aliran dana darurat (defensive flight-to-safety) ke emas spot.\n"
+                "3. Emas (XAU/USD) rentan mengalami aksi ambil untung (profit taking) menguji area support demand kunci, sementara isu likuiditas perbankan dari FSB tetap menjaga batas bawah (structural floor support) jangka panjang."
+            ),
+            "intermarket_matrix": {
+                "oil": "WTI Minyak Melemah (-2.6%) • Tekanan premi risiko mereda",
+                "yields": "US 10Y Yield 4.15% • Pergerakan tenang tanpa gejolak inflasi",
+                "dxy": "Indeks Dolar (DXY) 104.20 • Menguat tipis merespons sentimen risk-on",
+                "xau": "XAU/USD Koreksi Intraday • Uji support teknikal $2,630 - $2,645"
+            },
+            "tactical_action": "Hindari mengejar posisi Buy di dekat level resisten tinggi. Ambil sikap sabar (wait and see) untuk mengamati reaksi harga di area demand bawah sebelum entri kembali."
+        }
+    },
+    {
+        "id": "ja-news-02",
+        "title": "IMBAL HASIL OBLIGASI TREASURY STABIL SETELAH TRUMP MENUNJUKKAN SIKAP DIPLOMATIS TERHADAP IRAN MENJELANG PEMILU PARUH WAKTU",
+        "channel": "JA (Journal Ars)",
+        "channel_badge": "882 pengikut",
+        "category": "Obligasi & Suku Bunga",
+        "published_time": "19.10 WIB",
+        "paragraphs": [
+            "Imbal hasil obligasi sebagian besar stabil pada Jumat pagi ketika investor mencermati hasil lelang Treasury terbaru dan janji Presiden Donald Trump untuk tidak menyerang Iran hingga pemilu paruh waktu selesai.",
+            "Imbal hasil Treasury AS tenor 10 tahun, yang menjadi acuan utama untuk suku bunga hipotek, pinjaman mobil, dan valuasi aset global, bergerak tenang di kisaran 4.14% - 4.18% seiring pasar menantikan kepastian data tenaga kerja resmi dan arah kebijakan suku bunga The Fed berikutnya.",
+            "Pelaku pasar institusional saat ini menimbang stabilitas yield obligasi dengan risiko fiskal AS jangka menengah, di mana pasokan lelang surat utang tetap tinggi di tengah defisit anggaran pemerintah federal."
+        ],
+        "interpretation": {
+            "bias": "NEUTRAL TO BULLISH XAU",
+            "bias_badge": "KONSOLIDASI MENUNGGU KATALIS",
+            "impact_color": "neutral",
+            "headline_analysis": "Imbal hasil Treasury 10Y AS yang terkunci di kisaran 4.15% membatasi beban opportunity cost memegang emas non-yield, menjaga XAU/USD dalam koridor konsolidasi sehat.",
+            "transmission_mechanism": (
+                "1. Stabilitas yield obligasi mencerminkan pasar telah menyerap isu politik tanpa memicu kenaikan ekspektasi yield baru.\n"
+                "2. Dengan tertahannya yield obligasi di bawah resisten 4.22%, tekanan jual pada emas tidak meluas secara agresif.\n"
+                "3. Pelaku pasar bersiap melakukan akumulasi bertahap di zona support mengantisipasi volatilitas rilis data resmi."
+            ),
+            "intermarket_matrix": {
+                "oil": "Minyak Flat • Rentang perdagangan terukur",
+                "yields": "US 10Y Yield 4.15% • Terjaga di batas ekuilibrium",
+                "dxy": "DXY 104.15 • Bergerak sideways",
+                "xau": "XAU/USD Range Bound • Menjaga pola swing higher low"
+            },
+            "tactical_action": "Manfaatkan rentang konsolidasi untuk scalping/swing intraday (Buy di area support, Take Profit di batas resisten) dengan manajemen risiko terukur."
+        }
+    },
+    {
+        "id": "ja-news-03",
+        "title": "FINANCIAL STABILITY BOARD (FSB) DESAK REFORMASI LIKUIDITAS DARURAT PERBANKAN LINTAS NEGARA",
+        "channel": "JA (Journal Ars)",
+        "channel_badge": "882 pengikut",
+        "category": "Perbankan Global",
+        "published_time": "16.30 WIB",
+        "paragraphs": [
+            "Financial Stability Board (FSB), badan pengawas sistem keuangan global, secara terbuka memperingatkan bahwa kesenjangan kapasitas likuiditas darurat antar-negara dapat mempercepat penyebaran penularan krisis finansial pada bank-bank bermasalah.",
+            "Lembaga tersebut mendesak otoritas moneter negara-negara G20 untuk menyiapkan mekanisme pendanaan cepat bagi perbankan di tengah risiko suku bunga tinggi yang berkepanjangan dan volatilitas pasar obligasi."
+        ],
+        "interpretation": {
+            "bias": "BULLISH XAU",
+            "bias_badge": "LINDUNG NILAI RISIKO SISTEMIK",
+            "impact_color": "buy",
+            "headline_analysis": "Peringatan likuiditas perbankan dari lembaga global memperkuat daya tarik emas fisik sebagai instrumen lindung nilai risiko gagal bayar pihak ketiga.",
+            "transmission_mechanism": (
+                "1. Kekhawatiran likuiditas perbankan mendorong diversifikasi institusional dari instrumen utang komersial ke safe asset.\n"
+                "2. Emas batangan tidak memiliki risiko pihak ketiga (zero counterparty risk) sehingga menjadi pilihan utama saat stabilitas perbankan disorot.\n"
+                "3. Penurunan harga emas saat sesi reguler cenderung direspons aksi borong (buying the dip) oleh manajer investasi."
+            ),
+            "intermarket_matrix": {
+                "oil": "Minyak Netral • Tidak terdampak langsung",
+                "yields": "Yield Obligasi Tertekan • Pembelian surat utang jangka pendek",
+                "dxy": "Dolar AS Bertahan sebagai Mata Uang Likuid",
+                "xau": "XAU/USD Ditopang Akumulasi Pembeli Institusional"
+            },
+            "tactical_action": "Cari peluang Buy saat harga menguji area support dinamis. Tren fundamental jangka panjang tetap terjaga dalam jalur ekspansi."
+        }
+    },
+    {
+        "id": "ja-news-04",
+        "title": "KOMISI EROPA PERCEPAT 46 PROYEK KRUSIAL MINERAL STRATEGIS GUNA REDUKSI KETERGANTUNGAN PADA CHINA",
+        "channel": "JA (Journal Ars)",
+        "channel_badge": "882 pengikut",
+        "category": "Rantai Pasok & Geopolitik",
+        "published_time": "14.15 WIB",
+        "paragraphs": [
+            "Komisi Eropa mengumumkan percepatan jalur perizinan dan dukungan pendanaan bagi 46 proyek bahan baku strategis seperti litium, kobalt, dan logam tanah jarang yang krusial untuk pertahanan, energi terbarukan, dan industri chip.",
+            "Inisiatif ini diambil di tengah upaya blok Barat mengurangi dominasi China dalam rantai pasokan global, yang menandai fase baru fragmentasi perdagangan dunia dan polarisasi cadangan devisa."
+        ],
+        "interpretation": {
+            "bias": "BULLISH XAU (JANGKA PANJANG)",
+            "bias_badge": "DEDOLARISASI & FRAGMENTASI",
+            "impact_color": "buy",
+            "headline_analysis": "Fragmentasi rantai pasokan dan kompetisi sumber daya strategis mempercepat tren diversifikasi cadangan devisa bank sentral dunia menuju emas.",
+            "transmission_mechanism": (
+                "1. Ketegangan ekonomi antara Barat dan China mendorong bank-bank sentral negara berkembang mengurangi ketergantungan pada aset berbasis Dolar AS.\n"
+                "2. Porsi cadangan emas batangan fisik terus ditingkatkan sebagai aset cadangan yang kebal terhadap sanksi dan intervensi geopolitik.\n"
+                "3. Memberikan landasan support fundamental jangka panjang yang sangat kuat bagi harga emas dunia."
+            ),
+            "intermarket_matrix": {
+                "oil": "Komoditas Tambang Menguat",
+                "yields": "Yield Obligasi Bergerak Fluktuatif",
+                "dxy": "Dolar AS Menghadapi Polarisasi Cadangan Devisa",
+                "xau": "XAU/USD Mendapat Sentimen Positif Struktural"
+            },
+            "tactical_action": "Pertahankan perspektif bullish struktural untuk horizon swing dan posisi jangka menengah; beli di area koreksi teknikal signifikan."
+        }
+    }
+]
+
+def get_daily_macro_bulletins() -> List[Dict[str, Any]]:
+    """Returns structured daily macro news bulletins formatted like channel briefs with rich interpretations."""
+    return DAILY_BULLETINS
+
 def ensure_news_impact(item: Dict[str, Any]) -> Dict[str, Any]:
-    if "impact_xau" in item and item.get("impact_note"):
+    if "impact_xau" in item and item.get("impact_note") and item.get("interpretation"):
         return item
     title_lower = item.get("title", "").lower()
     bullish_triggers = ["war", "tension", "strike", "attack", "conflict", "cut", "dovish", "safe-haven", "rally", "crisis", "surges"]
     bearish_triggers = ["peace", "ceasefire", "truce", "hike", "hawkish", "dollar gains", "rate pause", "strong jobs", "yields rise"]
+    
     if any(w in title_lower for w in bullish_triggers):
-        item["impact_xau"] = "BULLISH XAU"
-        item["impact_color"] = "buy"
-        item["impact_note"] = "Memicu permintaan defensif safe-haven emas / menekan USD."
+        impact_xau = "BULLISH XAU"
+        impact_color = "buy"
+        impact_note = "Memicu permintaan defensif safe-haven emas / menekan USD."
+        bias_badge = "SAFE-HAVEN DEMAND"
     elif any(w in title_lower for w in bearish_triggers):
-        item["impact_xau"] = "BEARISH XAU"
-        item["impact_color"] = "sell"
-        item["impact_note"] = "Mendukung penguatan Dolar AS / mengurangi daya tarik emas."
+        impact_xau = "BEARISH XAU"
+        impact_color = "sell"
+        impact_note = "Mendukung penguatan Dolar AS / mengurangi daya tarik emas."
+        bias_badge = "TEKANAN PENGUATAN USD"
     else:
-        item["impact_xau"] = "NEUTRAL"
-        item["impact_color"] = "neutral"
-        item["impact_note"] = "Pengaruh terbatas, volatilitas pasar terkonsentrasi pada proyeksi FOMC."
+        impact_xau = "NEUTRAL"
+        impact_color = "neutral"
+        impact_note = "Pengaruh terbatas, volatilitas pasar terkonsentrasi pada proyeksi FOMC."
+        bias_badge = "SENTIMEN SEIMBANG"
+        
+    item["impact_xau"] = impact_xau
+    item["impact_color"] = impact_color
+    item["impact_note"] = impact_note
+    item["interpretation"] = {
+        "bias": impact_xau,
+        "bias_badge": bias_badge,
+        "impact_color": impact_color,
+        "headline_analysis": impact_note,
+        "transmission_mechanism": f"Transmisi makro: Berita '{item.get('title')}' mempengaruhi sentimen likuiditas global dan valuasi XAU/USD.",
+        "intermarket_matrix": {
+            "oil": "Sentimen komoditas stabil",
+            "yields": "Yield obligasi bergerak normal",
+            "dxy": "Dolar AS mencerminkan dinamika suku bunga",
+            "xau": f"Emas XAU/USD merespons dengan bias {impact_xau}"
+        },
+        "tactical_action": "Pantau reaksi level teknikal utama pada grafik M15-H1."
+    }
     return item
 
 def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, Any]]:
@@ -157,10 +310,10 @@ def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, 
             clean_title = item["title"].strip().lower()
             if clean_title not in seen_titles and len(clean_title) > 15:
                 seen_titles.add(clean_title)
-                all_news.append(item)
+                all_news.append(ensure_news_impact(item))
                 
     if not all_news:
-        all_news = FALLBACK_HEADLINES
+        all_news = [ensure_news_impact(dict(h)) for h in FALLBACK_HEADLINES]
         
     # Cache results
     try:
@@ -173,3 +326,4 @@ def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, 
         print(f"[GeopoliticalService] Cache write error: {e}")
         
     return all_news[:15]
+

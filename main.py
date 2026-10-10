@@ -11,8 +11,8 @@ from pydantic import BaseModel
 from config import load_settings, save_settings
 from modules.scheduler_service import scheduler
 from modules.calendar_service import get_economic_calendar
-from modules.geopolitical_service import get_latest_geopolitical_news
-from modules.ai_analyzer import analyze_with_llm
+from modules.geopolitical_service import get_latest_geopolitical_news, get_daily_macro_bulletins
+from modules.ai_analyzer import analyze_with_llm, interpret_single_news_item
 from modules.quant_engine import compute_full_quant_signal
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -85,10 +85,29 @@ async def get_state(force: bool = False):
             "next_event": next_ev,
             "correlated_news": cal.get("correlated_news", []),
             "news": scheduler.last_news,
+            "daily_bulletins": get_daily_macro_bulletins(),
             "signal": scheduler.last_signal,
             "server_time": datetime.now(timezone.utc).isoformat()
         }
     return JSONResponse(content=state)
+
+@app.get("/api/daily-news")
+async def get_daily_news_api():
+    """Returns curated institutional daily news bulletins with full market interpretations."""
+    bulletins = get_daily_macro_bulletins()
+    return JSONResponse(content={"status": "success", "bulletins": bulletins})
+
+class CustomInterpretPayload(BaseModel):
+    text: str = ""
+
+@app.post("/api/interpret-custom")
+async def interpret_custom_news_api(payload: CustomInterpretPayload):
+    """Interprets arbitrary user-pasted news text for XAU/USD impact and transmission."""
+    cleaned_text = payload.text.strip()
+    if not cleaned_text:
+        raise HTTPException(status_code=400, detail="Teks berita tidak boleh kosong.")
+    result = interpret_single_news_item(cleaned_text)
+    return JSONResponse(content={"status": "success", "interpretation": result})
 
 @app.post("/api/refresh")
 async def refresh_data():

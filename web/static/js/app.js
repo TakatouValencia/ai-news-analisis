@@ -407,7 +407,12 @@ function updateUI(data) {
     });
   }
 
-  // 9. Sync indicator text
+  // 9. Daily Macro Bulletins (JA Journal Ars Feed)
+  if (data.daily_bulletins) {
+    renderDailyBulletins(data.daily_bulletins);
+  }
+
+  // 10. Sync indicator text
   const syncText = document.getElementById("sync-status-text");
   if (syncText) {
     const now = new Date();
@@ -742,10 +747,358 @@ setInterval(() => {
   fetchState(false);
 }, 20000);
 
+// ==========================================================================
+// DAILY MACRO BULLETINS & AI INTERPRETATION ENGINE (JA JOURNAL ARS)
+// ==========================================================================
+let currentBulletins = [];
+let activeNewsCategory = "all";
+
+function renderDailyBulletins(bulletins) {
+  if (bulletins && bulletins.length > 0) {
+    currentBulletins = bulletins;
+  }
+  const container = document.getElementById("daily-bulletin-feed");
+  if (!container) return;
+
+  const filtered = activeNewsCategory === "all"
+    ? currentBulletins
+    : currentBulletins.filter(b => (b.category || "").toLowerCase().includes(activeNewsCategory.toLowerCase()));
+
+  if (!filtered || filtered.length === 0) {
+    container.innerHTML = `<div class="table-loading-row font-mono">Tidak ada berita untuk filter kategori ini.</div>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  filtered.forEach(item => {
+    const interp = item.interpretation || {};
+    const bias = interp.bias || "NEUTRAL";
+    const biasBadge = interp.bias_badge || "ANALISIS PASAR";
+    const colorClass = bias.includes("BUY") ? "chip-cyan" : (bias.includes("SELL") ? "chip-red" : "chip-gold");
+    const borderClass = bias.includes("BUY") ? "border-buy" : (bias.includes("SELL") ? "border-sell" : "border-neutral");
+
+    const card = document.createElement("article");
+    card.className = `bulletin-card ${borderClass}`;
+    card.id = `bulletin-${item.id}`;
+
+    // Format paragraphs
+    const paragraphsHtml = (item.paragraphs || [])
+      .map(p => `<p class="bulletin-paragraph">${p}</p>`)
+      .join("");
+
+    // Intermarket matrix row
+    const intermarket = interp.intermarket_matrix || {};
+    let intermarketHtml = "";
+    if (intermarket.oil || intermarket.yields || intermarket.dxy || intermarket.xau) {
+      intermarketHtml = `
+        <div class="intermarket-matrix-box">
+          <span class="matrix-box-label font-mono">DAMPAK KOMODITAS &amp; PASAR GLOBAL:</span>
+          <div class="matrix-pills-row">
+            ${intermarket.oil ? `<div class="asset-pill"><span class="asset-k font-mono">MINYAK:</span> <span class="asset-v">${intermarket.oil}</span></div>` : ''}
+            ${intermarket.yields ? `<div class="asset-pill"><span class="asset-k font-mono">US 10Y:</span> <span class="asset-v">${intermarket.yields}</span></div>` : ''}
+            ${intermarket.dxy ? `<div class="asset-pill"><span class="asset-k font-mono">DXY:</span> <span class="asset-v">${intermarket.dxy}</span></div>` : ''}
+            ${intermarket.xau ? `<div class="asset-pill asset-pill-highlight"><span class="asset-k font-mono">XAU/USD:</span> <span class="asset-v">${intermarket.xau}</span></div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    // Macro transmission lines
+    let transmissionHtml = "";
+    if (interp.transmission_mechanism) {
+      const transLines = interp.transmission_mechanism.split("\n").filter(l => l.trim().length > 0);
+      transmissionHtml = `
+        <div class="transmission-flow-box">
+          <span class="flow-box-label font-mono">MEKANISME TRANSMISI MAKROEKONOMI:</span>
+          <ul class="flow-points-list">
+            ${transLines.map(line => `<li>${line}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="bulletin-header">
+        <div class="bulletin-channel-tag">
+          <div class="bulletin-avatar-mini font-mono">JA</div>
+          <div class="bulletin-tag-info">
+            <span class="bulletin-channel-name">${item.channel || "JA (Journal Ars)"}</span>
+            <span class="bulletin-followers-sub font-mono">${item.channel_badge || "882 pengikut"}</span>
+          </div>
+        </div>
+        <div class="bulletin-meta-right">
+          <span class="status-chip chip-amber font-mono">${item.category || "Makro"}</span>
+          <span class="bulletin-time-pill font-mono">${item.published_time || "Terbaru"}</span>
+        </div>
+      </div>
+
+      <h3 class="bulletin-headline">${item.title}</h3>
+
+      <div class="bulletin-body">
+        ${paragraphsHtml}
+      </div>
+
+      <!-- KOTAK INTERPRETASI PASAR & XAU/USD -->
+      <div class="bulletin-interpretation-card ${interp.impact_color || 'neutral'}">
+        <div class="interpretation-top-row">
+          <div class="interpretation-title-tag">
+            <svg class="interp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span class="interp-header-label font-mono">INTERPRETASI PASAR &amp; XAU/USD</span>
+          </div>
+          <div class="interp-bias-cluster">
+            <span class="status-chip ${colorClass} font-mono">${bias}</span>
+            <span class="bias-sub-badge font-mono">${biasBadge}</span>
+          </div>
+        </div>
+
+        ${interp.headline_analysis ? `
+          <div class="interp-thesis-statement">
+            <strong>Analisis Kunci:</strong> ${interp.headline_analysis}
+          </div>
+        ` : ''}
+
+        ${transmissionHtml}
+
+        ${intermarketHtml}
+
+        ${interp.tactical_action ? `
+          <div class="tactical-action-box">
+            <span class="action-box-label font-mono">PANDUAN TAKTIS TRADER:</span>
+            <p class="action-text">${interp.tactical_action}</p>
+          </div>
+        ` : ''}
+
+        <div class="bulletin-actions-foot">
+          <button class="btn-copy-bulletin font-mono" data-id="${item.id}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>SALIN BERITA &amp; INTERPRETASI</span>
+          </button>
+          <span class="foot-disclaimer font-mono">EANews Novaire Macro Desk</span>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+
+  // Attach copy listeners
+  container.querySelectorAll(".btn-copy-bulletin").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      copyBulletinToClipboard(id);
+    });
+  });
+}
+
+function copyBulletinToClipboard(id) {
+  const item = currentBulletins.find(b => b.id === id);
+  if (!item) return;
+
+  const interp = item.interpretation || {};
+  let text = `📢 ${item.channel || "JA (Journal Ars)"} • ${item.published_time || "Berita Harian"}\n\n`;
+  text += `${item.title}\n\n`;
+  (item.paragraphs || []).forEach(p => {
+    text += `${p}\n\n`;
+  });
+  text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `📊 INTERPRETASI PASAR & XAU/USD\n`;
+  text += `Arah/Bias: ${interp.bias || 'NEUTRAL'} (${interp.bias_badge || ''})\n\n`;
+  if (interp.headline_analysis) {
+    text += `💡 Analisis: ${interp.headline_analysis}\n\n`;
+  }
+  if (interp.transmission_mechanism) {
+    text += `🔄 Transmisi Makro:\n${interp.transmission_mechanism}\n\n`;
+  }
+  if (interp.tactical_action) {
+    text += `🎯 Panduan Taktis:\n${interp.tactical_action}\n`;
+  }
+  text += `━━━━━━━━━━━━━━━━━━━━━\nEANews Novaire AI Terminal`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("Berita & Interpretasi berhasil disalin ke clipboard!");
+    }).catch(() => {
+      showToast("Berhasil disalin ke clipboard!");
+    });
+  } else {
+    showToast("Berhasil disalin ke clipboard!");
+  }
+}
+
+function renderCustomInterpretationResult(interp, rawText) {
+  const resultCard = document.getElementById("custom-interpret-result");
+  if (!resultCard) return;
+
+  const bias = interp.bias || "NEUTRAL";
+  const biasBadge = interp.bias_badge || "ANALISIS TEKS";
+  const colorClass = bias.includes("BUY") ? "chip-cyan" : (bias.includes("SELL") ? "chip-red" : "chip-gold");
+  const intermarket = interp.intermarket_matrix || {};
+
+  let transHtml = "";
+  if (interp.transmission_mechanism) {
+    const lines = interp.transmission_mechanism.split("\n").filter(l => l.trim().length > 0);
+    transHtml = `
+      <ul class="flow-points-list">
+        ${lines.map(l => `<li>${l}</li>`).join("")}
+      </ul>
+    `;
+  }
+
+  resultCard.classList.remove("hidden");
+  resultCard.innerHTML = `
+    <div class="interpretation-top-row">
+      <div class="interpretation-title-tag">
+        <svg class="interp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <span class="interp-header-label font-mono">HASIL INTERPRETASI AI QUANT</span>
+      </div>
+      <div class="interp-bias-cluster">
+        <span class="status-chip ${colorClass} font-mono">${bias}</span>
+        <span class="bias-sub-badge font-mono">${biasBadge}</span>
+      </div>
+    </div>
+
+    ${interp.headline_analysis ? `
+      <div class="interp-thesis-statement">
+        <strong>Ringkasan Eksekutif:</strong> ${interp.headline_analysis}
+      </div>
+    ` : ''}
+
+    <div class="transmission-flow-box">
+      <span class="flow-box-label font-mono">MEKANISME TRANSMISI PASAR (DXY • YIELD • XAU):</span>
+      ${transHtml}
+    </div>
+
+    ${(intermarket.oil || intermarket.yields || intermarket.dxy || intermarket.xau) ? `
+      <div class="intermarket-matrix-box">
+        <span class="matrix-box-label font-mono">PROYEKSI DAMPAK ASET:</span>
+        <div class="matrix-pills-row">
+          ${intermarket.oil ? `<div class="asset-pill"><span class="asset-k font-mono">MINYAK:</span> <span class="asset-v">${intermarket.oil}</span></div>` : ''}
+          ${intermarket.yields ? `<div class="asset-pill"><span class="asset-k font-mono">US 10Y:</span> <span class="asset-v">${intermarket.yields}</span></div>` : ''}
+          ${intermarket.dxy ? `<div class="asset-pill"><span class="asset-k font-mono">DXY:</span> <span class="asset-v">${intermarket.dxy}</span></div>` : ''}
+          ${intermarket.xau ? `<div class="asset-pill asset-pill-highlight"><span class="asset-k font-mono">XAU/USD:</span> <span class="asset-v">${intermarket.xau}</span></div>` : ''}
+        </div>
+      </div>
+    ` : ''}
+
+    ${interp.tactical_action ? `
+      <div class="tactical-action-box">
+        <span class="action-box-label font-mono">PANDUAN EKSEKUSI TRADING:</span>
+        <p class="action-text">${interp.tactical_action}</p>
+      </div>
+    ` : ''}
+  `;
+}
+
+async function runCustomNewsInterpretation() {
+  const inputEl = document.getElementById("custom-news-input");
+  const runBtn = document.getElementById("btn-run-interpret");
+  if (!inputEl || !runBtn) return;
+
+  const rawText = inputEl.value.trim();
+  if (!rawText) {
+    showToast("Silakan tempel teks berita terlebih dahulu.", true);
+    return;
+  }
+
+  runBtn.disabled = true;
+  runBtn.innerHTML = `<span>MENGANALISIS...</span>`;
+  showToast("AI sedang menganalisis teks berita & menghitung transmisi makro...");
+
+  try {
+    const res = await fetch("/api/interpret-custom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: rawText })
+    });
+    const data = await res.json();
+    if (data.status === "success" && data.interpretation) {
+      renderCustomInterpretationResult(data.interpretation, rawText);
+      showToast("Interpretasi berita berhasil dibuat!");
+    } else {
+      showToast("Gagal menganalisis berita: " + (data.detail || "Error"), true);
+    }
+  } catch (err) {
+    showToast("Error jaringan saat analisis: " + err, true);
+  } finally {
+    runBtn.disabled = false;
+    runBtn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span>INTERPRETASIKAN DENGAN AI</span>
+    `;
+  }
+}
+
+function setupDailyNewsEvents() {
+  // Category Filter Pills
+  const catPills = document.querySelectorAll("#news-category-filters .cat-pill");
+  catPills.forEach(pill => {
+    pill.addEventListener("click", () => {
+      catPills.forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      activeNewsCategory = pill.getAttribute("data-cat") || "all";
+      renderDailyBulletins(currentBulletins);
+    });
+  });
+
+  // Toggle Custom Interpreter
+  const toggleBtn = document.getElementById("btn-toggle-custom-interpreter");
+  const closeBtn = document.getElementById("btn-close-custom-interpreter");
+  const interpreterPanel = document.getElementById("custom-interpreter-box");
+  const runBtn = document.getElementById("btn-run-interpret");
+  const clearBtn = document.getElementById("btn-clear-custom-input");
+
+  if (toggleBtn && interpreterPanel) {
+    toggleBtn.addEventListener("click", () => {
+      interpreterPanel.classList.toggle("hidden");
+      if (!interpreterPanel.classList.contains("hidden")) {
+        const input = document.getElementById("custom-news-input");
+        if (input) input.focus();
+      }
+    });
+  }
+
+  if (closeBtn && interpreterPanel) {
+    closeBtn.addEventListener("click", () => {
+      interpreterPanel.classList.add("hidden");
+    });
+  }
+
+  if (runBtn) {
+    runBtn.addEventListener("click", runCustomNewsInterpretation);
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      const input = document.getElementById("custom-news-input");
+      if (input) input.value = "";
+      const resultCard = document.getElementById("custom-interpret-result");
+      if (resultCard) {
+        resultCard.innerHTML = "";
+        resultCard.classList.add("hidden");
+      }
+    });
+  }
+
+  // Jump from Tab 1 to Tab 3 Daily News
+  const gotoNewsBtn = document.getElementById("btn-goto-daily-news");
+  if (gotoNewsBtn) {
+    gotoNewsBtn.addEventListener("click", () => {
+      const newsTabBtn = document.querySelector('.tab-btn[data-tab="tab-intelligence"]');
+      if (newsTabBtn) newsTabBtn.click();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+}
+
 // Initial Load & Event Binding
 document.addEventListener("DOMContentLoaded", () => {
   updateClocks();
   setupTabs();
+  setupDailyNewsEvents();
   
   document.getElementById("btn-refresh").addEventListener("click", handleRefresh);
   
@@ -762,3 +1115,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial data load
   fetchState(true);
 });
+

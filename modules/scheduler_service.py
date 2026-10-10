@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Set
 from modules.calendar_service import get_economic_calendar
-from modules.geopolitical_service import get_latest_geopolitical_news
+from modules.geopolitical_service import get_latest_geopolitical_news, get_daily_macro_bulletins
 from modules.ai_analyzer import analyze_with_llm
 from modules.quant_engine import compute_full_quant_signal
 from modules.discord_webhook import send_discord_webhook
@@ -67,6 +67,7 @@ class NewsMonitoringScheduler:
             "next_event": next_ev,
             "correlated_news": calendar_data.get("correlated_news", []),
             "news": news_data,
+            "daily_bulletins": get_daily_macro_bulletins(),
             "signal": signal
         }
 
