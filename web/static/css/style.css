@@ -2256,6 +2256,12 @@ body.terminal-body {
   box-shadow: 0 4px 14px var(--gold-glow);
 }
 
+.avatar-img-shield {
+  object-fit: cover;
+  padding: 0;
+  border-radius: 12px;
+}
+
 .avatar-verified-tick {
   position: absolute;
   bottom: -2px;
@@ -2634,6 +2640,15 @@ body.terminal-body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.bulletin-avatar-mini-img {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--gold-border);
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .bulletin-tag-info {

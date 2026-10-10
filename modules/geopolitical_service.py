@@ -115,10 +115,10 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
 
 DAILY_BULLETINS: List[Dict[str, Any]] = [
     {
-        "id": "ja-news-01",
+        "id": "novaire-news-01",
         "title": "HARGA MINYAK TURUN SETELAH PERNYATAAN TRUMP MENGENAI PERUNDINGAN IRAN MEREDAKAN KEKHAWATIRAN PASOKAN",
-        "channel": "JA (Journal Ars)",
-        "channel_badge": "882 pengikut",
+        "channel": "Novaire Macro Wire",
+        "channel_badge": "Novaire Desk",
         "category": "Energi & Geopolitik",
         "published_time": "18.54 WIB",
         "paragraphs": [
@@ -148,10 +148,10 @@ DAILY_BULLETINS: List[Dict[str, Any]] = [
         }
     },
     {
-        "id": "ja-news-02",
+        "id": "novaire-news-02",
         "title": "IMBAL HASIL OBLIGASI TREASURY STABIL SETELAH TRUMP MENUNJUKKAN SIKAP DIPLOMATIS TERHADAP IRAN MENJELANG PEMILU PARUH WAKTU",
-        "channel": "JA (Journal Ars)",
-        "channel_badge": "882 pengikut",
+        "channel": "Novaire Macro Wire",
+        "channel_badge": "Novaire Desk",
         "category": "Obligasi & Suku Bunga",
         "published_time": "19.10 WIB",
         "paragraphs": [
@@ -179,10 +179,10 @@ DAILY_BULLETINS: List[Dict[str, Any]] = [
         }
     },
     {
-        "id": "ja-news-03",
+        "id": "novaire-news-03",
         "title": "FINANCIAL STABILITY BOARD (FSB) DESAK REFORMASI LIKUIDITAS DARURAT PERBANKAN LINTAS NEGARA",
-        "channel": "JA (Journal Ars)",
-        "channel_badge": "882 pengikut",
+        "channel": "Novaire Macro Wire",
+        "channel_badge": "Novaire Desk",
         "category": "Perbankan Global",
         "published_time": "16.30 WIB",
         "paragraphs": [
@@ -209,10 +209,10 @@ DAILY_BULLETINS: List[Dict[str, Any]] = [
         }
     },
     {
-        "id": "ja-news-04",
+        "id": "novaire-news-04",
         "title": "KOMISI EROPA PERCEPAT 46 PROYEK KRUSIAL MINERAL STRATEGIS GUNA REDUKSI KETERGANTUNGAN PADA CHINA",
-        "channel": "JA (Journal Ars)",
-        "channel_badge": "882 pengikut",
+        "channel": "Novaire Macro Wire",
+        "channel_badge": "Novaire Desk",
         "category": "Rantai Pasok & Geopolitik",
         "published_time": "14.15 WIB",
         "paragraphs": [

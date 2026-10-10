@@ -820,10 +820,10 @@ function renderDailyBulletins(bulletins) {
     card.innerHTML = `
       <div class="bulletin-header">
         <div class="bulletin-channel-tag">
-          <div class="bulletin-avatar-mini font-mono">JA</div>
+          <img src="static/img/novaire_logo.jpg" alt="Novaire" class="bulletin-avatar-mini-img">
           <div class="bulletin-tag-info">
-            <span class="bulletin-channel-name">${item.channel || "JA (Journal Ars)"}</span>
-            <span class="bulletin-followers-sub font-mono">${item.channel_badge || "882 pengikut"}</span>
+            <span class="bulletin-channel-name">${item.channel || "Novaire Macro Wire"}</span>
+            <span class="bulletin-followers-sub font-mono">${item.channel_badge || "Novaire Desk"}</span>
           </div>
         </div>
         <div class="bulletin-meta-right">
@@ -897,7 +897,7 @@ function copyBulletinToClipboard(id) {
   if (!item) return;
 
   const interp = item.interpretation || {};
-  let text = `📢 ${item.channel || "JA (Journal Ars)"} • ${item.published_time || "Berita Harian"}\n\n`;
+  let text = `📢 ${item.channel || "Novaire Macro Wire"} • ${item.published_time || "Berita Harian"}\n\n`;
   text += `${item.title}\n\n`;
   (item.paragraphs || []).forEach(p => {
     text += `${p}\n\n`;
