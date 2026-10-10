@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-  <meta name="theme-color" content="#060913">
+  <meta name="theme-color" content="#08090d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>EANews Novaire • Institutional Fundamental Terminal</title>
@@ -13,16 +13,14 @@
   <meta http-equiv="Expires" content="0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/style.css?v=4.3.0">
-  <link rel="icon" type="image/jpeg" href="/static/img/novaire_logo.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/style.css?v=5.0.0">
+  <link rel="icon" type="image/jpeg" href="static/img/novaire_logo.jpg">
 </head>
 <body class="terminal-body">
 
-  <!-- Ambient background glow layers -->
-  <div class="ambient-glow glow-cyan"></div>
-  <div class="ambient-glow glow-crimson"></div>
-  <div class="ambient-glow glow-emerald"></div>
+  <!-- Ambient lighting atmosphere & fine micro-grid -->
+  <div class="ambient-mesh-glow"></div>
 
   <div class="terminal-container">
     
@@ -30,31 +28,31 @@
     <header class="terminal-header">
       <div class="header-left">
         <div class="terminal-logo logo-novaire">
-          <img src="/static/img/novaire_logo.jpg" alt="EANews Novaire Logo" class="novaire-avatar-img">
+          <img src="static/img/novaire_logo.jpg" alt="EANews Novaire Logo" class="novaire-avatar-img">
         </div>
         <div class="terminal-branding">
           <div class="branding-top">
             <span class="pro-pill gold-pill">NOVAIRE QUANT</span>
-            <span class="version-tag">v3.2 TERMINAL</span>
+            <span class="version-tag">v3.2 PRO TERMINAL</span>
           </div>
           <h1 class="branding-title">EANews <span class="gold-gradient">Novaire</span></h1>
         </div>
       </div>
 
-      <!-- Live Dual Clocks -->
+      <!-- Live Dual Clocks (Financial Centers) -->
       <div class="dual-clocks-wrapper">
         <div class="clock-box">
           <div class="clock-label-row">
-            <span class="clock-flag">🇮🇩</span>
-            <span class="clock-city">WIB (JAKARTA)</span>
+            <span class="clock-flag-badge">ID</span>
+            <span class="clock-city">WIB • JAKARTA</span>
           </div>
           <span class="clock-digits font-mono" id="clock-wib">--:--:-- WIB</span>
         </div>
         <div class="clock-separator"></div>
         <div class="clock-box">
           <div class="clock-label-row">
-            <span class="clock-flag">🇬🇧</span>
-            <span class="clock-city">UTC (LONDON)</span>
+            <span class="clock-flag-badge">UK</span>
+            <span class="clock-city">UTC • LONDON</span>
           </div>
           <span class="clock-digits font-mono" id="clock-utc">--:--:-- UTC</span>
         </div>
@@ -67,15 +65,23 @@
           <span class="live-text" id="sync-status-text">LIVE FEED</span>
         </div>
         <button class="nav-icon-btn" id="btn-refresh" title="Perbarui Data" aria-label="Refresh Data">
-          🔄
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+            <path d="M16 21h5v-5"/>
+          </svg>
         </button>
         <button class="nav-icon-btn" id="btn-open-settings" title="Pengaturan Sistem" aria-label="Settings">
-          ⚙️
+          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
         </button>
       </div>
     </header>
 
-    <!-- Ticker Tape Ribbon (Terminal / Airport Crawler) -->
+    <!-- Ticker Tape Ribbon (Terminal Stream Marquee) -->
     <div class="ticker-tape-bar" id="ticker-bar">
       <div class="ticker-badge">
         <span class="ticker-live-dot"></span>
@@ -95,7 +101,6 @@
 
     <!-- 24-HOUR PRE-NEWS RADAR BANNER (Active 24 Hours Prior to Release) -->
     <section class="radar-24h-banner" id="radar-banner">
-      <div class="radar-watermark font-mono">24H PRE-NEWS</div>
       <div class="radar-inner">
         <div class="radar-header">
           <div class="radar-status-badge">
@@ -103,7 +108,7 @@
             <span class="radar-status-text">SIAGA 24 JAM PRA-RILIS BERITA AKTIF</span>
           </div>
           <div class="radar-time-remaining font-mono">
-            <span>Sisa Waktu Menuju Rilis:</span>
+            <span class="radar-time-label">Sisa Waktu Menuju Rilis:</span>
             <strong class="radar-countdown-highlight" id="radar-countdown-val">--h --m --s</strong>
           </div>
         </div>
@@ -112,7 +117,12 @@
           <div class="radar-event-info">
             <h2 class="radar-event-title" id="radar-event-name">Non-Farm Employment Change (NFP)</h2>
             <div class="radar-event-schedule">
-              <span class="radar-cal-icon">📅</span>
+              <svg class="schedule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
               <span id="radar-event-schedule-text">Jumat, 02 Oktober 2026 | 19:30 WIB (12:30 UTC)</span>
             </div>
             <p class="radar-event-desc">
@@ -123,41 +133,51 @@
           <!-- Interactive 24H Timeline Stepper -->
           <div class="stepper-24h">
             <div class="stepper-item step-completed">
-              <div class="step-circle">✓</div>
+              <div class="step-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
               <div class="step-content">
-                <span class="step-time">T-24 Jam</span>
+                <span class="step-time font-mono">T-24 Jam</span>
                 <span class="step-name">Koleksi Konsensus</span>
               </div>
             </div>
             <div class="stepper-bar bar-active"></div>
             <div class="stepper-item step-current">
-              <div class="step-circle step-circle-pulse">⚡</div>
+              <div class="step-circle step-circle-pulse">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
               <div class="step-content">
-                <span class="step-time">T-12 Jam</span>
+                <span class="step-time font-mono">T-12 Jam</span>
                 <span class="step-name">Analisis AI Quant</span>
               </div>
             </div>
             <div class="stepper-bar"></div>
             <div class="stepper-item">
-              <div class="step-circle">📢</div>
+              <div class="step-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </div>
               <div class="step-content">
-                <span class="step-time">T-30 Menit</span>
+                <span class="step-time font-mono">T-30 Menit</span>
                 <span class="step-name">Alert Discord 1</span>
               </div>
             </div>
             <div class="stepper-bar"></div>
             <div class="stepper-item">
-              <div class="step-circle">⚡</div>
+              <div class="step-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
               <div class="step-content">
-                <span class="step-time">T-5 Menit</span>
+                <span class="step-time font-mono">T-5 Menit</span>
                 <span class="step-name">Imminent Alert</span>
               </div>
             </div>
             <div class="stepper-bar"></div>
             <div class="stepper-item">
-              <div class="step-circle">🔥</div>
+              <div class="step-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              </div>
               <div class="step-content">
-                <span class="step-time">RILIS</span>
+                <span class="step-time font-mono">RILIS</span>
                 <span class="step-name">Flash Reaction</span>
               </div>
             </div>
@@ -166,22 +186,40 @@
       </div>
     </section>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs (Floating Segmented Bar) -->
     <nav class="view-tabs" role="tablist">
       <button class="tab-btn active" data-tab="tab-overview" role="tab" aria-selected="true">
-        <span class="tab-icon">📊</span>
+        <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
         <span>Terminal Sinyal & Eksekusi</span>
       </button>
       <button class="tab-btn" data-tab="tab-calendar" role="tab" aria-selected="false">
-        <span class="tab-icon">📅</span>
+        <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
         <span>Radar 24H & Kalender Lengkap</span>
       </button>
       <button class="tab-btn" data-tab="tab-intelligence" role="tab" aria-selected="false">
-        <span class="tab-icon">🧠</span>
+        <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
         <span>Intelejen Makro & Geopolitik</span>
       </button>
       <button class="tab-btn" data-tab="tab-playbook" role="tab" aria-selected="false">
-        <span class="tab-icon">🎯</span>
+        <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="22" y1="12" x2="18" y2="12"/>
+          <line x1="6" y1="12" x2="2" y2="12"/>
+          <line x1="12" y1="6" x2="12" y2="2"/>
+          <line x1="12" y1="22" x2="12" y2="18"/>
+        </svg>
         <span id="tab-playbook-title">Skenario Trading High Impact</span>
       </button>
     </nav>
@@ -202,7 +240,12 @@
           </div>
 
           <div class="bias-main-display">
-            <div class="bias-indicator-symbol" id="bias-symbol">🔺</div>
+            <div class="bias-indicator-symbol" id="bias-symbol">
+              <svg class="bias-glyph-icon glyph-buy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17L17 7"/>
+                <path d="M7 7h10v10"/>
+              </svg>
+            </div>
             <div class="bias-text-group">
               <span class="bias-primary-text" id="bias-value">XAU BUY</span>
               <span class="bias-sub-label">Arah Pergerakan Dominan XAU/USD</span>
@@ -237,7 +280,7 @@
         <div class="terminal-card card-primary-event" id="card-next-news">
           <div class="card-top-bar">
             <div class="badge-cluster">
-              <span class="status-chip chip-red">🔴 HIGH IMPACT USD</span>
+              <span class="status-chip chip-red">HIGH IMPACT USD</span>
               <span class="status-chip chip-amber">PRIORITAS UTAMA</span>
             </div>
             <span class="live-clock-badge font-mono">LIVE TIMER</span>
@@ -246,11 +289,16 @@
           <h3 class="primary-event-title" id="next-news-title">Non-Farm Employment Change (NFP)</h3>
           
           <div class="official-schedule-ribbon">
-            <span class="ribbon-icon">📅</span>
+            <svg class="ribbon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
             <span class="ribbon-text" id="next-news-schedule">Jumat, 02 Okt 2026 | 19:30 WIB</span>
           </div>
 
-          <!-- Digital Split Clock Units -->
+          <!-- Digital Split Clock Units (Horology Recessed Display) -->
           <div class="digital-clock-cluster">
             <div class="clock-segment">
               <span class="segment-number font-mono" id="cd-days">00</span>
@@ -275,7 +323,10 @@
 
           <!-- Consensus Breakdown Table -->
           <div class="consensus-breakdown-box">
-            <div class="breakdown-header">DATA KONSENSUS RESMI (FORECAST vs PREVIOUS)</div>
+            <div class="breakdown-header">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              <span>DATA KONSENSUS RESMI (FORECAST vs PREVIOUS)</span>
+            </div>
             <div class="breakdown-list" id="news-items-list">
               <div class="breakdown-item">
                 <span class="item-name">Menghubungkan kalender...</span>
@@ -297,7 +348,9 @@
           </div>
           <div class="tile-number-row">
             <span class="tile-large-num font-mono" id="spike-value">97%</span>
-            <span class="tile-icon">⚡</span>
+            <div class="tile-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
           </div>
           <div class="meter-track">
             <div class="meter-fill fill-gradient-spike" id="spike-bar" style="width: 97%;"></div>
@@ -313,7 +366,9 @@
           </div>
           <div class="tile-number-row">
             <span class="tile-large-num font-mono" id="oneway-value">72%</span>
-            <span class="tile-icon">🎯</span>
+            <div class="tile-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </div>
           </div>
           <div class="meter-track">
             <div class="meter-fill fill-gradient-cyan" id="oneway-bar" style="width: 72%;"></div>
@@ -329,7 +384,9 @@
           </div>
           <div class="tile-number-row">
             <span class="tile-large-num font-mono" id="twoway-value">28%</span>
-            <span class="tile-icon">🔄</span>
+            <div class="tile-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </div>
           </div>
           <div class="meter-track">
             <div class="meter-fill fill-gradient-purple" id="twoway-bar" style="width: 28%;"></div>
@@ -341,10 +398,9 @@
 
       <!-- DEDICATED FUNDAMENTAL DOSSIER: Alasan Bias & Interpretasi Pasar (NFP / CPI / FOMC) -->
       <section class="card-fundamental-dossier" id="card-fundamental-dossier">
-        <div class="dossier-ambient-glow"></div>
         <div class="card-top-bar">
           <div class="badge-cluster">
-            <span class="status-chip chip-cyan" id="dossier-event-badge">🔴 TIER-1 ULTRA HIGH IMPACT</span>
+            <span class="status-chip chip-cyan" id="dossier-event-badge">TIER-1 ULTRA HIGH IMPACT</span>
             <span class="status-chip chip-gold" id="dossier-model-badge">INSTITUTIONAL MACRO DOSSIER</span>
           </div>
           <span class="live-clock-badge font-mono" id="dossier-event-name-tag">NFP ANALYSIS</span>
@@ -369,7 +425,9 @@
           <!-- Column 1: Alasan Bias Fundamental -->
           <div class="dossier-block block-reason">
             <div class="dossier-block-head">
-              <span class="dossier-block-icon">💡</span>
+              <span class="dossier-icon-pill">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              </span>
               <span class="dossier-block-title">ALASAN BIAS KUANTITATIF &amp; FUNDAMENTAL</span>
             </div>
             <div class="dossier-block-body">
@@ -382,7 +440,9 @@
           <!-- Column 2: Transmisi Pasar (DXY, Yields, Gold) -->
           <div class="dossier-block block-transmission">
             <div class="dossier-block-head">
-              <span class="dossier-block-icon">🔍</span>
+              <span class="dossier-icon-pill">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </span>
               <span class="dossier-block-title">MEKANISME TRANSMISI PASAR (DXY • YIELDS • XAU)</span>
             </div>
             <div class="dossier-block-body" id="dossier-transmission-body">
@@ -397,7 +457,10 @@
         <!-- Consensus Deviation Rules Matrix -->
         <div class="dossier-rules-section">
           <div class="rules-section-header">
-            <span class="rules-title">⚡ MATRIKS ATURAN DEVIASI &amp; RESPON REAKSI HARGA (ACTUAL vs FORECAST)</span>
+            <div class="rules-title-group">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span class="rules-title">MATRIKS ATURAN DEVIASI &amp; RESPON REAKSI HARGA (ACTUAL vs FORECAST)</span>
+            </div>
             <span class="rules-subtitle">Panduan respon pasar seketika saat angka rilis resmi keluar</span>
           </div>
           
@@ -409,13 +472,13 @@
         <!-- Key Watch Factors & Tactical Guidance Footer -->
         <div class="dossier-footer-grid">
           <div class="watch-factors-col">
-            <span class="footer-block-label">🎯 FAKTOR KUNCI YANG WAJIB DIPANTAU SAAT RILIS:</span>
+            <span class="footer-block-label">FAKTOR KUNCI YANG WAJIB DIPANTAU SAAT RILIS:</span>
             <div class="watch-factors-pills" id="dossier-watch-factors">
               <!-- Dynamically populated -->
             </div>
           </div>
           <div class="tactical-guidance-col">
-            <span class="footer-block-label">🛡️ PANDUAN TAKTIS &amp; MANAJEMEN RISIKO:</span>
+            <span class="footer-block-label">PANDUAN TAKTIS &amp; MANAJEMEN RISIKO:</span>
             <p class="tactical-note" id="dossier-tactical-guidance">
               Pasang SL minimal 40-60 pips sebelum rilis untuk mengantisipasi pelebaran spread broker.
             </p>
@@ -446,7 +509,9 @@
           </div>
           
           <div class="executive-synthesis-card">
-            <div class="quote-mark">“</div>
+            <div class="quote-mark">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+            </div>
             <p class="synthesis-paragraph" id="ai-reasoning">
               Sedang menganalisis sentimen makroekonomi, tensi geopolitik Timur Tengah, dan proyeksi rilis data High Impact...
             </p>
@@ -454,7 +519,7 @@
 
           <div class="wire-feed-title-bar">
             <span class="wire-title">BERITA BREAKING & WIRE GLOBAL TERBARU</span>
-            <span class="wire-sub">REUTERS / BLOOMBERG FEED</span>
+            <span class="wire-sub font-mono">REUTERS / BLOOMBERG WIRE</span>
           </div>
           
           <div id="geopolitical-news-container" class="news-feed-stack">
@@ -478,11 +543,11 @@
         </div>
 
         <p class="calendar-intro-desc">
-          Seluruh data kalender ekonomi High Impact USD yang dijadwalkan dalam 24 jam ke depan hingga akhir minggu. Event yang berada di bawah 24 jam diberi lencana khusus <strong>⚡ SIAGA 24H</strong>.
+          Seluruh data kalender ekonomi High Impact USD yang dijadwalkan dalam 24 jam ke depan hingga akhir minggu. Event yang berada di bawah 24 jam diberi lencana khusus <strong>SIAGA 24H</strong>.
         </p>
 
         <div id="upcoming-calendar-list" class="full-calendar-table">
-          <div class="table-loading-row">Menghubungkan kalender ekonomi multi-source...</div>
+          <div class="table-loading-row font-mono">Menghubungkan kalender ekonomi multi-source...</div>
         </div>
       </div>
     </section>
@@ -536,7 +601,7 @@
             <span class="card-tagline">TRADE PLAYBOOK</span>
             <h3 class="tab-section-title" id="playbook-tab-title">Panduan 3 Skenario Reaksi Pasar Menjelang & Saat Rilis NFP</h3>
           </div>
-          <span class="status-chip chip-purple">STRATEGI RESIKO</span>
+          <span class="status-chip chip-purple">STRATEGI RISIKO</span>
         </div>
 
         <div class="playbook-scenarios-grid" id="playbook-scenarios-grid">
@@ -545,7 +610,7 @@
           <div class="scenario-card card-bearish">
             <div class="scenario-header">
               <span class="scenario-badge">SKENARIO 1: HAWKISH USD</span>
-              <span class="scenario-impact">🔻 BEARISH XAU (SELL)</span>
+              <span class="scenario-impact font-mono">BEARISH XAU (SELL)</span>
             </div>
             <div class="scenario-trigger">
               <strong>Kondisi:</strong> Payrolls &gt; 120K &amp; Pengangguran &le; 4.0%
@@ -554,8 +619,8 @@
               Pasar tenaga kerja terbukti sangat perkasa. Menghilangkan wacana pemangkasan bunga agresif. Dolar AS melonjak tajam.
             </p>
             <div class="scenario-action">
-              <span>🎯 <strong>Rekomendasi Arah:</strong> XAU SELL / SHORT</span>
-              <span>⚡ <strong>Target Spike:</strong> Penurunan 60 - 120 pips</span>
+              <span><strong>Rekomendasi Arah:</strong> XAU SELL / SHORT</span>
+              <span><strong>Target Spike:</strong> Penurunan 60 - 120 pips</span>
             </div>
           </div>
 
@@ -563,7 +628,7 @@
           <div class="scenario-card card-bullish">
             <div class="scenario-header">
               <span class="scenario-badge">SKENARIO 2: DOVISH USD</span>
-              <span class="scenario-impact">🔺 BULLISH XAU (BUY)</span>
+              <span class="scenario-impact font-mono">BULLISH XAU (BUY)</span>
             </div>
             <div class="scenario-trigger">
               <strong>Kondisi:</strong> Payrolls &lt; 65K &amp; Pengangguran &ge; 4.2%
@@ -572,8 +637,8 @@
               Pasar tenaga kerja mendingin drastis. Kekhawatiran pelemahan ekonomi memaksa The Fed memangkas suku bunga. Emas melesat naik.
             </p>
             <div class="scenario-action">
-              <span>🎯 <strong>Rekomendasi Arah:</strong> XAU BUY / LONG</span>
-              <span>⚡ <strong>Target Spike:</strong> Lonjakan 80 - 160 pips</span>
+              <span><strong>Rekomendasi Arah:</strong> XAU BUY / LONG</span>
+              <span><strong>Target Spike:</strong> Lonjakan 80 - 160 pips</span>
             </div>
           </div>
 
@@ -581,7 +646,7 @@
           <div class="scenario-card card-mixed">
             <div class="scenario-header">
               <span class="scenario-badge">SKENARIO 3: MIXED / WHIPSAW</span>
-              <span class="scenario-impact">🔄 TWO-WAY SPIKE</span>
+              <span class="scenario-impact font-mono">TWO-WAY SPIKE</span>
             </div>
             <div class="scenario-trigger">
               <strong>Kondisi:</strong> Payrolls Sesuai Ekspektasi (~89K) namun Upah Naik
@@ -590,14 +655,15 @@
               Data bertolak belakang memicu kebingungan algoritma. Terjadi sapu likuiditas 2 arah (whipsaw) dalam 3-5 menit pertama.
             </p>
             <div class="scenario-action">
-              <span>🎯 <strong>Rekomendasi Arah:</strong> Tunggu Breakout M5 / Scalp Retracement</span>
-              <span>⚡ <strong>Target Spike:</strong> Volatilitas 40 pips bolak-balik</span>
+              <span><strong>Rekomendasi Arah:</strong> Tunggu Breakout M5 / Scalp Retracement</span>
+              <span><strong>Target Spike:</strong> Volatilitas 40 pips bolak-balik</span>
             </div>
           </div>
 
         </div>
       </div>
     </section>
+
     <!-- Footer -->
     <footer class="terminal-footer">
       <div class="footer-left">
@@ -606,7 +672,7 @@
       <div class="footer-right">
         <span>ForexFactory XML &amp; FinanceCalendar Multi-Source</span>
         <span>•</span>
-        <span class="font-mono">Status: OK</span>
+        <span class="font-mono">Status: Connected</span>
       </div>
     </footer>
 
@@ -617,13 +683,23 @@
     <div class="modal-window">
       <div class="modal-head">
         <div class="modal-title-group">
-          <span class="modal-head-icon">⚙️</span>
+          <div class="modal-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
           <div>
             <h4 class="modal-head-title">Pengaturan Integrasi &amp; AI</h4>
             <span class="modal-head-sub">Konfigurasi Webhook Discord dan API Key AI • EANews Novaire</span>
           </div>
         </div>
-        <button class="modal-close-cross" id="btn-close-settings" aria-label="Tutup">&times;</button>
+        <button class="modal-close-cross" id="btn-close-settings" aria-label="Tutup">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
 
       <div class="modal-content-body">
@@ -656,6 +732,6 @@
   <!-- Toast Notification System -->
   <div class="toast-shelf" id="toast-container" aria-live="polite"></div>
 
-  <script src="/static/js/app.js?v=4.3.0"></script>
+  <script src="static/js/app.js?v=5.0.0"></script>
 </body>
 </html>

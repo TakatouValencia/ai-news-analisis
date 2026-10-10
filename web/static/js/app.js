@@ -1,5 +1,5 @@
 // ==========================================================================
-// EANews Pro Terminal - Frontend Engine Logic (v3.2)
+// EANews Pro Terminal - Frontend Engine Logic (v5.0 Institutional Edition)
 // ==========================================================================
 
 let state = null;
@@ -19,24 +19,29 @@ function padZero(num) {
   return String(num).padStart(2, '0');
 }
 
-// Toast notification
+// Toast notification with sleek vector glyphs
 function showToast(message, isError = false) {
   const container = document.getElementById("toast-container");
   if (!container) return;
   
   const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.style.borderColor = isError ? "rgba(244, 63, 94, 0.5)" : "rgba(16, 185, 129, 0.5)";
-  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span> <span>${message}</span>`;
+  toast.className = `toast ${isError ? 'toast-error' : 'toast-success'}`;
+  
+  const iconSvg = isError
+    ? `<svg class="toast-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+    : `<svg class="toast-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    
+  toast.innerHTML = `<span class="toast-icon-wrap">${iconSvg}</span> <span class="toast-msg">${message}</span>`;
   container.appendChild(toast);
   
   setTimeout(() => {
     toast.style.opacity = "0";
+    toast.style.transform = "translateY(8px)";
     setTimeout(() => toast.remove(), 250);
   }, 4000);
 }
 
-// Live Dual Clocks
+// Live Dual Clocks (Financial Hubs)
 function updateClocks() {
   const now = new Date();
   
@@ -60,7 +65,7 @@ function updateClocks() {
 
 let lastSeenTopNewsTitle = "";
 
-// Dynamic Airport / Terminal Style Continuous Marquee Ticker
+// Dynamic Continuous Marquee Ticker
 function updateTicker(data) {
   const tickerContent = document.getElementById("ticker-content");
   const tickerClone = document.getElementById("ticker-content-clone");
@@ -88,7 +93,7 @@ function updateTicker(data) {
         tickerBar.classList.add("ticker-flash-new");
         setTimeout(() => tickerBar.classList.remove("ticker-flash-new"), 4000);
       }
-      showToast(`📢 Berita Geopolitik Baru: ${topNewsTitle.substring(0, 50)}...`);
+      showToast(`Berita Geopolitik Baru: ${topNewsTitle.substring(0, 50)}...`);
     }
     lastSeenTopNewsTitle = topNewsTitle;
   }
@@ -123,7 +128,7 @@ function updateTicker(data) {
     newsList.slice(0, 6).forEach((n, idx) => {
       const isTopBreaking = idx === 0 && isNewNews;
       const chipBadge = isTopBreaking 
-        ? '<span class="ticker-tag-chip chip-breaking">BARU 🔥</span>' 
+        ? '<span class="ticker-tag-chip chip-breaking">BARU</span>' 
         : '<span class="ticker-tag-chip chip-geo">WIRE</span>';
       const impactClass = n.impact_xau && n.impact_xau.includes("BUY") ? "cyan-text" : (n.impact_xau && n.impact_xau.includes("SELL") ? "red-text" : "gold-text");
       const impactTag = n.impact_xau ? `<strong class="${impactClass}">[${n.impact_xau}]</strong> ` : "";
@@ -153,7 +158,7 @@ function updateUI(data) {
   
   secondsRemaining = nextEvent.seconds_until || 0;
   
-  // 1. Airport-Style Continuous Marquee Ticker
+  // 1. Ticker
   updateTicker(data);
 
   // 2. 24-Hour Pre-News Radar Banner
@@ -199,12 +204,25 @@ function updateUI(data) {
   biasCard.classList.remove("sell", "buy");
   if (bias.includes("SELL")) {
     biasCard.classList.add("sell");
-    symbolEl.textContent = "🔻";
+    symbolEl.innerHTML = `
+      <svg class="bias-glyph-icon glyph-sell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 7l10 10"/>
+        <path d="M17 7v10H7"/>
+      </svg>`;
   } else if (bias.includes("BUY")) {
     biasCard.classList.add("buy");
-    symbolEl.textContent = "🔺";
+    symbolEl.innerHTML = `
+      <svg class="bias-glyph-icon glyph-buy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 17L17 7"/>
+        <path d="M7 7h10v10"/>
+      </svg>`;
   } else {
-    symbolEl.textContent = "⚠️";
+    symbolEl.innerHTML = `
+      <svg class="bias-glyph-icon glyph-neutral" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>`;
   }
   
   const contextPct = signal.context_percent || 80;
@@ -244,7 +262,7 @@ function updateUI(data) {
         
       row.innerHTML = `
         <span class="item-name">${it.title}</span>
-        <span class="item-figures">${figures}</span>
+        <span class="item-figures font-mono">${figures}</span>
       `;
       itemsContainer.appendChild(row);
     });
@@ -294,17 +312,17 @@ function updateUI(data) {
         row.className = "correlated-row";
         
         const impactClass = item.impact_type === "buy" ? "impact-buy" : (item.impact_type === "sell" ? "impact-sell" : "impact-neutral");
-        const impactIcon = item.impact_type === "buy" ? "🟢" : (item.impact_type === "sell" ? "🔴" : "🟡");
+        const impactDot = `<span class="impact-indicator-dot ${item.impact_type || 'neutral'}"></span>`;
         
         row.innerHTML = `
           <div class="corr-top">
             <span class="corr-title">${item.title}</span>
-            <span class="corr-tag">${item.category}</span>
+            <span class="corr-tag font-mono">${item.category}</span>
           </div>
-          ${item.latest_data ? `<div class="corr-data-line font-mono">📊 ${item.latest_data} · ${item.status || ''}</div>` : ''}
+          ${item.latest_data ? `<div class="corr-data-line font-mono"><span class="data-tag">DATA:</span> ${item.latest_data} · ${item.status || ''}</div>` : ''}
           <div class="corr-note">${item.relation_note}</div>
           <div class="corr-bottom">
-            <span class="impact-text ${impactClass}">${impactIcon} ${item.bias_impact}</span>
+            <span class="impact-text ${impactClass}">${impactDot} ${item.bias_impact}</span>
             <span class="importance-badge font-mono">${item.importance}</span>
           </div>
         `;
@@ -319,7 +337,7 @@ function updateUI(data) {
     const upcomingEvents = calendar.upcoming_events;
     if (upcomingEvents.length > 0) {
       fullCalendarList.innerHTML = "";
-      upcomingEvents.forEach((ev, idx) => {
+      upcomingEvents.forEach((ev) => {
         const row = document.createElement("div");
         const is24h = ev.seconds_until > 0 && ev.seconds_until <= 86400;
         row.className = "calendar-row-card" + (is24h ? " highlight-24h" : "");
@@ -334,20 +352,20 @@ function updateUI(data) {
             <span class="status-chip chip-red" style="width: fit-content;">HIGH IMPACT</span>
           </div>
           <div class="col-schedule font-mono">
-            <span class="ev-date-str">📅 ${ev.datetime_wib || ev.datetime}</span>
-            <span class="ev-countdown-str">⏳ ${ev.countdown_str || ''}</span>
+            <span class="ev-date-str">${ev.datetime_wib || ev.datetime}</span>
+            <span class="ev-countdown-str font-mono">${ev.countdown_str || ''}</span>
           </div>
           <div class="col-figures font-mono">
-            <span>📊 ${figures}</span>
+            <span>${figures}</span>
           </div>
           <div class="col-status-badge">
-            ${is24h ? '<span class="badge-24h">⚡ SIAGA 24H</span>' : '<span class="status-chip chip-cyan">MENDATANG</span>'}
+            ${is24h ? '<span class="badge-24h">SIAGA 24H</span>' : '<span class="status-chip chip-cyan">MENDATANG</span>'}
           </div>
         `;
         fullCalendarList.appendChild(row);
       });
     } else {
-      fullCalendarList.innerHTML = `<div class="table-loading-row">Tidak ada event berita High Impact mendatang minggu ini.</div>`;
+      fullCalendarList.innerHTML = `<div class="table-loading-row font-mono">Tidak ada event berita High Impact mendatang minggu ini.</div>`;
     }
   }
 
@@ -379,7 +397,7 @@ function updateUI(data) {
           <span class="wire-headline">${news.title}</span>
           <span class="status-chip ${impactClass}">${impact}</span>
         </div>
-        ${news.impact_note ? `<div class="news-ai-note">💡 ${news.impact_note}</div>` : ''}
+        ${news.impact_note ? `<div class="news-ai-note font-mono">${news.impact_note}</div>` : ''}
         <div class="wire-foot">
           <span class="font-mono">${news.source || 'Wire'}</span>
           <span class="font-mono">${news.published || 'Terbaru'}</span>
@@ -423,7 +441,7 @@ function renderFundamentalDossier(data) {
   const biasPill = document.getElementById("dossier-bias-indicator");
   const biasText = document.getElementById("dossier-bias-text");
 
-  if (eventBadge) eventBadge.textContent = dossier.event_badge || "🔴 TIER-1 ULTRA HIGH IMPACT";
+  if (eventBadge) eventBadge.textContent = dossier.event_badge || "TIER-1 ULTRA HIGH IMPACT";
   if (eventNameTag) eventNameTag.textContent = `${groupName.toUpperCase()} DOSSIER`;
   if (dossierTitle) dossierTitle.textContent = `Alasan Bias & Interpretasi Fundamental ${groupName}`;
   if (dossierHeadline) {
@@ -453,7 +471,7 @@ function renderFundamentalDossier(data) {
     if (rawTransmission) {
       const lines = rawTransmission.split("\n").filter(l => l.trim().length > 0);
       let html = "";
-      lines.forEach(line => {
+      lines.forEach((line, idx) => {
         let formatted = line;
         if (line.includes(":")) {
           const colonIdx = line.indexOf(":");
@@ -461,7 +479,11 @@ function renderFundamentalDossier(data) {
           const rest = line.substring(colonIdx + 1);
           formatted = `<strong>${prefix}:</strong>${rest}`;
         }
-        html += `<div class="transmission-step-item"><p class="dossier-text">${formatted}</p></div>`;
+        html += `
+          <div class="transmission-step-item">
+            <span class="step-num-bullet">${idx + 1}</span>
+            <p class="dossier-text">${formatted}</p>
+          </div>`;
       });
       transmissionBody.innerHTML = html;
     } else {
@@ -482,13 +504,13 @@ function renderFundamentalDossier(data) {
       const card = document.createElement("div");
       card.className = `rule-scenario-card ${cardClass}`;
       card.innerHTML = `
-        <div class="rule-cond-tag">${r.condition}</div>
-        <div class="rule-trigger-box">🎯 <strong>Pemicu:</strong> ${r.trigger}</div>
+        <div class="rule-cond-tag font-mono">${r.condition}</div>
+        <div class="rule-trigger-box"><span class="trigger-label font-mono">PEMICU:</span> ${r.trigger}</div>
         <div class="rule-detail-line"><strong>DXY & Yields:</strong> ${r.dxy_yield_reaction}</div>
         <div class="rule-reaction-badge">${r.xau_reaction}</div>
         <div class="rule-meta-foot">
-          <span class="rule-pips font-mono">⚡ ${r.expected_pips}</span>
-          <span class="rule-action-pill">${r.action}</span>
+          <span class="rule-pips font-mono">${r.expected_pips}</span>
+          <span class="rule-action-pill font-mono">${r.action}</span>
         </div>
       `;
       rulesGrid.appendChild(card);
@@ -537,22 +559,22 @@ function renderFundamentalDossier(data) {
       const isBullish = r.condition.toLowerCase().includes("bullish") || r.condition.toLowerCase().includes("dovish");
       const isBearish = r.condition.toLowerCase().includes("bearish") || r.condition.toLowerCase().includes("hawkish");
       const cardClass = isBullish ? "card-bullish" : (isBearish ? "card-bearish" : "card-mixed");
-      const impactText = isBullish ? "🔺 BULLISH XAU (BUY)" : (isBearish ? "🔻 BEARISH XAU (SELL)" : "🔄 TWO-WAY SPIKE");
+      const impactText = isBullish ? "BULLISH XAU (BUY)" : (isBearish ? "BEARISH XAU (SELL)" : "TWO-WAY SPIKE");
 
       const card = document.createElement("div");
       card.className = `scenario-card ${cardClass}`;
       card.innerHTML = `
         <div class="scenario-header">
-          <span class="scenario-badge">SKENARIO ${idx + 1}: ${r.condition.toUpperCase()}</span>
-          <span class="scenario-impact">${impactText}</span>
+          <span class="scenario-badge font-mono">SKENARIO ${idx + 1}: ${r.condition.toUpperCase()}</span>
+          <span class="scenario-impact font-mono">${impactText}</span>
         </div>
         <div class="scenario-trigger">
           <strong>Kondisi:</strong> ${r.trigger}
         </div>
         <p class="scenario-desc">${r.dxy_yield_reaction}. ${r.xau_reaction}.</p>
         <div class="scenario-action">
-          <span>🎯 <strong>Rekomendasi Arah:</strong> ${r.action}</span>
-          <span>⚡ <strong>Target Spike:</strong> ${r.expected_pips}</span>
+          <span><strong>Rekomendasi Arah:</strong> ${r.action}</span>
+          <span><strong>Target Spike:</strong> ${r.expected_pips}</span>
         </div>
       `;
       playbookGrid.appendChild(card);
@@ -604,7 +626,7 @@ async function fetchState(force = false) {
 // Manual force refresh
 async function handleRefresh() {
   const btn = document.getElementById("btn-refresh");
-  btn.style.transform = "rotate(180deg)";
+  btn.classList.add("rotating");
   showToast("Menghubungkan kalender & menyinkronkan data...");
   
   try {
@@ -617,7 +639,7 @@ async function handleRefresh() {
   } catch (err) {
     showToast("Gagal memperbarui: " + err, true);
   } finally {
-    setTimeout(() => { btn.style.transform = "none"; }, 500);
+    setTimeout(() => { btn.classList.remove("rotating"); }, 600);
   }
 }
 
