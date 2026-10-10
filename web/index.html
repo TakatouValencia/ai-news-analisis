@@ -14,12 +14,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="static/css/style.css?v=5.0.0">
+  <link rel="stylesheet" href="static/css/style.css?v=5.1.0">
   <link rel="icon" type="image/jpeg" href="static/img/novaire_logo.jpg">
 </head>
 <body class="terminal-body">
 
-  <!-- Ambient lighting atmosphere & fine micro-grid -->
+  <!-- Subtle ambient lighting & micro-grid texture -->
   <div class="ambient-mesh-glow"></div>
 
   <div class="terminal-container">
@@ -33,13 +33,13 @@
         <div class="terminal-branding">
           <div class="branding-top">
             <span class="pro-pill gold-pill">NOVAIRE QUANT</span>
-            <span class="version-tag">v3.2 PRO TERMINAL</span>
+            <span class="version-tag">v5.1 TERMINAL</span>
           </div>
           <h1 class="branding-title">EANews <span class="gold-gradient">Novaire</span></h1>
         </div>
       </div>
 
-      <!-- Live Dual Clocks (Financial Centers) -->
+      <!-- Live Dual Clocks (Financial Hubs) -->
       <div class="dual-clocks-wrapper">
         <div class="clock-box">
           <div class="clock-label-row">
@@ -99,89 +99,63 @@
       </div>
     </div>
 
-    <!-- 24-HOUR PRE-NEWS RADAR BANNER (Active 24 Hours Prior to Release) -->
+    <!-- 24-HOUR PRE-NEWS RADAR (Streamlined Mission-Control Horizon Ribbon) -->
     <section class="radar-24h-banner" id="radar-banner">
-      <div class="radar-inner">
-        <div class="radar-header">
+      <div class="radar-inner-streamlined">
+        <div class="radar-left-group">
           <div class="radar-status-badge">
             <span class="radar-pulse-ring"></span>
             <span class="radar-status-text">SIAGA 24 JAM PRA-RILIS BERITA AKTIF</span>
           </div>
-          <div class="radar-time-remaining font-mono">
-            <span class="radar-time-label">Sisa Waktu Menuju Rilis:</span>
-            <strong class="radar-countdown-highlight" id="radar-countdown-val">--h --m --s</strong>
+          <div class="radar-meta-item">
+            <span class="radar-event-title-compact" id="radar-event-name">Non-Farm Employment Change (NFP)</span>
+            <span class="radar-bullet-sep">•</span>
+            <span class="radar-event-schedule-compact font-mono" id="radar-event-schedule-text">Jumat, 02 Oktober 2026 | 19:30 WIB</span>
           </div>
         </div>
 
-        <div class="radar-body">
-          <div class="radar-event-info">
-            <h2 class="radar-event-title" id="radar-event-name">Non-Farm Employment Change (NFP)</h2>
-            <div class="radar-event-schedule">
-              <svg class="schedule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              <span id="radar-event-schedule-text">Jumat, 02 Oktober 2026 | 19:30 WIB (12:30 UTC)</span>
+        <!-- Sleek Horizon Stepper -->
+        <div class="stepper-24h">
+          <div class="stepper-item step-completed" title="T-24 Jam: Koleksi Konsensus">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <p class="radar-event-desc">
-              Data ekonomi paling berpengaruh bagi emas (XAU/USD). Informasi dan analisis konsensus fundamental telah aktif 24 jam sebelum rilis untuk persiapan manajemen risiko akun.
-            </p>
+            <span class="step-time font-mono">T-24h</span>
           </div>
+          <div class="stepper-bar bar-active"></div>
+          <div class="stepper-item step-current" title="T-12 Jam: Analisis AI Quant">
+            <div class="step-circle step-circle-pulse">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <span class="step-time font-mono">T-12h</span>
+          </div>
+          <div class="stepper-bar"></div>
+          <div class="stepper-item" title="T-30 Menit: Alert Discord 1">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <span class="step-time font-mono">T-30m</span>
+          </div>
+          <div class="stepper-bar"></div>
+          <div class="stepper-item" title="T-5 Menit: Imminent Alert">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span class="step-time font-mono">T-5m</span>
+          </div>
+          <div class="stepper-bar"></div>
+          <div class="stepper-item" title="RILIS: Flash Reaction">
+            <div class="step-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </div>
+            <span class="step-time font-mono">RILIS</span>
+          </div>
+        </div>
 
-          <!-- Interactive 24H Timeline Stepper -->
-          <div class="stepper-24h">
-            <div class="stepper-item step-completed">
-              <div class="step-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <div class="step-content">
-                <span class="step-time font-mono">T-24 Jam</span>
-                <span class="step-name">Koleksi Konsensus</span>
-              </div>
-            </div>
-            <div class="stepper-bar bar-active"></div>
-            <div class="stepper-item step-current">
-              <div class="step-circle step-circle-pulse">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              </div>
-              <div class="step-content">
-                <span class="step-time font-mono">T-12 Jam</span>
-                <span class="step-name">Analisis AI Quant</span>
-              </div>
-            </div>
-            <div class="stepper-bar"></div>
-            <div class="stepper-item">
-              <div class="step-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              </div>
-              <div class="step-content">
-                <span class="step-time font-mono">T-30 Menit</span>
-                <span class="step-name">Alert Discord 1</span>
-              </div>
-            </div>
-            <div class="stepper-bar"></div>
-            <div class="stepper-item">
-              <div class="step-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </div>
-              <div class="step-content">
-                <span class="step-time font-mono">T-5 Menit</span>
-                <span class="step-name">Imminent Alert</span>
-              </div>
-            </div>
-            <div class="stepper-bar"></div>
-            <div class="stepper-item">
-              <div class="step-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-              </div>
-              <div class="step-content">
-                <span class="step-time font-mono">RILIS</span>
-                <span class="step-name">Flash Reaction</span>
-              </div>
-            </div>
-          </div>
+        <!-- T-Minus Countdown Readout -->
+        <div class="radar-time-remaining font-mono">
+          <span class="radar-time-label">T-MINUS:</span>
+          <strong class="radar-countdown-highlight" id="radar-countdown-val">--h --m --s</strong>
         </div>
       </div>
     </section>
@@ -227,16 +201,16 @@
     <!-- TAB 1: TERMINAL SINYAL & EKSEKUSI (OVERVIEW) -->
     <section class="tab-panel active" id="tab-overview" role="tabpanel">
       
-      <!-- Top Row: Hero Bias + Primary News Event -->
+      <!-- Operational Hub: Left (Quant Engine & Metrics) vs Right (Primary Event Focus) -->
       <div class="panel-grid-top">
         
-        <!-- Hero Card 1: Quant Bias Card -->
+        <!-- Left: Quantitative Engine Card -->
         <div class="terminal-card card-bias-hero" id="card-bias">
           <div class="bias-ambient-aura"></div>
           
           <div class="card-top-bar">
-            <span class="card-tagline">PREDICTIVE XAU BIAS</span>
-            <span class="status-chip chip-cyan" id="engine-mode-tag">AI QUANT MODEL</span>
+            <span class="card-tagline">PREDICTIVE XAU QUANT ENGINE</span>
+            <span class="status-chip chip-cyan font-mono" id="engine-mode-tag">AI QUANT MODEL</span>
           </div>
 
           <div class="bias-main-display">
@@ -252,6 +226,7 @@
             </div>
           </div>
 
+          <!-- Dual Meters: Confidence & Score -->
           <div class="bias-meters-wrapper">
             <div class="meter-col">
               <div class="meter-info-line">
@@ -274,28 +249,80 @@
               </div>
             </div>
           </div>
+
+          <!-- Integrated Quant Dynamics Trio (Spike, One-Way, Two-Way) -->
+          <div class="integrated-metrics-trio">
+            
+            <!-- Metric 1: Spike Potential -->
+            <div class="metric-cell">
+              <div class="metric-cell-head">
+                <span class="cell-label">SPIKE POTENTIAL</span>
+                <span class="status-chip chip-red font-mono" id="spike-tier-badge">EXTREME</span>
+              </div>
+              <div class="metric-cell-body">
+                <span class="cell-number font-mono" id="spike-value">97%</span>
+                <div class="meter-track cell-track">
+                  <div class="meter-fill fill-gradient-spike" id="spike-bar" style="width: 97%;"></div>
+                </div>
+              </div>
+              <span class="cell-desc">Peluang lonjakan &gt;60-150 pips</span>
+            </div>
+
+            <!-- Metric 2: One-Way Trajectory -->
+            <div class="metric-cell">
+              <div class="metric-cell-head">
+                <span class="cell-label">ONE-WAY TRAJECTORY</span>
+                <span class="status-chip chip-cyan font-mono">TRENDING</span>
+              </div>
+              <div class="metric-cell-body">
+                <span class="cell-number font-mono" id="oneway-value">72%</span>
+                <div class="meter-track cell-track">
+                  <div class="meter-fill fill-gradient-cyan" id="oneway-bar" style="width: 72%;"></div>
+                </div>
+              </div>
+              <span class="cell-desc">Peluang reli lurus searah</span>
+            </div>
+
+            <!-- Metric 3: Two-Way Retracement -->
+            <div class="metric-cell">
+              <div class="metric-cell-head">
+                <span class="cell-label">TWO-WAY RETRACEMENT</span>
+                <span class="status-chip chip-purple font-mono">WHIPSAW</span>
+              </div>
+              <div class="metric-cell-body">
+                <span class="cell-number font-mono" id="twoway-value">28%</span>
+                <div class="meter-track cell-track">
+                  <div class="meter-fill fill-gradient-purple" id="twoway-bar" style="width: 28%;"></div>
+                </div>
+              </div>
+              <span class="cell-desc">Risiko fakeout sapu likuiditas</span>
+            </div>
+
+          </div>
         </div>
 
-        <!-- Hero Card 2: Primary Upcoming Event Card -->
+        <!-- Right: Primary Upcoming Event Card -->
         <div class="terminal-card card-primary-event" id="card-next-news">
           <div class="card-top-bar">
             <div class="badge-cluster">
-              <span class="status-chip chip-red">HIGH IMPACT USD</span>
-              <span class="status-chip chip-amber">PRIORITAS UTAMA</span>
+              <span class="status-chip chip-red font-mono">HIGH IMPACT USD</span>
+              <span class="status-chip chip-amber font-mono">PRIORITAS UTAMA</span>
             </div>
             <span class="live-clock-badge font-mono">LIVE TIMER</span>
           </div>
 
-          <h3 class="primary-event-title" id="next-news-title">Non-Farm Employment Change (NFP)</h3>
-          
-          <div class="official-schedule-ribbon">
-            <svg class="ribbon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span class="ribbon-text" id="next-news-schedule">Jumat, 02 Okt 2026 | 19:30 WIB</span>
+          <div class="event-headline-wrap">
+            <h3 class="primary-event-title" id="next-news-title">Non-Farm Employment Change (NFP)</h3>
+            
+            <div class="official-schedule-ribbon">
+              <svg class="ribbon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span class="ribbon-text" id="next-news-schedule">Jumat, 02 Okt 2026 | 19:30 WIB</span>
+            </div>
           </div>
 
           <!-- Digital Split Clock Units (Horology Recessed Display) -->
@@ -337,71 +364,12 @@
 
       </div>
 
-      <!-- Mid Row: Quant Metrics Grid -->
-      <div class="metrics-trio-grid">
-        
-        <!-- Metric 1: Spike Volatility -->
-        <div class="terminal-card metric-tile">
-          <div class="tile-header">
-            <span class="tile-eyebrow">POTENSI SPIKE VOLATILITAS</span>
-            <span class="status-chip chip-red" id="spike-tier-badge">EXTREME</span>
-          </div>
-          <div class="tile-number-row">
-            <span class="tile-large-num font-mono" id="spike-value">97%</span>
-            <div class="tile-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            </div>
-          </div>
-          <div class="meter-track">
-            <div class="meter-fill fill-gradient-spike" id="spike-bar" style="width: 97%;"></div>
-          </div>
-          <div class="tile-footnote">Peluang lonjakan harga instan &gt;60-150 pips pada detik rilis data.</div>
-        </div>
-
-        <!-- Metric 2: One-Way Trajectory -->
-        <div class="terminal-card metric-tile">
-          <div class="tile-header">
-            <span class="tile-eyebrow">ONE-WAY TRAJECTORY</span>
-            <span class="status-chip chip-cyan">TRENDING</span>
-          </div>
-          <div class="tile-number-row">
-            <span class="tile-large-num font-mono" id="oneway-value">72%</span>
-            <div class="tile-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            </div>
-          </div>
-          <div class="meter-track">
-            <div class="meter-fill fill-gradient-cyan" id="oneway-bar" style="width: 72%;"></div>
-          </div>
-          <div class="tile-footnote">Peluang reli lurus searah tanpa koreksi dalam pada rentang 15 menit awal.</div>
-        </div>
-
-        <!-- Metric 3: Two-Way Retracement -->
-        <div class="terminal-card metric-tile">
-          <div class="tile-header">
-            <span class="tile-eyebrow">TWO-WAY RETRACEMENT</span>
-            <span class="status-chip chip-purple">WHIPSAW</span>
-          </div>
-          <div class="tile-number-row">
-            <span class="tile-large-num font-mono" id="twoway-value">28%</span>
-            <div class="tile-icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            </div>
-          </div>
-          <div class="meter-track">
-            <div class="meter-fill fill-gradient-purple" id="twoway-bar" style="width: 28%;"></div>
-          </div>
-          <div class="tile-footnote">Risiko fakeout sapu likuiditas atas & bawah sebelum arah sejati terbentuk.</div>
-        </div>
-
-      </div>
-
       <!-- DEDICATED FUNDAMENTAL DOSSIER: Alasan Bias & Interpretasi Pasar (NFP / CPI / FOMC) -->
       <section class="card-fundamental-dossier" id="card-fundamental-dossier">
         <div class="card-top-bar">
           <div class="badge-cluster">
-            <span class="status-chip chip-cyan" id="dossier-event-badge">TIER-1 ULTRA HIGH IMPACT</span>
-            <span class="status-chip chip-gold" id="dossier-model-badge">INSTITUTIONAL MACRO DOSSIER</span>
+            <span class="status-chip chip-cyan font-mono" id="dossier-event-badge">TIER-1 ULTRA HIGH IMPACT</span>
+            <span class="status-chip chip-gold font-mono" id="dossier-model-badge">INSTITUTIONAL MACRO DOSSIER</span>
           </div>
           <span class="live-clock-badge font-mono" id="dossier-event-name-tag">NFP ANALYSIS</span>
         </div>
@@ -419,7 +387,7 @@
           </div>
         </div>
 
-        <!-- 2-Column Split: Alasan Bias (Why Bias) vs Transmisi Pasar (Market Transmission) -->
+        <!-- 2-Column Split: Alasan Bias vs Transmisi Pasar -->
         <div class="dossier-core-grid">
           
           <!-- Column 1: Alasan Bias Fundamental -->
@@ -493,8 +461,8 @@
         <!-- Left: Correlated Indicators -->
         <div class="terminal-card">
           <div class="card-top-bar">
-            <span class="card-tagline" id="correlated-card-label">BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO NFP)</span>
-            <span class="status-chip chip-amber">LEAD-IN RADAR</span>
+            <span class="card-tagline" id="correlated-card-label">BERITA PENDUKUNG & INDIKATOR TERKAIT</span>
+            <span class="status-chip chip-amber font-mono">LEAD-IN RADAR</span>
           </div>
           <div id="correlated-news-container" class="correlated-stack">
             <!-- Dynamically populated -->
@@ -505,7 +473,7 @@
         <div class="terminal-card">
           <div class="card-top-bar">
             <span class="card-tagline">GEOPOLITICAL & MACRO AI SYNTHESIS</span>
-            <span class="status-chip" id="geo-sentiment-tag">GEOPOLITIK: MEMUAT...</span>
+            <span class="status-chip font-mono" id="geo-sentiment-tag">GEOPOLITIK: MEMUAT...</span>
           </div>
           
           <div class="executive-synthesis-card">
@@ -539,7 +507,7 @@
             <span class="card-tagline">FULL ECONOMIC RADAR • HIGH IMPACT USD</span>
             <h3 class="tab-section-title">Jadwal Kalender Berita Ekonomi Mendatang</h3>
           </div>
-          <span class="status-chip chip-cyan">AUTO-SYNC 24 JAM</span>
+          <span class="status-chip chip-cyan font-mono">AUTO-SYNC 24 JAM</span>
         </div>
 
         <p class="calendar-intro-desc">
@@ -558,7 +526,7 @@
         <div class="terminal-card">
           <div class="card-top-bar">
             <span class="card-tagline">AI MACRO INTELLIGENCE</span>
-            <span class="status-chip chip-cyan">LLM REASONING</span>
+            <span class="status-chip chip-cyan font-mono">LLM REASONING</span>
           </div>
           <h3 class="tab-section-title">Korelasi Makroekonomi & Suku Bunga The Fed</h3>
           <p class="intelligence-full-text">
@@ -583,7 +551,7 @@
         <div class="terminal-card">
           <div class="card-top-bar">
             <span class="card-tagline">GEOPOLITICAL SAFE-HAVEN</span>
-            <span class="status-chip chip-amber">DEFENSIVE DEMAND</span>
+            <span class="status-chip chip-amber font-mono">DEFENSIVE DEMAND</span>
           </div>
           <h3 class="tab-section-title">Tensi Geopolitik & Permintaan Safe-Haven</h3>
           <p class="intelligence-full-text">
@@ -601,7 +569,7 @@
             <span class="card-tagline">TRADE PLAYBOOK</span>
             <h3 class="tab-section-title" id="playbook-tab-title">Panduan 3 Skenario Reaksi Pasar Menjelang & Saat Rilis NFP</h3>
           </div>
-          <span class="status-chip chip-purple">STRATEGI RISIKO</span>
+          <span class="status-chip chip-purple font-mono">STRATEGI RISIKO</span>
         </div>
 
         <div class="playbook-scenarios-grid" id="playbook-scenarios-grid">
@@ -609,16 +577,16 @@
           <!-- Skenario A -->
           <div class="scenario-card card-bearish">
             <div class="scenario-header">
-              <span class="scenario-badge">SKENARIO 1: HAWKISH USD</span>
+              <span class="scenario-badge font-mono">SKENARIO 1: HAWKISH USD</span>
               <span class="scenario-impact font-mono">BEARISH XAU (SELL)</span>
             </div>
-            <div class="scenario-trigger">
+            <div class="scenario-trigger font-mono">
               <strong>Kondisi:</strong> Payrolls &gt; 120K &amp; Pengangguran &le; 4.0%
             </div>
             <p class="scenario-desc">
               Pasar tenaga kerja terbukti sangat perkasa. Menghilangkan wacana pemangkasan bunga agresif. Dolar AS melonjak tajam.
             </p>
-            <div class="scenario-action">
+            <div class="scenario-action font-mono">
               <span><strong>Rekomendasi Arah:</strong> XAU SELL / SHORT</span>
               <span><strong>Target Spike:</strong> Penurunan 60 - 120 pips</span>
             </div>
@@ -627,16 +595,16 @@
           <!-- Skenario B -->
           <div class="scenario-card card-bullish">
             <div class="scenario-header">
-              <span class="scenario-badge">SKENARIO 2: DOVISH USD</span>
+              <span class="scenario-badge font-mono">SKENARIO 2: DOVISH USD</span>
               <span class="scenario-impact font-mono">BULLISH XAU (BUY)</span>
             </div>
-            <div class="scenario-trigger">
+            <div class="scenario-trigger font-mono">
               <strong>Kondisi:</strong> Payrolls &lt; 65K &amp; Pengangguran &ge; 4.2%
             </div>
             <p class="scenario-desc">
               Pasar tenaga kerja mendingin drastis. Kekhawatiran pelemahan ekonomi memaksa The Fed memangkas suku bunga. Emas melesat naik.
             </p>
-            <div class="scenario-action">
+            <div class="scenario-action font-mono">
               <span><strong>Rekomendasi Arah:</strong> XAU BUY / LONG</span>
               <span><strong>Target Spike:</strong> Lonjakan 80 - 160 pips</span>
             </div>
@@ -645,16 +613,16 @@
           <!-- Skenario C -->
           <div class="scenario-card card-mixed">
             <div class="scenario-header">
-              <span class="scenario-badge">SKENARIO 3: MIXED / WHIPSAW</span>
+              <span class="scenario-badge font-mono">SKENARIO 3: MIXED / WHIPSAW</span>
               <span class="scenario-impact font-mono">TWO-WAY SPIKE</span>
             </div>
-            <div class="scenario-trigger">
+            <div class="scenario-trigger font-mono">
               <strong>Kondisi:</strong> Payrolls Sesuai Ekspektasi (~89K) namun Upah Naik
             </div>
             <p class="scenario-desc">
               Data bertolak belakang memicu kebingungan algoritma. Terjadi sapu likuiditas 2 arah (whipsaw) dalam 3-5 menit pertama.
             </p>
-            <div class="scenario-action">
+            <div class="scenario-action font-mono">
               <span><strong>Rekomendasi Arah:</strong> Tunggu Breakout M5 / Scalp Retracement</span>
               <span><strong>Target Spike:</strong> Volatilitas 40 pips bolak-balik</span>
             </div>
@@ -732,6 +700,6 @@
   <!-- Toast Notification System -->
   <div class="toast-shelf" id="toast-container" aria-live="polite"></div>
 
-  <script src="static/js/app.js?v=5.0.0"></script>
+  <script src="static/js/app.js?v=5.1.0"></script>
 </body>
 </html>
