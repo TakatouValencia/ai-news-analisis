@@ -37,6 +37,8 @@ class NewsMonitoringScheduler:
         self.last_signal: Dict[str, Any] = {}
         self.last_calendar: Dict[str, Any] = {}
         self.last_news: list = []
+        self.last_bulletins: list = []
+        self.latest_breaking_bulletin: Any = None
 
     def perform_full_cycle(self, force_refresh: bool = False) -> Dict[str, Any]:
         """Runs calendar fetch, geopolitical intelligence, quant calculation, and returns full state."""
@@ -44,8 +46,14 @@ class NewsMonitoringScheduler:
         self.last_calendar = calendar_data
         next_ev = calendar_data.get("next_event")
         
-        news_data = get_latest_geopolitical_news()
+        news_data = get_latest_geopolitical_news(force_refresh=force_refresh)
         self.last_news = news_data
+        
+        daily_bulletins = get_daily_macro_bulletins(force_refresh=force_refresh)
+        self.last_bulletins = daily_bulletins
+        important = [b for b in daily_bulletins if b.get("is_important")]
+        if important:
+            self.latest_breaking_bulletin = important[0]
         
         group_name = next_ev.get("group_name", "USD News") if next_ev else "USD News"
         
@@ -67,8 +75,10 @@ class NewsMonitoringScheduler:
             "next_event": next_ev,
             "correlated_news": calendar_data.get("correlated_news", []),
             "news": news_data,
-            "daily_bulletins": get_daily_macro_bulletins(),
-            "signal": signal
+            "daily_bulletins": daily_bulletins,
+            "latest_breaking_news": self.latest_breaking_bulletin,
+            "signal": signal,
+            "server_time": datetime.now(timezone.utc).isoformat()
         }
 
     def check_and_send_scheduled_alerts(self):
@@ -108,6 +118,14 @@ class NewsMonitoringScheduler:
                 send_discord_webhook(webhook_url, state["signal"], next_ev, stage="imminent")
                 mark_alert_as_sent(alert_key)
 
+    def check_and_update_web_breaking_news(self):
+        """Scans for new important breaking news bulletins and updates state for web interface display only."""
+        bulletins = get_daily_macro_bulletins(force_refresh=False)
+        self.last_bulletins = bulletins
+        important = [b for b in bulletins if b.get("is_important")]
+        if important:
+            self.latest_breaking_bulletin = important[0]
+
     async def run_loop(self):
         self.is_running = True
         print("[Scheduler] News Monitoring Scheduler started.")
@@ -115,11 +133,12 @@ class NewsMonitoringScheduler:
         while self.is_running:
             try:
                 self.check_and_send_scheduled_alerts()
+                self.check_and_update_web_breaking_news()
                 cycle_count += 1
-                # Periodically re-sync geopolitical feeds every 5 minutes
-                if cycle_count >= 5:
+                # Periodically re-sync geopolitical & macro bulletins every 2 minutes
+                if cycle_count >= 2:
                     cycle_count = 0
-                    self.perform_full_cycle(force_refresh=False)
+                    self.perform_full_cycle(force_refresh=True)
             except Exception as e:
                 print(f"[Scheduler] Error in monitoring cycle: {e}")
             # Check every 60 seconds

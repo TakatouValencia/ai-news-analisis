@@ -1,6 +1,7 @@
 import json
 import urllib.request
 import urllib.error
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 from config import load_settings
 
@@ -58,7 +59,15 @@ def rule_based_sentiment_analysis(headlines: List[Dict[str, Any]]) -> Dict[str, 
         "mode": "rule_based_engine"
     }
 
+_llm_cooldown_until = 0
+
 def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, timeout: int = 8) -> Dict[str, Any] | None:
+    global _llm_cooldown_until
+    now_ts = datetime.now(timezone.utc).timestamp()
+    if now_ts < _llm_cooldown_until:
+        # Avoid retrying during quota exhaustion cooldown
+        return None
+
     payload = {
         "model": model_name,
         "messages": messages,
@@ -78,7 +87,13 @@ def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, 
             parsed["mode"] = f"llm_{model_name}"
             return parsed
     except Exception as e:
-        print(f"[AI Analyzer] Model '{model_name}' tidak merespons ({e}), mencoba fallback...")
+        err_msg = str(e)
+        if "429" in err_msg or "too many requests" in err_msg.lower() or "quota" in err_msg.lower():
+            # Activate 10-minute cooldown
+            _llm_cooldown_until = now_ts + 600
+            print(f"[AI Analyzer] Quota 429 pada {model_name}, cooldown 10 menit aktif. Beralih ke mesin analisa instan.")
+        else:
+            print(f"[AI Analyzer] Model '{model_name}' tidak merespons ({e}), mencoba fallback...")
         return None
 
 def analyze_with_llm(headlines: List[Dict[str, Any]], next_event_title: str) -> Dict[str, Any]:
@@ -141,13 +156,19 @@ def interpret_single_news_item(news_text: str) -> Dict[str, Any]:
     bullish_signals = [
         "war", "strike", "attack", "missile", "iran", "israel", "conflict", "crisis", "threat", 
         "sanction", "military", "safe-haven", "rally", "surges", "bank fail", "emergency fund", 
-        "liquidity crisis", "cut", "dovish", "rate cut", "diversifikasi", "tanah jarang", 
-        "emas batangan", "dedolarisasi", "financial stability board", "kesenjangan likuiditas"
+        "liquidity crisis", "cut", "dovish", "rate cut", "rate cuts", "diversifikasi", "tanah jarang", 
+        "emas batangan", "dedolarisasi", "financial stability board", "kesenjangan likuiditas",
+        "geopolitical risks", "geopolitical tension", "gold rallies", "gold climbs", "gold surges",
+        "gold breaks", "record high", "all-time high", "dollar falls", "dollar drops", "dollar weakens",
+        "yields fall", "yields drop", "cooling inflation", "slowing growth", "recession fears"
     ]
     bearish_signals = [
         "peace", "ceasefire", "truce", "diplomatis", "tidak menyerang", "perundingan", 
-        "minyak turun", "hike", "hawkish", "dollar gains", "rate pause", "strong jobs", 
-        "yields surge", "inflasi melunak", "pengetatan pajak", "kekhawatiran mereda"
+        "minyak turun", "hike", "hawkish", "dollar gains", "dollar strengthens", "dollar surges",
+        "dollar rallies", "usd strengthens", "rate pause", "strong jobs", "yields surge",
+        "yields rise", "yields climb", "higher for longer", "inflasi melunak", "pengetatan pajak",
+        "kekhawatiran mereda", "risk-on", "gold drops", "gold declines", "gold falls", "gold slides",
+        "gold steadies", "pressure on gold", "profit taking", "gold weakens", "rate hike", "fed tightens"
     ]
     
     bull_count = sum(1 for w in bullish_signals if w in text_lower)
@@ -170,7 +191,75 @@ def interpret_single_news_item(news_text: str) -> Dict[str, Any]:
             "xau": "XAU/USD Cenderung Tertekan • Menguji support demand kunci"
         }
         tactical_action = "Waspadai aksi beli agresif di area resisten tinggi. Ambil sikap sabar menanti pengujian support kuat atau konfirmasi rilis NFP sebelum entri posisi baru."
-    elif "obligasi treasury stabil" in text_lower or "imbal hasil obligasi" in text_lower:
+    elif any(w in text_lower for w in ["cpi", "inflasi", "inflation", "pekan cpi", "fomc", "fed rate", "powell", "rate hike", "hold off a rate"]):
+        bias = "NEUTRAL TO REACTIVE XAU"
+        bias_badge = "ANTISIPASI KATALIS INFLASI & FED"
+        impact_color = "neutral"
+        headline_analysis = "Pelaku pasar bersiap menyambut rilis data inflasi utama yang akan menentukan arah kebijakan suku bunga The Fed berikutnya."
+        transmission = (
+            "1. Data inflasi acuan menjadi faktor determinan ekspektasi pelonggaran moneter The Fed.\n"
+            "2. Pergerakan imbal hasil obligasi AS dan DXY bereaksi tajam terhadap deviasi data terhadap konsensus pasar.\n"
+            "3. Pasangan XAU/USD berkonsolidasi menunggu konfirmasi arah volatilitas pasca rilis data resmi."
+        )
+        intermarket = {
+            "oil": "Minyak Rentang Sempit • Mengantisipasi proyeksi permintaan global",
+            "yields": "US 10Y Yield Menunggu Data • Bertahan di area pivot krusial",
+            "dxy": "DXY Konsolidasi Menguji Level Kritis 104.00 - 104.50",
+            "xau": "XAU/USD Konsolidasi Tinggi • Menanti lonjakan volatilitas pasca berita"
+        }
+        tactical_action = "Waspadai eksposur posisi berlebih menjelang rilis. Gunakan strategi breakout atau tunggu konfirmasi arah pasca berita."
+    elif any(w in text_lower for w in ["plunge", "merosot", "plunges", "drop", "tumble", "critical support", "support kritis"]):
+        bias = "BEARISH SHORT-TERM XAU"
+        bias_badge = "PENGUJIAN SUPPORT KRITIS"
+        impact_color = "sell"
+        headline_analysis = "Tekanan likuidasi jangka pendek mendorong harga emas merosot menguji level pertahanan support krusial."
+        transmission = (
+            "1. Penurunan tajam memicu eksekusi order stop-loss posisi beli dan peningkatan volume jual spot.\n"
+            "2. Penguatan indeks dolar dan kestabilan imbal hasil obligasi mempersempit ruang kenaikan intraday.\n"
+            "3. Penentuan arah swing harga bergantung pada kemampuan pembeli mempertahankan area demand kunci."
+        )
+        intermarket = {
+            "oil": "Minyak Bergerak Fleksibel Menjaga Support",
+            "yields": "US 10Y Yield Bertahan di Level Atas",
+            "dxy": "DXY Relatif Kuat Menekan Logam Mulia",
+            "xau": "XAU/USD Menguji Support Kritis • Waspadai Penembusan Lanjutan"
+        }
+        tactical_action = "Hindari menangkap pisau jatuh (catching falling knives). Pantau candle rejection kuat pada timeframe H1 sebelum mempertimbangkan entri buy."
+    elif any(w in text_lower for w in ["rebound", "bulls defend", "buyers retain", "pertahankan kendali", "menanjak", "rally", "buyers control"]):
+        bias = "BULLISH XAU"
+        bias_badge = "REBOUND & PERTAHANAN BUYERS"
+        impact_color = "buy"
+        headline_analysis = "Pembeli berhasil mempertahankan area demand kunci, memicu aksi rebound dan minat beli teknikal pada emas."
+        transmission = (
+            "1. Bertahannya level support krusial menarik masuk likuiditas beli institusional (buy on dip).\n"
+            "2. Sentimen defensif dan penolakan harga rendah menahan penurunan lebih lanjut.\n"
+            "3. Momentum XAU/USD terbuka untuk menguji kembali area resisten terdekat."
+        )
+        intermarket = {
+            "oil": "Minyak Cenderung Stabil di Tengah Ketidakpastian Pasokan",
+            "yields": "US 10Y Yield Tertahan di Bawah Resisten Kritis",
+            "dxy": "DXY Terkoreksi Ringan Memberi Ruang Bernapas Bagi Emas",
+            "xau": "XAU/USD Rebound Menguat • Menjaga Struktur Bullish Swing"
+        }
+        tactical_action = "Cari konfirmasi entri Buy on Retest di area demand dengan target resisten pertama dan stop-loss terukur."
+    elif any(w in text_lower for w in ["attacks deepen", "middle east", "supply fears", "kekhawatiran pasokan", "eskalasi", "war", "missile", "serangan"]):
+        bias = "BULLISH XAU"
+        bias_badge = "PREMI RISIKO SAFE-HAVEN"
+        impact_color = "buy"
+        headline_analysis = "Meningkatnya eskalasi serangan di Timur Tengah memicu kekhawatiran pasokan energi dan lonjakan arus modal safe-haven ke emas."
+        transmission = (
+            "1. Eskalasi konflik kawasan meningkatkan premi risiko pada minyak mentah dan aset riil.\n"
+            "2. Investor global melakukan lindung nilai terhadap potensi gangguan ekonomi dan volatilitas pasar saham.\n"
+            "3. Emas XAU/USD mendapatkan aliran dana beli safe-haven yang solid."
+        )
+        intermarket = {
+            "oil": "Minyak Mentah Melonjak • Kekhawatiran Gangguan Pasokan",
+            "yields": "Yield Obligasi Tertekan Aliran Flight-to-Safety",
+            "dxy": "DXY Bergerak Fluktuatif Mengikuti Polarisasi Likuiditas",
+            "xau": "XAU/USD Menguat Kuat • Safe-Haven Premium Aktif"
+        }
+        tactical_action = "Prioritaskan posisi Buy on Dip saat terjadi koreksi minor; pasang trailing stop untuk mengunci keuntungan momentum."
+    elif "treasury stabil" in text_lower or "yield 10y stabil" in text_lower:
         bias = "NEUTRAL TO BULLISH XAU"
         bias_badge = "KONSOLIDASI MENUNGGU KATALIS"
         impact_color = "neutral"
@@ -204,6 +293,23 @@ def interpret_single_news_item(news_text: str) -> Dict[str, Any]:
             "xau": "XAU/USD Mendapat Dukungan Kuat • Akumulasi institusi di level diskon"
         }
         tactical_action = "Pertimbangkan strategi Buy on Dip saat terjadi koreksi intraday menuju area support dinamis."
+    elif any(w in text_lower for w in ["dollar strengthens", "dollar surges", "gold declines", "gold drops", "gold falls", "pressure on gold", "profit taking on gold"]):
+        bias = "BEARISH XAU"
+        bias_badge = "TEKANAN PENGUATAN DOLAR AS"
+        impact_color = "sell"
+        headline_analysis = "Penguatan Dolar AS (DXY) dan kenaikan imbal hasil obligasi secara langsung menekan valuasi emas spot XAU/USD."
+        transmission = (
+            "1. Penguatan Dolar AS membuat emas yang berdenominasi USD menjadi relatif lebih mahal bagi investor global.\n"
+            "2. Daya tarik instrumen yield moneter AS memicu aksi likuidasi posisi beli (long unwinding) pada logam mulia.\n"
+            "3. Harga emas XAU/USD terdorong menguji area demand support kunci dan rentan mengalami aksi koreksi teknikal."
+        )
+        intermarket = {
+            "oil": "Minyak Terkoreksi • Penguatan Dolar AS membatasi harga komoditas",
+            "yields": "US 10Y Yield Menguat • Menambah beban opportunity cost emas",
+            "dxy": "Indeks Dolar (DXY) Naik Menguat • Tekanan langsung ke emas spot",
+            "xau": "XAU/USD Melemah Tertekan • Menguji batas support teknikal terdekat"
+        }
+        tactical_action = "Waspadai aksi Buy terburu-buru. Tunggu konfirmasi rejection kuat di area demand sebelum membuka posisi beli baru."
     elif bull_count > bear_count:
         bias = "BULLISH XAU"
         bias_badge = "SAFE-HAVEN & INFLATION HEDGE"

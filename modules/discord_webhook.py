@@ -182,3 +182,140 @@ def send_discord_webhook(webhook_url: str, signal: Dict[str, Any], next_event: O
             "success": False,
             "error": str(e)
         }
+
+def format_breaking_news_embed(bulletin: Dict[str, Any]) -> Dict[str, Any]:
+    interp = bulletin.get("interpretation", {})
+    bias = interp.get("bias", "NEUTRAL")
+    bias_badge = interp.get("bias_badge", "ANALISIS PASAR")
+    
+    if "SELL" in bias:
+        color = COLOR_SELL
+        bias_emoji = "🔻 🔴"
+    elif "BUY" in bias:
+        color = COLOR_BUY
+        bias_emoji = "🔺 🟢"
+    else:
+        color = COLOR_NEUTRAL
+        bias_emoji = "⚠️ 🟡"
+        
+    title = bulletin.get("title", "BERITA MAKRO TERBARU")
+    channel = bulletin.get("channel", "Novaire Macro Wire")
+    pub_time = bulletin.get("published_time", "Terbaru")
+    category = bulletin.get("category", "Geopolitik & Makro")
+    
+    headline_analysis = interp.get("headline_analysis", "Analisis transmisi makro terhadap XAU/USD.")
+    transmission = interp.get("transmission_mechanism", "Transmisi likuiditas dan sentimen safe-haven.")
+    intermarket = interp.get("intermarket_matrix", {})
+    tactical_action = interp.get("tactical_action", "Pantau level teknikal support/resisten utama.")
+    
+    paragraphs = bulletin.get("paragraphs", [])
+    brief_text = paragraphs[0] if paragraphs else ""
+    if len(brief_text) > 350:
+        brief_text = brief_text[:350] + "..."
+
+    matrix_lines = []
+    if intermarket.get("oil"): matrix_lines.append(f"• **Minyak:** {intermarket['oil']}")
+    if intermarket.get("yields"): matrix_lines.append(f"• **US 10Y Yield:** {intermarket['yields']}")
+    if intermarket.get("dxy"): matrix_lines.append(f"• **Dolar (DXY):** {intermarket['dxy']}")
+    if intermarket.get("xau"): matrix_lines.append(f"• **Emas (XAU/USD):** {intermarket['xau']}")
+    matrix_str = "\n".join(matrix_lines) if matrix_lines else "• Reaksi pasar normal terukur."
+
+    fields = [
+        {
+            "name": "🎯 EXPECTED XAU/USD BIAS",
+            "value": f"### {bias_emoji} {bias} • {bias_badge}",
+            "inline": False
+        },
+        {
+            "name": "💡 ANALISIS KUNCI EKSEKUTIF",
+            "value": headline_analysis[:1024],
+            "inline": False
+        },
+        {
+            "name": "🔄 MEKANISME TRANSMISI MAKRO (DXY • YIELD • XAU)",
+            "value": transmission[:1024],
+            "inline": False
+        },
+        {
+            "name": "🌐 PROYEKSI PASAR GLOBAL (INTERMARKET)",
+            "value": matrix_str[:1024],
+            "inline": False
+        },
+        {
+            "name": "🎯 PANDUAN TAKTIS TRADER",
+            "value": tactical_action[:1024],
+            "inline": False
+        }
+    ]
+
+    if brief_text:
+        fields.append({
+            "name": "📰 RINGKASAN BERITA",
+            "value": f"> {brief_text}",
+            "inline": False
+        })
+
+    embed = {
+        "title": f"🚨 [BREAKING WIRE & INTERPRETASI]: {title[:200]}",
+        "description": f"**Kanal:** `{channel}` • ⏰ `{pub_time}`\n🏷️ **Kategori:** `{category}`",
+        "color": color,
+        "author": {
+            "name": "EANews Novaire • Macro Wire Sentinel",
+            "icon_url": "https://raw.githubusercontent.com/TakatouValencia/ai-news-analisis/main/web/static/img/novaire_logo.jpg"
+        },
+        "fields": fields,
+        "footer": {
+            "text": f"EANews Novaire Macro Sentinel • Waktu: {pub_time}",
+            "icon_url": "https://raw.githubusercontent.com/TakatouValencia/ai-news-analisis/main/web/static/img/novaire_logo.jpg"
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    return embed
+
+def send_breaking_news_discord_webhook(webhook_url: str, bulletin: Dict[str, Any]) -> Dict[str, Any]:
+    """Sends immediate Discord alert for high impact / breaking macro news and its AI interpretation."""
+    if not webhook_url or not webhook_url.strip().startswith("http"):
+        return {
+            "success": False,
+            "error": "URL Discord Webhook belum diisi atau tidak valid."
+        }
+        
+    embed = format_breaking_news_embed(bulletin)
+    payload = {
+        "content": "@everyone 🚨 **BREAKING NEWS & INTERPRETASI PASAR XAU/USD • EANEWS NOVAIRE**",
+        "username": "EANews Novaire Wire",
+        "avatar_url": "https://raw.githubusercontent.com/TakatouValencia/ai-news-analisis/main/web/static/img/novaire_logo.jpg",
+        "embeds": [embed],
+        "allowed_mentions": {
+            "parse": ["everyone"]
+        }
+    }
+    
+    data = json.dumps(payload).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "EANewsNovaireBot/3.2"
+    }
+    
+    req = urllib.request.Request(webhook_url.strip(), data=data, headers=headers)
+    
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return {
+                "success": resp.status in [200, 204],
+                "status_code": resp.status,
+                "message": "Alert Berita Penting berhasil dikirim ke Discord!"
+            }
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="ignore")
+        return {
+            "success": False,
+            "status_code": e.code,
+            "error": f"HTTP {e.code}: {body}"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+

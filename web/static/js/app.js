@@ -382,29 +382,115 @@ function updateUI(data) {
     reasoningEl.textContent = signal.ai_reasoning || "Analisis geopolitik dan deviasi fundamental sedang aktif.";
   }
 
+  // 6.5. Featured Breaking News Horizon Card (Tab 1 Main Dashboard)
+  const breakingBanner = document.getElementById("featured-breaking-banner");
+  if (breakingBanner) {
+    const bulletins = data.daily_bulletins || [];
+    const importantBulletin = bulletins.find(b => b.is_important) || bulletins[0];
+    if (importantBulletin) {
+      breakingBanner.classList.remove("hidden");
+      const titleEl = document.getElementById("breaking-headline-text");
+      const descEl = document.getElementById("breaking-analysis-text");
+      const catEl = document.getElementById("breaking-cat-pill");
+      const timeEl = document.getElementById("breaking-time-pill");
+      const biasBox = document.getElementById("breaking-bias-box");
+      const biasVal = document.getElementById("breaking-bias-value");
+
+      if (titleEl) titleEl.textContent = importantBulletin.title || "BERITA MAKRO TERBARU";
+      const interp = importantBulletin.interpretation || {};
+      if (descEl) descEl.textContent = interp.headline_analysis || (importantBulletin.paragraphs ? importantBulletin.paragraphs[0] : "Analisis pasar aktif.");
+      if (catEl) catEl.textContent = (importantBulletin.category || "MAKRO").toUpperCase();
+      if (timeEl) timeEl.textContent = importantBulletin.published_time || "Terbaru";
+
+      const bias = interp.bias || "NEUTRAL";
+      if (biasVal) biasVal.textContent = bias;
+      if (biasBox) {
+        biasBox.className = "breaking-bias-box font-mono";
+        if (bias.includes("BUY")) biasBox.classList.add("buy");
+        else if (bias.includes("SELL")) biasBox.classList.add("sell");
+        else biasBox.classList.add("neutral");
+      }
+
+      // Jump button to Tab 3
+      const jumpBtn = document.getElementById("btn-view-breaking-dossier");
+      if (jumpBtn) {
+        jumpBtn.onclick = () => {
+          const tabBtn = document.querySelector('.tab-btn[data-tab="tab-intelligence"]');
+          if (tabBtn) tabBtn.click();
+          setTimeout(() => {
+            const cardEl = document.getElementById(`bulletin-${importantBulletin.id}`);
+            if (cardEl) {
+              cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+              cardEl.classList.add("card-highlight-pulse");
+              setTimeout(() => cardEl.classList.remove("card-highlight-pulse"), 2500);
+            }
+          }, 150);
+        };
+      }
+    } else {
+      breakingBanner.classList.add("hidden");
+    }
+  }
+
   const newsFeedContainer = document.getElementById("geopolitical-news-container");
-  if (newsFeedContainer && data.news) {
+  if (newsFeedContainer) {
     newsFeedContainer.innerHTML = "";
-    data.news.slice(0, 5).forEach(news => {
+    // Display top daily bulletins with rich tags on Tab 1
+    const topBulletins = (data.daily_bulletins || []).slice(0, 3);
+    topBulletins.forEach(b => {
       const item = document.createElement("div");
-      item.className = "wire-item";
-      
-      const impact = news.impact_xau || "NEUTRAL";
-      const impactClass = impact.includes("BUY") ? "chip-cyan" : (impact.includes("SELL") ? "chip-red" : "chip-amber");
-      
+      item.className = "wire-item wire-item-bulletin" + (b.is_important ? " wire-item-important" : "");
+      const interp = b.interpretation || {};
+      const bias = interp.bias || "NEUTRAL";
+      const impactClass = bias.includes("BUY") ? "chip-cyan" : (bias.includes("SELL") ? "chip-red" : "chip-amber");
+
       item.innerHTML = `
         <div class="wire-item-head">
-          <span class="wire-headline">${news.title}</span>
-          <span class="status-chip ${impactClass}">${impact}</span>
+          <span class="wire-headline">${b.title}</span>
+          <div style="display:flex;gap:4px;align-items:center;">
+            ${b.is_important ? '<span class="status-chip chip-red font-mono blink-badge" style="font-size:9px;padding:1px 5px;">PENTING</span>' : ''}
+            <span class="status-chip ${impactClass} font-mono">${bias}</span>
+          </div>
         </div>
-        ${news.impact_note ? `<div class="news-ai-note font-mono">${news.impact_note}</div>` : ''}
+        ${interp.headline_analysis ? `<div class="news-ai-note font-mono">${interp.headline_analysis}</div>` : ''}
         <div class="wire-foot">
-          <span class="font-mono">${news.source || 'Wire'}</span>
-          <span class="font-mono">${news.published || 'Terbaru'}</span>
+          <span class="font-mono">${b.category || 'Makro'}</span>
+          <span class="font-mono">${b.published_time || 'Hari ini'}</span>
         </div>
       `;
+      item.onclick = () => {
+        const tabBtn = document.querySelector('.tab-btn[data-tab="tab-intelligence"]');
+        if (tabBtn) tabBtn.click();
+        setTimeout(() => {
+          const cardEl = document.getElementById(`bulletin-${b.id}`);
+          if (cardEl) cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+      };
       newsFeedContainer.appendChild(item);
     });
+
+    // Also display remaining live wire items
+    if (data.news) {
+      data.news.slice(0, 3).forEach(news => {
+        const item = document.createElement("div");
+        item.className = "wire-item";
+        const impact = news.impact_xau || "NEUTRAL";
+        const impactClass = impact.includes("BUY") ? "chip-cyan" : (impact.includes("SELL") ? "chip-red" : "chip-amber");
+        
+        item.innerHTML = `
+          <div class="wire-item-head">
+            <span class="wire-headline">${news.title}</span>
+            <span class="status-chip ${impactClass}">${impact}</span>
+          </div>
+          ${news.impact_note ? `<div class="news-ai-note font-mono">${news.impact_note}</div>` : ''}
+          <div class="wire-foot">
+            <span class="font-mono">${news.source || 'Wire'}</span>
+            <span class="font-mono">${news.published || 'Terbaru'}</span>
+          </div>
+        `;
+        newsFeedContainer.appendChild(item);
+      });
+    }
   }
 
   // 9. Daily Macro Bulletins (JA Journal Ars Feed)
@@ -752,9 +838,22 @@ setInterval(() => {
 // ==========================================================================
 let currentBulletins = [];
 let activeNewsCategory = "all";
+let lastSeenTopBulletinId = "";
 
 function renderDailyBulletins(bulletins) {
   if (bulletins && bulletins.length > 0) {
+    const topBulletin = bulletins[0];
+    if (topBulletin && topBulletin.id && topBulletin.id !== lastSeenTopBulletinId) {
+      if (lastSeenTopBulletinId !== "" && topBulletin.is_important) {
+        showToast(`🚨 BERITA PENTING BARU: ${topBulletin.title.substring(0, 45)}... [${topBulletin.interpretation?.bias || 'XAU'}]`);
+        const tickerBar = document.getElementById("ticker-bar");
+        if (tickerBar) {
+          tickerBar.classList.add("ticker-flash-new");
+          setTimeout(() => tickerBar.classList.remove("ticker-flash-new"), 4000);
+        }
+      }
+      lastSeenTopBulletinId = topBulletin.id;
+    }
     currentBulletins = bulletins;
   }
   const container = document.getElementById("daily-bulletin-feed");
@@ -762,7 +861,12 @@ function renderDailyBulletins(bulletins) {
 
   const filtered = activeNewsCategory === "all"
     ? currentBulletins
-    : currentBulletins.filter(b => (b.category || "").toLowerCase().includes(activeNewsCategory.toLowerCase()));
+    : currentBulletins.filter(b => {
+        const cat = (b.category || "").toLowerCase();
+        const active = activeNewsCategory.toLowerCase();
+        if (active === "kebijakan") return cat.includes("fed") || cat.includes("inflasi") || cat.includes("kebijakan");
+        return cat.includes(active);
+      });
 
   if (!filtered || filtered.length === 0) {
     container.innerHTML = `<div class="table-loading-row font-mono">Tidak ada berita untuk filter kategori ini.</div>`;
@@ -778,7 +882,7 @@ function renderDailyBulletins(bulletins) {
     const borderClass = bias.includes("BUY") ? "border-buy" : (bias.includes("SELL") ? "border-sell" : "border-neutral");
 
     const card = document.createElement("article");
-    card.className = `bulletin-card ${borderClass}`;
+    card.className = `bulletin-card ${borderClass}${item.is_important ? ' important-bulletin' : ''}`;
     card.id = `bulletin-${item.id}`;
 
     // Format paragraphs
@@ -827,6 +931,7 @@ function renderDailyBulletins(bulletins) {
           </div>
         </div>
         <div class="bulletin-meta-right">
+          ${item.is_important ? '<span class="status-chip chip-red font-mono blink-badge">🚨 PENTING</span>' : ''}
           <span class="status-chip chip-amber font-mono">${item.category || "Makro"}</span>
           <span class="bulletin-time-pill font-mono">${item.published_time || "Terbaru"}</span>
         </div>
@@ -1043,6 +1148,31 @@ function setupDailyNewsEvents() {
       renderDailyBulletins(currentBulletins);
     });
   });
+
+  // Manual force sync for daily macro bulletins
+  const syncBulletinsBtn = document.getElementById("btn-sync-bulletins");
+  if (syncBulletinsBtn) {
+    syncBulletinsBtn.addEventListener("click", async () => {
+      syncBulletinsBtn.classList.add("rotating");
+      showToast("Menyinkronkan berita harian & menggenerate interpretasi...");
+      try {
+        const res = await fetch("/api/daily-news/refresh", { method: "POST" });
+        if (res.ok) {
+          const resp = await res.json();
+          if (resp.bulletins) {
+            renderDailyBulletins(resp.bulletins);
+            showToast("Berita harian & interpretasi berhasil diperbarui!");
+          }
+        } else {
+          showToast("Gagal memperbarui berita harian.", true);
+        }
+      } catch (err) {
+        showToast("Error jaringan saat sinkronisasi: " + err, true);
+      } finally {
+        setTimeout(() => { syncBulletinsBtn.classList.remove("rotating"); }, 600);
+      }
+    });
+  }
 
   // Toggle Custom Interpreter
   const toggleBtn = document.getElementById("btn-toggle-custom-interpreter");

@@ -3335,3 +3335,216 @@ body.terminal-body {
     font-size: 10px;
   }
 }
+
+/* ==========================================================================
+   Live Daily News & Auto-Sync Styles
+   ========================================================================== */
+.live-auto-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  letter-spacing: 0.04em;
+}
+
+.btn-refresh-bulletins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-high);
+  padding: 7px 13px;
+  border-radius: var(--r-md);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-refresh-bulletins:hover {
+  background: var(--gold-surface);
+  border-color: var(--gold-border);
+  color: var(--gold-light);
+  transform: translateY(-1px);
+}
+
+.btn-refresh-bulletins.rotating svg {
+  animation: spin-refresh 0.7s linear infinite;
+}
+
+.bulletin-card.important-bulletin {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.04) 0%, rgba(13, 18, 30, 0.85) 100%);
+  box-shadow: 0 4px 24px rgba(239, 68, 68, 0.1);
+}
+
+.blink-badge {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.45) !important;
+  animation: pulse-badge 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.82; transform: scale(0.97); }
+}
+
+/* ==========================================================================
+   Featured Breaking News Horizon Banner (Tab 1 Main Dashboard)
+   ========================================================================== */
+.breaking-news-live-banner {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(13, 18, 30, 0.95) 50%, rgba(212, 175, 55, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: var(--r-xl);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+  animation: toast-in 0.3s ease-out;
+}
+
+.breaking-news-live-banner.hidden {
+  display: none !important;
+}
+
+.breaking-banner-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.breaking-badge-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.breaking-banner-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+}
+
+.breaking-banner-desc {
+  font-size: 12.5px;
+  color: var(--text-body);
+  line-height: 1.45;
+}
+
+.breaking-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.breaking-bias-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  background: rgba(11, 15, 24, 0.85);
+  border: 1px solid var(--border-subtle);
+  min-width: 105px;
+}
+
+.breaking-bias-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-mid);
+  letter-spacing: 0.05em;
+}
+
+.breaking-bias-value {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.breaking-bias-box.buy  { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.08); }
+.breaking-bias-box.buy .breaking-bias-value { color: var(--color-buy); }
+
+.breaking-bias-box.sell { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); }
+.breaking-bias-box.sell .breaking-bias-value { color: var(--color-sell); }
+
+.breaking-bias-box.neutral { border-color: var(--gold-border); background: var(--gold-surface); }
+.breaking-bias-box.neutral .breaking-bias-value { color: var(--gold-light); }
+
+.btn-jump-dossier {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(212, 175, 55, 0.06) 100%);
+  border: 1px solid var(--gold-border);
+  color: var(--gold-light);
+  padding: 9px 14px;
+  border-radius: var(--r-md);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-jump-dossier:hover {
+  background: var(--gold-surface);
+  border-color: var(--gold-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--gold-glow);
+}
+
+.wire-item-bulletin {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wire-item-bulletin:hover {
+  background: rgba(212, 175, 55, 0.05);
+  border-color: rgba(212, 175, 55, 0.3);
+}
+
+.wire-item-important {
+  border-left: 2.5px solid var(--color-sell);
+}
+
+.card-highlight-pulse {
+  animation: pulse-border-gold 1.5s ease-out 2;
+}
+
+@keyframes pulse-border-gold {
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(212, 175, 55, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
+@media (max-width: 768px) {
+  .breaking-news-live-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .breaking-banner-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+

@@ -85,17 +85,28 @@ async def get_state(force: bool = False):
             "next_event": next_ev,
             "correlated_news": cal.get("correlated_news", []),
             "news": scheduler.last_news,
-            "daily_bulletins": get_daily_macro_bulletins(),
+            "daily_bulletins": scheduler.last_bulletins if scheduler.last_bulletins else get_daily_macro_bulletins(),
+            "latest_breaking_news": getattr(scheduler, "latest_breaking_bulletin", None),
             "signal": scheduler.last_signal,
             "server_time": datetime.now(timezone.utc).isoformat()
         }
     return JSONResponse(content=state)
 
 @app.get("/api/daily-news")
-async def get_daily_news_api():
+async def get_daily_news_api(force: bool = False):
     """Returns curated institutional daily news bulletins with full market interpretations."""
-    bulletins = get_daily_macro_bulletins()
-    return JSONResponse(content={"status": "success", "bulletins": bulletins})
+    bulletins = get_daily_macro_bulletins(force_refresh=force)
+    return JSONResponse(content={"status": "success", "bulletins": bulletins, "count": len(bulletins)})
+
+@app.post("/api/daily-news/refresh")
+async def refresh_daily_news_api():
+    """Forces immediate live fetch and AI interpretation generation for daily bulletins."""
+    bulletins = get_daily_macro_bulletins(force_refresh=True)
+    scheduler.last_bulletins = bulletins
+    important = [b for b in bulletins if b.get("is_important")]
+    if important:
+        scheduler.latest_breaking_bulletin = important[0]
+    return JSONResponse(content={"status": "success", "bulletins": bulletins, "message": "Berita harian & interpretasi berhasil diperbarui!"})
 
 class CustomInterpretPayload(BaseModel):
     text: str = ""
