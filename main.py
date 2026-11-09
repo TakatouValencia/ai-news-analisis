@@ -66,20 +66,17 @@ async def serve_index():
 @app.get("/api/state")
 async def get_state(force: bool = False):
     """Returns current state of calendar, next event, AI quant signal, and news."""
-    if force or not scheduler.last_signal:
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    cached_next = scheduler.last_calendar.get("next_event") if scheduler.last_calendar else None
+    event_expired = bool(cached_next and cached_next.get("timestamp", 0) <= now_ts)
+
+    if force or not scheduler.last_signal or event_expired:
         state = scheduler.perform_full_cycle(force_refresh=force)
     else:
-        # Use scheduler's in-memory calendar or cached calendar
-        cal = scheduler.last_calendar if scheduler.last_calendar else get_economic_calendar(force_refresh=False)
+        cal = get_economic_calendar(force_refresh=False)
+        scheduler.last_calendar = cal
         next_ev = cal.get("next_event")
-        
-        # Keep countdown seconds fresh in real time
-        now_ts = int(datetime.now(timezone.utc).timestamp())
-        if next_ev and "timestamp" in next_ev:
-            diff = next_ev["timestamp"] - now_ts
-            next_ev["seconds_until"] = diff
-            next_ev["is_past"] = diff < 0
-            
+
         state = {
             "calendar": cal,
             "next_event": next_ev,

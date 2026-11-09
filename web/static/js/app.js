@@ -1243,6 +1243,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   
   // Initial data load
-  fetchState(true);
+  fetchState(false);
 });
 

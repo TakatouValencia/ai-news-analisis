@@ -92,6 +92,9 @@ def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, 
             # Activate 10-minute cooldown
             _llm_cooldown_until = now_ts + 600
             print(f"[AI Analyzer] Quota 429 pada {model_name}, cooldown 10 menit aktif. Beralih ke mesin analisa instan.")
+        elif "timed out" in err_msg.lower() or "timeout" in err_msg.lower():
+            _llm_cooldown_until = now_ts + 180
+            print(f"[AI Analyzer] Timeout pada {model_name}, cooldown 3 menit aktif. Beralih ke mesin analisa instan.")
         else:
             print(f"[AI Analyzer] Model '{model_name}' tidak merespons ({e}), mencoba fallback...")
         return None

@@ -135,10 +135,10 @@ class NewsMonitoringScheduler:
                 self.check_and_send_scheduled_alerts()
                 self.check_and_update_web_breaking_news()
                 cycle_count += 1
-                # Periodically re-sync geopolitical & macro bulletins every 2 minutes
+                # Periodically re-sync state while respecting service cache TTLs
                 if cycle_count >= 2:
                     cycle_count = 0
-                    self.perform_full_cycle(force_refresh=True)
+                    self.perform_full_cycle(force_refresh=False)
             except Exception as e:
                 print(f"[Scheduler] Error in monitoring cycle: {e}")
             # Check every 60 seconds
