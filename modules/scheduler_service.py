@@ -55,11 +55,20 @@ class NewsMonitoringScheduler:
         if important:
             self.latest_breaking_bulletin = important[0]
         
-        group_name = next_ev.get("group_name", "USD News") if next_ev else "USD News"
+        group_name = next_ev.get("group_name", "WAITING NEWS") if next_ev else "WAITING NEWS"
+        is_waiting = not next_ev or bool(next_ev.get("is_waiting")) or group_name == "WAITING NEWS"
         
-        # Cache AI analysis for 15 minutes if event group hasn't changed
+        # Only run event-specific AI analysis when within the H-3 (3 days) active window
         now_ts = datetime.now(timezone.utc).timestamp()
-        if not force_refresh and self.last_signal and (now_ts - getattr(self, "last_ai_time", 0) < 900) and getattr(self, "last_ai_group", "") == group_name:
+        if is_waiting:
+            ai_res = {
+                "geo_score": 0.0,
+                "macro_score": 0.0,
+                "geopolitical_sentiment": "neutral",
+                "summary_reasoning": "Status WAITING NEWS aktif: Tidak ada rilis NFP, PPI, CPI, FOMC, atau PMI dalam 3 hari ke depan. Analisa AI Quant keluar pada H-3.",
+                "mode": "WAITING H-3"
+            }
+        elif not force_refresh and self.last_signal and (now_ts - getattr(self, "last_ai_time", 0) < 900) and getattr(self, "last_ai_group", "") == group_name:
             ai_res = getattr(self, "last_ai_res", {})
         else:
             ai_res = analyze_with_llm(news_data, group_name)
@@ -85,7 +94,7 @@ class NewsMonitoringScheduler:
         """Checks if next event is within T-30m or T-5m, and sends Discord webhook if not yet sent."""
         state = self.perform_full_cycle()
         next_ev = state.get("next_event")
-        if not next_ev:
+        if not next_ev or next_ev.get("is_waiting") or next_ev.get("group_name") == "WAITING NEWS":
             return
             
         settings = load_settings()

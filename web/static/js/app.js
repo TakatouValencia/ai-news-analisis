@@ -76,12 +76,13 @@ function updateTicker(data) {
   const nextEvent = data.next_event || {};
   const newsList = data.news || [];
   
-  const bias = signal.expected_bias || "XAU NEUTRAL";
+  const bias = signal.expected_bias || "WAITING NEWS";
+  const isWaiting = Boolean(nextEvent.is_waiting || nextEvent.group_name === "WAITING NEWS" || bias === "WAITING NEWS");
   const score = signal.xau_score || 0.0;
-  const spike = signal.spike_potential || 90;
-  const groupName = nextEvent.group_name || "High Impact USD";
-  const scheduleStr = nextEvent.datetime_wib || "Jadwal resmi";
-  const geoSentiment = signal.geo_sentiment ? signal.geo_sentiment.toUpperCase() : "DEFENSIVE";
+  const spike = signal.spike_potential || 0;
+  const groupName = nextEvent.group_name || "WAITING NEWS";
+  const scheduleStr = nextEvent.datetime_wib || "Menunggu Jadwal H-3";
+  const geoSentiment = signal.geo_sentiment ? signal.geo_sentiment.toUpperCase() : "NEUTRAL";
 
   // Detect if new geopolitical news arrived
   const topNewsTitle = newsList.length > 0 ? newsList[0].title : "";
@@ -100,11 +101,12 @@ function updateTicker(data) {
 
   // Construct items
   const biasColor = bias.includes("BUY") ? "cyan-text" : (bias.includes("SELL") ? "red-text" : "gold-text");
+  const spikeText = isWaiting ? "STANDBY (Analisa Keluar H-3)" : `${spike}% (${spike >= 90 ? 'Ekstrem' : 'Tinggi'})`;
   
   let html = `
     <span class="ticker-item">
       <span class="ticker-tag-chip chip-breaking">SIGNAL</span>
-      <strong class="${biasColor}">XAU/USD: ${bias}</strong> <span class="font-mono">(${score > 0 ? '+' : ''}${score.toFixed(2)})</span>
+      <strong class="${biasColor}">XAU/USD: ${bias}</strong> ${isWaiting ? '' : `<span class="font-mono">(${score > 0 ? '+' : ''}${score.toFixed(2)})</span>`}
     </span>
     <span class="ticker-bullet">•</span>
     <span class="ticker-item">
@@ -113,7 +115,7 @@ function updateTicker(data) {
     </span>
     <span class="ticker-bullet">•</span>
     <span class="ticker-item">
-      <strong class="red-text">SPIKE VOLATILITY:</strong> <span class="font-mono">${spike}% (${spike >= 90 ? 'Ekstrem' : 'Tinggi'})</span>
+      <strong class="red-text">SPIKE VOLATILITY:</strong> <span class="font-mono">${spikeText}</span>
     </span>
     <span class="ticker-bullet">•</span>
     <span class="ticker-item">
@@ -155,36 +157,39 @@ function updateUI(data) {
   const signal = data.signal || {};
   const nextEvent = data.next_event || {};
   const calendar = data.calendar || {};
+  const bias = signal.expected_bias || "WAITING NEWS";
+  const isWaiting = Boolean(nextEvent.is_waiting || nextEvent.group_name === "WAITING NEWS" || bias === "WAITING NEWS");
   
   secondsRemaining = nextEvent.seconds_until || 0;
   
   // 1. Ticker
   updateTicker(data);
 
-  // 2. 24-Hour Pre-News Radar Banner
+  // 2. Pre-News Radar Banner (Enforces H-3 Window & WAITING NEWS state)
   const radarBanner = document.getElementById("radar-banner");
-  const radarCountdownVal = document.getElementById("radar-countdown-val");
   const radarEventName = document.getElementById("radar-event-name");
   const radarEventScheduleText = document.getElementById("radar-event-schedule-text");
   
   if (radarBanner) {
     const statusTextEl = radarBanner.querySelector(".radar-status-text");
     if (statusTextEl) {
-      if (secondsRemaining <= 86400 && secondsRemaining > 0) {
-        statusTextEl.textContent = "SIAGA 24 JAM PRA-RILIS BERITA AKTIF";
+      if (isWaiting) {
+        statusTextEl.textContent = "STATUS: WAITING NEWS (ANALISA KELUAR H-3)";
+      } else if (secondsRemaining <= 86400 && secondsRemaining > 0) {
+        statusTextEl.textContent = "SIAGA 24 JAM PRA-RILIS BERITA AKTIF (H-1)";
       } else if (secondsRemaining > 86400) {
         const days = Math.ceil(secondsRemaining / 86400);
-        statusTextEl.textContent = `RADAR BERITA MENDATANG (${days} HARI LAGI)`;
+        statusTextEl.textContent = `ANALISA H-3 AKTIF (${days} HARI LAGI)`;
       } else {
         statusTextEl.textContent = "DATA TELAH DIRILIS (POST-EVENT)";
       }
     }
   }
   if (radarEventName) {
-    radarEventName.textContent = nextEvent.group_name || "High Impact USD Release";
+    radarEventName.textContent = nextEvent.group_name || "WAITING NEWS";
   }
   if (radarEventScheduleText) {
-    radarEventScheduleText.textContent = nextEvent.datetime_wib || "Jadwal resmi terkonfirmasi";
+    radarEventScheduleText.textContent = nextEvent.datetime_wib || "Tidak ada jadwal NFP / PPI / CPI / FOMC / PMI dalam 3 hari ke depan";
   }
   updateCountdownDigits(secondsRemaining);
 
@@ -198,7 +203,6 @@ function updateUI(data) {
   const scoreBar = document.getElementById("score-bar");
   const engineModeTag = document.getElementById("engine-mode-tag");
   
-  const bias = signal.expected_bias || "XAU NEUTRAL";
   biasEl.textContent = bias;
   
   biasCard.classList.remove("sell", "buy");
@@ -225,19 +229,26 @@ function updateUI(data) {
       </svg>`;
   }
   
-  const contextPct = signal.context_percent || 80;
-  contextEl.textContent = `${contextPct}%`;
-  contextBar.style.width = `${contextPct}%`;
+  if (isWaiting) {
+    contextEl.textContent = "H-3";
+    contextBar.style.width = "0%";
+    scoreEl.textContent = "0.00";
+    scoreBar.style.width = "50%";
+  } else {
+    const contextPct = signal.context_percent || 80;
+    contextEl.textContent = `${contextPct}%`;
+    contextBar.style.width = `${contextPct}%`;
+    
+    const score = signal.xau_score || 0.0;
+    scoreEl.textContent = score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2);
+    
+    // Center-split score bar (-10.0 to +10.0 mapped to 5% - 95%)
+    const scorePct = Math.max(5, Math.min(95, ((score + 10.0) / 20.0) * 100));
+    scoreBar.style.width = `${scorePct}%`;
+  }
   
-  const score = signal.xau_score || 0.0;
-  scoreEl.textContent = score > 0 ? `+${score.toFixed(2)}` : score.toFixed(2);
-  
-  // Center-split score bar (-10.0 to +10.0 mapped to 5% - 95%)
-  const scorePct = Math.max(5, Math.min(95, ((score + 10.0) / 20.0) * 100));
-  scoreBar.style.width = `${scorePct}%`;
-  
-  if (engineModeTag && signal.analysis_mode) {
-    engineModeTag.textContent = signal.analysis_mode.toUpperCase().replace("LLM_", "AI ");
+  if (engineModeTag) {
+    engineModeTag.textContent = isWaiting ? "WAITING H-3" : (signal.analysis_mode || "QUANT").toUpperCase().replace("LLM_", "AI ");
   }
 
   // 4. Primary Event Focus Card
@@ -245,13 +256,26 @@ function updateUI(data) {
   const scheduleEl = document.getElementById("next-news-schedule");
   const itemsContainer = document.getElementById("news-items-list");
   
-  newsTitleEl.textContent = nextEvent.group_name || "High Impact USD News";
+  newsTitleEl.textContent = nextEvent.group_name || "WAITING NEWS";
   if (scheduleEl) {
-    scheduleEl.textContent = nextEvent.datetime_wib ? nextEvent.datetime_wib : "Jadwal Resmi Sedang Dikonfirmasi";
+    scheduleEl.textContent = nextEvent.datetime_wib ? nextEvent.datetime_wib : "Tidak ada jadwal dalam 3 hari ke depan";
   }
   
   itemsContainer.innerHTML = "";
-  if (nextEvent.items && nextEvent.items.length > 0) {
+  if (isWaiting) {
+    const nextGroup = nextEvent.next_scheduled_group;
+    const nextWib = nextEvent.next_scheduled_wib;
+    itemsContainer.innerHTML = `
+      <div class="breakdown-item">
+        <span class="item-name">Status Kalender (3 Hari Ke Depan)</span>
+        <span class="item-figures font-mono">WAITING NEWS</span>
+      </div>
+      <div class="breakdown-item">
+        <span class="item-name">${nextGroup ? `Jadwal Berikutnya: ${nextGroup} (${nextWib})` : 'Filter Ketat: NFP • PPI • CPI • FOMC • PMI'}</span>
+        <span class="item-figures font-mono">Analisa Keluar H-3</span>
+      </div>
+    `;
+  } else if (nextEvent.items && nextEvent.items.length > 0) {
     nextEvent.items.forEach(it => {
       const row = document.createElement("div");
       row.className = "breakdown-item";
@@ -274,33 +298,45 @@ function updateUI(data) {
   const spikeValEl = document.getElementById("spike-value");
   const spikeBar = document.getElementById("spike-bar");
   const spikeTierBadge = document.getElementById("spike-tier-badge");
-  const spike = signal.spike_potential || 90;
-  
-  spikeValEl.textContent = `${spike}%`;
-  spikeBar.style.width = `${spike}%`;
-  if (spikeTierBadge) {
-    spikeTierBadge.textContent = spike >= 90 ? "EXTREME" : (spike >= 80 ? "VERY HIGH" : "HIGH");
-  }
-  
   const onewayValEl = document.getElementById("oneway-value");
   const onewayBar = document.getElementById("oneway-bar");
-  const oneway = signal.one_way || 70;
-  onewayValEl.textContent = `${oneway}%`;
-  onewayBar.style.width = `${oneway}%`;
-  
   const twowayValEl = document.getElementById("twoway-value");
   const twowayBar = document.getElementById("twoway-bar");
-  const twoway = signal.two_way || 30;
-  twowayValEl.textContent = `${twoway}%`;
-  twowayBar.style.width = `${twoway}%`;
 
-  // 6. Fundamental Dossier: Alasan Bias & Interpretasi Pasar (NFP / CPI / FOMC)
+  if (isWaiting) {
+    spikeValEl.textContent = "H-3";
+    spikeBar.style.width = "0%";
+    if (spikeTierBadge) spikeTierBadge.textContent = "WAITING NEWS";
+    onewayValEl.textContent = "H-3";
+    onewayBar.style.width = "0%";
+    twowayValEl.textContent = "H-3";
+    twowayBar.style.width = "0%";
+  } else {
+    const spike = signal.spike_potential || 85;
+    spikeValEl.textContent = `${spike}%`;
+    spikeBar.style.width = `${spike}%`;
+    if (spikeTierBadge) {
+      spikeTierBadge.textContent = spike >= 90 ? "EXTREME" : (spike >= 80 ? "VERY HIGH" : "HIGH");
+    }
+    
+    const oneway = signal.one_way || 70;
+    onewayValEl.textContent = `${oneway}%`;
+    onewayBar.style.width = `${oneway}%`;
+    
+    const twoway = signal.two_way || 30;
+    twowayValEl.textContent = `${twoway}%`;
+    twowayBar.style.width = `${twoway}%`;
+  }
+
+  // 6. Fundamental Dossier: Alasan Bias & Interpretasi Pasar (NFP / PPI / CPI / FOMC / PMI / WAITING NEWS)
   renderFundamentalDossier(data);
 
   // 7. Correlated Lead-In Indicators
   const correlatedLabel = document.getElementById("correlated-card-label");
   if (correlatedLabel) {
-    correlatedLabel.textContent = `BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO ${nextEvent.group_name || 'NEWS'})`;
+    correlatedLabel.textContent = isWaiting
+      ? "STATUS PROTOKOL H-3 & INDIKATOR INTERMARKET (WAITING NEWS)"
+      : `BERITA PENDUKUNG & INDIKATOR TERKAIT (LEAD-IN TO ${nextEvent.group_name || 'NEWS'})`;
   }
   const correlatedContainer = document.getElementById("correlated-news-container");
   if (correlatedContainer) {
@@ -340,11 +376,18 @@ function updateUI(data) {
       upcomingEvents.forEach((ev) => {
         const row = document.createElement("div");
         const is24h = ev.seconds_until > 0 && ev.seconds_until <= 86400;
+        const isH3 = ev.seconds_until > 0 && ev.seconds_until <= 259200;
         row.className = "calendar-row-card" + (is24h ? " highlight-24h" : "");
         
         const figures = ev.items && ev.items.length > 0 && ev.items[0].forecast !== "-"
           ? `F: ${ev.items[0].forecast} | P: ${ev.items[0].previous}`
           : "Konsensus Sedang Diperbarui";
+
+        const badgeHtml = is24h
+          ? '<span class="badge-24h">SIAGA 24H</span>'
+          : (isH3
+            ? '<span class="status-chip chip-cyan">AKTIF (H-3)</span>'
+            : '<span class="status-chip chip-amber">WAITING H-3</span>');
           
         row.innerHTML = `
           <div class="col-event-name">
@@ -359,13 +402,13 @@ function updateUI(data) {
             <span>${figures}</span>
           </div>
           <div class="col-status-badge">
-            ${is24h ? '<span class="badge-24h">SIAGA 24H</span>' : '<span class="status-chip chip-cyan">MENDATANG</span>'}
+            ${badgeHtml}
           </div>
         `;
         fullCalendarList.appendChild(row);
       });
     } else {
-      fullCalendarList.innerHTML = `<div class="table-loading-row font-mono">Tidak ada event berita High Impact mendatang minggu ini.</div>`;
+      fullCalendarList.innerHTML = `<div class="table-loading-row font-mono">WAITING NEWS • Tidak ada jadwal NFP, PPI, CPI, FOMC, atau PMI dalam 3 hari ke depan.</div>`;
     }
   }
 

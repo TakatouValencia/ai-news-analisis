@@ -68,25 +68,28 @@ async def get_state(force: bool = False):
     """Returns current state of calendar, next event, AI quant signal, and news."""
     now_ts = int(datetime.now(timezone.utc).timestamp())
     cached_next = scheduler.last_calendar.get("next_event") if scheduler.last_calendar else None
-    event_expired = bool(cached_next and cached_next.get("timestamp", 0) <= now_ts)
+    event_expired = bool(cached_next and cached_next.get("timestamp", 0) > 0 and cached_next.get("timestamp", 0) <= now_ts)
 
     if force or not scheduler.last_signal or event_expired:
         state = scheduler.perform_full_cycle(force_refresh=force)
     else:
         cal = get_economic_calendar(force_refresh=False)
-        scheduler.last_calendar = cal
         next_ev = cal.get("next_event")
-
-        state = {
-            "calendar": cal,
-            "next_event": next_ev,
-            "correlated_news": cal.get("correlated_news", []),
-            "news": scheduler.last_news,
-            "daily_bulletins": scheduler.last_bulletins if scheduler.last_bulletins else get_daily_macro_bulletins(),
-            "latest_breaking_news": getattr(scheduler, "latest_breaking_bulletin", None),
-            "signal": scheduler.last_signal,
-            "server_time": datetime.now(timezone.utc).isoformat()
-        }
+        group_changed = (next_ev or {}).get("group_name") != (cached_next or {}).get("group_name")
+        if group_changed:
+            state = scheduler.perform_full_cycle(force_refresh=False)
+        else:
+            scheduler.last_calendar = cal
+            state = {
+                "calendar": cal,
+                "next_event": next_ev,
+                "correlated_news": cal.get("correlated_news", []),
+                "news": scheduler.last_news,
+                "daily_bulletins": scheduler.last_bulletins if scheduler.last_bulletins else get_daily_macro_bulletins(),
+                "latest_breaking_news": getattr(scheduler, "latest_breaking_bulletin", None),
+                "signal": scheduler.last_signal,
+                "server_time": datetime.now(timezone.utc).isoformat()
+            }
     return JSONResponse(content=state)
 
 @app.get("/api/daily-news")

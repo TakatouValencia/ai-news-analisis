@@ -1,33 +1,61 @@
 import json
 import asyncio
 from modules.geopolitical_service import get_daily_macro_bulletins
-from modules.calendar_service import get_economic_calendar, classify_event_group, is_high_impact_event
+from modules.calendar_service import get_economic_calendar, classify_event_group, is_high_impact_event, ALLOWED_GROUPS
+from modules.quant_engine import compute_full_quant_signal
 from modules.scheduler_service import scheduler
 from main import get_state, get_daily_news_api, refresh_daily_news_api
 
 def test_calendar_accuracy():
-    print("1. Testing Calendar Classification & Filtering Accuracy...")
-    # Ensure routine FOMC Member speech is never marked High Impact or classified as FOMC Rate Decision
-    waller_speech = {
-        "title": "FOMC Member Waller Speaks",
-        "country": "USD",
-        "date": "2026-11-10T09:00:00+00:00",
-        "impact": "Medium"
-    }
-    assert not is_high_impact_event(waller_speech), "FOMC Member speech (Medium) must NOT be High Impact!"
-    assert classify_event_group("FOMC Member Waller Speaks") != "FOMC", "FOMC Member speech must NOT be classified as FOMC!"
+    print("1. Testing Strict 5-Event Whitelist (NFP, PPI, CPI, FOMC, PMI) & H-3 Rule...")
+    # Ensure non-whitelisted events are strictly rejected
+    rejected_titles = [
+        "FOMC Member Waller Speaks",
+        "Fed Chairman Warsh Speaks",
+        "ADP Non-Farm Employment Change",
+        "Unemployment Claims",
+        "Initial Jobless Claims",
+        "FOMC Meeting Minutes",
+        "Retail Sales m/m",
+        "Core PCE Price Index m/m",
+        "Advance GDP q/q",
+        "Philly Fed Manufacturing Index"
+    ]
+    for rt in rejected_titles:
+        ev = {"title": rt, "country": "USD", "date": "2026-11-12T13:30:00+00:00", "impact": "High"}
+        assert not is_high_impact_event(ev), f"{rt} must NOT be allowed!"
+        assert classify_event_group(rt) == "", f"{rt} must classify as empty string!"
 
-    # Ensure ADP is never classified as NFP
-    assert classify_event_group("ADP Non-Farm Employment Change") == "ADP Non-Farm Employment", "ADP must not be classified as NFP!"
-    assert classify_event_group("Non-Farm Employment Change") == "NFP", "Official Non-Farm Employment Change must be classified as NFP!"
-    assert classify_event_group("FOMC Meeting Minutes") == "FOMC Meeting Minutes", "FOMC Minutes must not be classified as FOMC Rate Decision!"
-    assert classify_event_group("Federal Funds Rate") == "FOMC", "Federal Funds Rate must be classified as FOMC!"
+    # Ensure the 5 allowed groups classify accurately
+    assert classify_event_group("Non-Farm Employment Change") == "NFP"
+    assert classify_event_group("Core CPI m/m") == "CPI"
+    assert classify_event_group("PPI m/m") == "PPI"
+    assert classify_event_group("Federal Funds Rate") == "FOMC"
+    assert classify_event_group("ISM Manufacturing PMI") == "PMI"
+    assert classify_event_group("Flash Services PMI") == "PMI"
 
-    cal = get_economic_calendar(force_refresh=False)
+    cal = get_economic_calendar(force_refresh=True)
+    for ev in cal.get("upcoming_events", []):
+        assert ev["group_name"] in ALLOWED_GROUPS, f"Unexpected group in calendar: {ev['group_name']}"
+
     next_ev = cal.get("next_event")
     assert next_ev is not None, "Next event should not be None!"
-    print(f"   -> Next Event: {next_ev['group_name']} ({next_ev['datetime_wib']})")
-    print("   -> Calendar classification and multi-week schedule verified!")
+    print(f"   -> Next Active Reading: {next_ev['group_name']} ({next_ev['datetime_wib']})")
+    print(f"   -> Total Upcoming Allowed Events (NFP/PPI/CPI/FOMC/PMI): {len(cal.get('upcoming_events', []))}")
+
+    # Test H-3 Waiting News Rule (> 3 days away -> WAITING NEWS)
+    far_event = {
+        "group_name": "NFP",
+        "is_waiting": False,
+        "seconds_until": 5 * 86400,  # 5 days away (> H-3)
+        "next_scheduled_group": "NFP",
+        "next_scheduled_wib": "Jumat, 04 Des 2026 | 20:30 WIB",
+        "items": [{"title": "Non-Farm Employment Change", "forecast": "180K", "previous": "150K"}]
+    }
+    wait_sig = compute_full_quant_signal(far_event, {})
+    assert wait_sig["expected_bias"] == "WAITING NEWS", "Events > 3 days away must return WAITING NEWS!"
+    assert wait_sig["fundamental_dossier"]["event_type"] == "WAITING_NEWS"
+    print("   -> H-3 Waiting News Rule verified (events > 3 days away return WAITING NEWS)!")
 
 def test_daily_news():
     print("\n2. Testing get_daily_macro_bulletins()...")

@@ -21,7 +21,8 @@ DEFAULT_SETTINGS = {
     "auto_alert_pre_news_minutes": [30, 5],
     "high_impact_only": True,
     "target_currencies": ["USD"],
-    "target_events": ["FOMC", "Fed Interest Rate", "CPI", "PPI", "Non-Farm Employment", "NFP", "Unemployment Rate", "Jobless Claims"]
+    "target_events": ["NFP", "PPI", "CPI", "FOMC", "PMI"],
+    "analysis_window_days": 3
 }
 
 def load_settings() -> dict:

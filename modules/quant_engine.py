@@ -67,6 +67,10 @@ def evaluate_event_consensus_bias(items: List[Dict[str, Any]]) -> Dict[str, Any]
             weight = 2.2
             # Higher unemployment rate = Dovish USD = Bullish Gold
             direction = 1.0 if diff > 0 else (-1.0 if diff < 0 else -0.3)
+        elif "pmi" in title or "ism" in title:
+            weight = 2.6
+            # Higher PMI = Stronger US activity = Hawkish USD = Bearish Gold; Lower PMI = Bullish Gold
+            direction = -1.0 if diff > 0 else (1.0 if diff < 0 else (-0.3 if f_val >= 50.0 else 0.3))
         else:
             weight = 1.2
             direction = -1.0 if diff > 0 else (1.0 if diff < 0 else 0.0)
@@ -105,27 +109,12 @@ def calculate_spike_potential(group_name: str, items: List[Dict[str, Any]]) -> i
         base = 95
     elif name_lower == "cpi":
         base = 92
-    elif name_lower == "core pce":
-        base = 88
-    elif name_lower == "fomc meeting minutes":
-        base = 85
-    elif name_lower == "gdp":
-        base = 84
     elif name_lower == "ppi":
-        has_claims = any("jobless" in it.get("title", "").lower() or "claims" in it.get("title", "").lower() for it in items)
-        base = 88 if has_claims else 82
-    elif name_lower == "retail sales":
-        base = 82
-    elif name_lower == "ism pmi":
-        base = 80
-    elif "adp" in name_lower or "jolts" in name_lower:
-        base = 78
-    elif "jobless claims" in name_lower or "unemployment claims" in name_lower:
-        base = 74
-    elif "fed chair" in name_lower:
-        base = 80
+        base = 85
+    elif name_lower in ["pmi", "ism pmi"]:
+        base = 84
     else:
-        base = 68
+        base = 75
 
     if len(items) > 1:
         base = min(98, base + 3)
@@ -487,208 +476,160 @@ def generate_fundamental_dossier(
             "tactical_guidance": "Gunakan Stop Loss disiplin pada saat pengumuman FOMC dan waspadai volatilitas gelombang kedua saat konferensi pers."
         }
 
-    # 5. FOMC MEETING MINUTES (RISALAH RAPAT FOMC - BUKAN KEPUTUSAN SUKU BUNGA)
-    elif name_lower == "fomc meeting minutes":
-        why_bias = (
-            f"Rilis **FOMC Meeting Minutes** merupakan risalah detail dari rapat kebijakan FOMC sebelumnya (bukan pengumuman suku bunga baru). "
-            f"Model AI Quant menetapkan bias **{expected_bias} (Skor {final_score:+.2f})** dengan mencermati perdebatan internal anggota komite The Fed "
-            f"mengenai risiko inflasi versus ketahanan pasar tenaga kerja."
-        )
-        return {
-            "event_type": "FOMC_MINUTES",
-            "event_badge": "📋 FOMC MINUTES RELEASE",
-            "headline_summary": "Rilis Risalah Rapat FOMC (Meeting Minutes): rincian diskusi internal pejabat The Fed mengenai arah kebijakan moneter.",
-            "why_bias_reason": why_bias,
-            "market_interpretation": (
-                "1. Bukan Pengumuman Rate Baru: FOMC Minutes membedah proporsi anggota The Fed yang berpandangan hawkish vs dovish pada rapat sebelumnya.\n"
-                "2. Pergeseran Probabilitas FedWatch: Kalimat kunci dalam risalah dapat mengubah ekspektasi pasar terhadap rapat FOMC akhir bulan/mendatang.\n"
-                "3. Reaksi XAU/USD: Jika risalah menekankan kekhawatiran inflasi, DXY menguat dan menekan emas; jika menyoroti risiko perlambatan ekonomi, emas terdorong naik."
-            ),
-            "consensus_rules": [
-                {
-                    "condition": "Risalah Bernada Dovish (Bullish XAU)",
-                    "trigger": "Mayoritas anggota mendukung pelonggaran suku bunga lebih lanjut",
-                    "dxy_yield_reaction": "DXY dan Yield US 10Y melemah",
-                    "xau_reaction": "🔺 Kenaikan Terukur (XAU BUY)",
-                    "expected_pips": "+45 hingga +90 pips",
-                    "action": "Buy on breakout"
-                },
-                {
-                    "condition": "Risalah Bernada Hawkish (Bearish XAU)",
-                    "trigger": "Anggota mengkhawatirkan inflasi persisten dan menahan pemangkasan bunga",
-                    "dxy_yield_reaction": "DXY menguat, Yield obligasi naik",
-                    "xau_reaction": "🔻 Tekanan Jual (XAU SELL)",
-                    "expected_pips": "-45 hingga -90 pips",
-                    "action": "Sell momentum"
-                },
-                {
-                    "condition": "Risalah Netral / Sesuai Ekspektasi",
-                    "trigger": "Tidak ada kejutan baru dibanding pernyataan rapat sebelumnya",
-                    "dxy_yield_reaction": "Fluktuasi terbatas",
-                    "xau_reaction": "🔄 Konsolidasi Intraday",
-                    "expected_pips": "Rentang 25 - 45 pips",
-                    "action": "Fokus pada level Support/Resistance teknikal"
-                }
-            ],
-            "key_watch_factors": [
-                {"factor": "FOMC Meeting Minutes", "benchmark": "Sentimen Hawkish vs Dovish Komite", "importance": "Petunjuk Arah Kebijakan Rapat FOMC Berikutnya"},
-                {"factor": "Respon US 10Y Yield", "benchmark": "Reaksi Pasar Obligasi AS", "importance": "Konfirmasi Arah Likuiditas XAU/USD"}
-            ],
-            "tactical_guidance": "Algoritma membaca teks risalah secara instan pada detik rilis; tunggu candle M5 pertama selesai sebelum membuka posisi."
-        }
-
-    # 6. INITIAL JOBLESS CLAIMS / ADP / LABOR RELEASES (NON-NFP)
-    elif "jobless" in name_lower or "claims" in name_lower or "adp" in name_lower or "jolts" in name_lower:
+    # 5. PURCHASING MANAGERS' INDEX (PMI - ISM / FLASH PMI)
+    else:
         first_f = items[0].get("forecast", "-") if items else "-"
         first_p = items[0].get("previous", "-") if items else "-"
         if "BUY" in expected_bias:
             why_bias = (
-                f"Model AI Quant menetapkan bias **XAU BUY (Skor {final_score:+.2f})** pada rilis **{name_clean}** ({items_summary}). "
-                f"Konsensus data mengindikasikan pelonggaran pada kondisi ketenagakerjaan mingguan/swasta AS dibanding periode sebelumnya ({first_f} vs {first_p}). "
-                f"Data klaim pengangguran yang lebih tinggi atau serapan kerja yang melambat menekan Dolar AS (DXY) dan memberikan dorongan positif bagi harga emas (XAU/USD)."
+                f"Model AI Quant menetapkan bias **XAU BUY (Skor {final_score:+.2f})** berdasarkan konsensus rilis **PMI AS** ({items_summary}). "
+                f"Proyeksi melambatnya indeks aktivitas manufaktur/jasa ({first_f} vs {first_p}) menandakan pendinginan ekspansi bisnis AS. "
+                f"Pelemahan PMI menekan imbal hasil US Treasury 10Y serta Indeks Dolar AS (DXY), sehingga memicu akumulasi beli institusional pada emas (XAU/USD)."
             )
         elif "SELL" in expected_bias:
             why_bias = (
-                f"Model AI Quant menetapkan bias **XAU SELL (Skor {final_score:+.2f})** pada rilis **{name_clean}** ({items_summary}). "
-                f"Konsensus menunjukkan pasar tenaga kerja AS tetap tangguh ({first_f} vs {first_p}), mendukung kekuatan Dolar AS dan menahan laju kenaikan emas."
+                f"Model AI Quant menetapkan bias **XAU SELL (Skor {final_score:+.2f})** berdasarkan konsensus rilis **PMI AS** ({items_summary}). "
+                f"Ketahanan aktivitas sektor manufaktur dan jasa di zona ekspansi ({first_f} vs {first_p}) memperkuat argumen bahwa ekonomi AS masih solid, "
+                f"mendukung penguatan Dolar AS (DXY) dan membatasi kenaikan emas (XAU/USD)."
             )
         else:
             why_bias = (
-                f"Konsensus pada rilis **{name_clean}** ({items_summary}) berada di kisaran stabil; pasar menunggu deviasi aktual terhadap angka perkiraan."
-            )
-
-        return {
-            "event_type": "LABOR_MARKET",
-            "event_badge": "🔴 HIGH IMPACT LABOR DATA",
-            "headline_summary": f"Rilis Data Ketenagakerjaan AS: {name_clean} ({items_summary}).",
-            "why_bias_reason": why_bias,
-            "market_interpretation": (
-                f"1. Indikator Kesehatan Pasar Kerja: {name_clean} mengukur dinamika ketenagakerjaan AS secara berkala di luar jadwal NFP bulanan.\n"
-                "2. Respon DXY & Yield: Pelemahan data tenaga kerja (klaim naik / serapan turun) melemahkan DXY dan mengangkat XAU/USD.\n"
-                f"3. Potensi Volatilitas: Diperkirakan memicu pergerakan terukur dengan potensi spike {spike_potential}%."
-            ),
-            "consensus_rules": [
-                {
-                    "condition": "Pasar Kerja Melemah / Dovish USD (Bullish XAU)",
-                    "trigger": "Klaim Pengangguran > Forecast (atau ADP/JOLTS < Forecast)",
-                    "dxy_yield_reaction": "DXY tertekan turun, Yield US 10Y melandai",
-                    "xau_reaction": "🔺 Kenaikan Harga (XAU BUY)",
-                    "expected_pips": "+40 hingga +85 pips",
-                    "action": "Buy on breakout"
-                },
-                {
-                    "condition": "Pasar Kerja Kuat / Hawkish USD (Bearish XAU)",
-                    "trigger": "Klaim Pengangguran < Forecast (atau ADP/JOLTS > Forecast)",
-                    "dxy_yield_reaction": "DXY menguat, Yield obligasi naik",
-                    "xau_reaction": "🔻 Penurunan Harga (XAU SELL)",
-                    "expected_pips": "-40 hingga -85 pips",
-                    "action": "Sell momentum"
-                },
-                {
-                    "condition": "Data Sesuai Ekspektasi",
-                    "trigger": f"Rilis aktual sesuai konsensus ({first_f})",
-                    "dxy_yield_reaction": "Reaksi terbatas pada DXY",
-                    "xau_reaction": "🔄 Konsolidasi dalam rentang teknikal",
-                    "expected_pips": "Rentang 25 - 40 pips",
-                    "action": "Eksekusi pada batas Support/Resistance"
-                }
-            ],
-            "key_watch_factors": [
-                {"factor": name_clean, "benchmark": f"Forecast: {first_f} | Previous: {first_p}", "importance": "Deviasi Aktual terhadap Konsensus Pasar"},
-                {"factor": "Indeks Dolar AS (DXY) & US 10Y", "benchmark": "Reaksi Sesi New York", "importance": "Konfirmasi Validitas Arah Pergerakan XAU/USD"}
-            ],
-            "tactical_guidance": "Pantau reaksi 5 menit pertama pasca rilis dan perhatikan arah yield obligasi AS."
-        }
-
-    # 7. OTHER HIGH IMPACT MACRO (GDP, Retail Sales, Core PCE, ISM PMI, Fed Chair Speech)
-    else:
-        if "BUY" in expected_bias:
-            why_bias = (
-                f"Model AI Quant menetapkan bias **XAU BUY (Skor {final_score:+.2f})** karena komparasi konsensus pada rilis **{name_clean}** ({items_summary}) "
-                f"mengindikasikan perlambatan aktivitas ekonomi atau meredanya tekanan harga dibanding periode sebelumnya. "
-                f"Data makro yang melandai menekan Indeks Dolar AS (DXY) dan imbal hasil obligasi, memberikan ruang dorong bagi harga emas untuk bergerak naik."
-            )
-        elif "SELL" in expected_bias:
-            why_bias = (
-                f"Model AI Quant menetapkan bias **XAU SELL (Skor {final_score:+.2f})** karena data konsensus pada **{name_clean}** ({items_summary}) "
-                f"menunjukkan ketahanan ekonomi AS yang lebih kuat dari periode sebelumnya. "
-                f"Hal ini memperkuat permintaan Dolar AS dan membatasi minat beli pada instrumen emas dunia."
-            )
-        else:
-            why_bias = (
-                f"Data konsensus pada **{name_clean}** ({items_summary}) menunjukkan dinamika berimbang terhadap periode sebelumnya; "
-                f"pasar diperkirakan bergerak dalam rentang konsolidasi hingga rilis resmi keluar."
+                f"Konsensus rilis **PMI AS** ({items_summary}) berada di level seimbang terhadap periode sebelumnya; "
+                f"pasar menantikan deviasi aktual terhadap ambang batas ekspansi 50.0."
             )
 
         market_transmission = (
-            f"1. Transmisi Data Makro ke Dolar: Rilis {name_clean} menguji ekspektasi pasar terhadap pertumbuhan ekonomi dan kebijakan moneter AS.\n"
-            "2. Korelasi Terbalik Emas & DXY: Kejutan data di bawah konsensus melemahkan DXY dan memicu reli emas, sedangkan angka yang melampaui konsensus menekan emas turun.\n"
-            f"3. Potensi Lonjakan Volatilitas: Model memproyeksikan potensi spike {spike_potential}% pada menit-menit awal rilis data."
+            "1. Ambang Kritis 50.0 (Ekspansi vs Kontraksi): Angka PMI di atas 50.0 menandakan ekspansi aktivitas bisnis yang menopang USD, sedangkan angka di bawah 50.0 menandakan kontraksi ekonomi yang memicu spekulasi pemangkasan suku bunga The Fed.\n"
+            "2. Transmisi ke DXY & Real Yields: Kejutan PMI di bawah konsensus menekan yield obligasi AS dan DXY secara langsung pada sesi New York, mengangkat harga XAU/USD.\n"
+            f"3. Potensi Volatilitas: Model mengkalkulasi potensi spike {spike_potential}% saat rilis data PMI."
         )
 
         consensus_rules = [
             {
-                "condition": "Data Lemah / Dovish USD (Bullish XAU)",
-                "trigger": "Actual < Forecast secara signifikan",
-                "dxy_yield_reaction": "DXY melemah, Yield obligasi tertekan",
-                "xau_reaction": "🔺 Kenaikan Harga (XAU BUY)",
-                "expected_pips": "+45 hingga +95 pips",
-                "action": "Buy on breakout"
+                "condition": "PMI Melemah / Kontraksi (Bullish XAU)",
+                "trigger": f"Actual PMI < Forecast ({first_f}) atau turun menembus < 50.0",
+                "dxy_yield_reaction": "DXY tertekan turun, Yield US 10Y melandai tajam",
+                "xau_reaction": "🔺 Reli Kenaikan Terarah (XAU BUY)",
+                "expected_pips": "+50 hingga +110 pips",
+                "action": "Buy on breakout / Pullback support"
             },
             {
-                "condition": "Data Kuat / Hawkish USD (Bearish XAU)",
-                "trigger": "Actual > Forecast secara signifikan",
-                "dxy_yield_reaction": "DXY menguat, Yield obligasi naik",
-                "xau_reaction": "🔻 Penurunan Harga (XAU SELL)",
-                "expected_pips": "-45 hingga -95 pips",
-                "action": "Sell momentum"
+                "condition": "PMI Ekspansif / Kuat (Bearish XAU)",
+                "trigger": f"Actual PMI > Forecast ({first_f}) dan bertahan kuat di atas 50.0",
+                "dxy_yield_reaction": "DXY menguat cepat, Yield obligasi AS naik",
+                "xau_reaction": "🔻 Tekanan Jual Intraday (XAU SELL)",
+                "expected_pips": "-50 hingga -105 pips",
+                "action": "Follow Sell momentum"
             },
             {
-                "condition": "Data Sesuai Ekspektasi",
-                "trigger": "Actual ~= Forecast",
-                "dxy_yield_reaction": "Reaksi datar atau normalisasi cepat",
-                "xau_reaction": "🔄 Konsolidasi dalam rentang teknikal",
-                "expected_pips": "Rentang 25 - 45 pips",
-                "action": "Fokus pada level teknikal Support/Resistance"
+                "condition": "Data Mixed (Manufaktur vs Jasa Berlawanan)",
+                "trigger": "PMI Manufaktur dan PMI Jasa bergerak berlawanan arah terhadap konsensus",
+                "dxy_yield_reaction": "Fluktuasi dua arah pada DXY",
+                "xau_reaction": "🔄 Whipsaw Intraday (Uji Support & Resistance)",
+                "expected_pips": "Rentang 35 - 60 pips",
+                "action": "Tunggu konfirmasi candle M5 dengan prioritas pada Services PMI"
             }
         ]
 
         key_watch_factors = [
-            {"factor": name_clean, "benchmark": items_summary, "importance": "Deviasi Angka Aktual terhadap Perkiraan Pasar"},
-            {"factor": "Respon Indeks Dolar (DXY)", "benchmark": "Support & Resistance Kunci", "importance": "Konfirmasi Arah Aliran Dana Global"}
+            {"factor": "Purchasing Managers' Index (PMI)", "benchmark": items_summary, "importance": "Barometer Utama Aktivitas Manufaktur & Jasa AS (Batas 50.0)"},
+            {"factor": "US 10Y Treasury Yield & DXY", "benchmark": "Reaksi Sesi New York", "importance": "Konfirmasi Validitas Arah Pergerakan XAU/USD"}
         ]
 
         return {
-            "event_type": "MACRO_HIGH_IMPACT",
-            "event_badge": "🔴 HIGH IMPACT MACRO RELEASE",
-            "headline_summary": f"Rilis data ekonomi {name_clean} ({items_summary}) dengan potensi pergerakan terukur pada XAU/USD.",
+            "event_type": "PMI",
+            "event_badge": "🔴 TIER-1 ECONOMIC ACTIVITY (PMI)",
+            "headline_summary": f"Rilis Indeks Manajer Pembelian AS (PMI) — {items_summary} — indikator utama ekspansi vs kontraksi ekonomi AS.",
             "why_bias_reason": why_bias,
             "market_interpretation": market_transmission,
             "consensus_rules": consensus_rules,
             "key_watch_factors": key_watch_factors,
-            "tactical_guidance": "Gunakan trailing stop dan perhatikan respon DXY pada 5 menit pertama rilis data."
+            "tactical_guidance": "Perhatikan deviasi angka aktual terhadap konsensus dan ambang 50.0 pada 5 menit pertama rilis."
         }
+
+H3_WINDOW_SECONDS = 3 * 86400  # 3 days (72 hours = 259,200 seconds)
 
 def compute_full_quant_signal(
     next_event: Dict[str, Any],
     ai_analysis: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """Produces the complete quantitative signal matched to the upcoming economic calendar event."""
-    if not next_event:
+    """
+    Produces the complete quantitative signal matched to the upcoming economic calendar event.
+    Enforces the H-3 rule: if there is no allowed High Impact event (NFP, PPI, CPI, FOMC, PMI)
+    within the next 3 days (259,200 seconds), returns 'WAITING NEWS' standby status.
+    """
+    is_waiting = (
+        not next_event
+        or bool(next_event.get("is_waiting"))
+        or next_event.get("group_name") == "WAITING NEWS"
+        or int(next_event.get("seconds_until", 0)) > H3_WINDOW_SECONDS
+    )
+
+    if is_waiting:
+        next_sched_group = next_event.get("next_scheduled_group") if next_event else None
+        next_sched_wib = next_event.get("next_scheduled_wib") if next_event else None
+        next_info_str = (
+            f"Jadwal High Impact berikutnya adalah {next_sched_group} pada {next_sched_wib}."
+            if next_sched_group and next_sched_wib
+            else "Belum ada jadwal NFP, PPI, CPI, FOMC, atau PMI dalam 3 hari ke depan."
+        )
+        why_wait = (
+            f"Status saat ini adalah **WAITING NEWS** karena tidak ada jadwal rilis berita High Impact utama "
+            f"(**NFP, PPI, CPI, FOMC, PMI**) dalam rentang **3 hari (72 jam)** ke depan. "
+            f"{next_info_str} Sesuai aturan **H-3**, hasil analisa AI Quant, skor bias XAU/USD, dan skenario deviasi "
+            f"akan dikeluarkan secara otomatis tepat pada **H-3 (3 hari sebelum jadwal rilis berita)**."
+        )
+        waiting_dossier = {
+            "event_type": "WAITING_NEWS",
+            "event_badge": "⏳ STANDBY MODE • WAITING NEWS (ATURAN H-3)",
+            "headline_summary": f"Tidak ada rilis NFP, PPI, CPI, FOMC, atau PMI dalam 3 hari ke depan. {next_info_str}",
+            "why_bias_reason": why_wait,
+            "market_interpretation": (
+                "1. Filter Ketat 5 Berita Utama: Sistem hanya memantau 5 katalis High Impact penggerak utama XAU/USD yaitu NFP, PPI, CPI, FOMC, dan PMI.\n"
+                "2. Protokol Rilis Analisa H-3: Analisa bias kuantitatif dan proyeksi deviasi konsensus dikunci hingga memasuki jendela H-3 (<= 72 jam sebelum rilis) agar data konsensus akurat dan tidak prematur.\n"
+                "3. Fokus Perdagangan Saat Ini: Selama fase WAITING NEWS, pergerakan XAU/USD lebih dipengaruhi oleh struktur teknikal intraday, imbal hasil US 10Y Treasury, dan arus berita geopolitik harian."
+            ),
+            "consensus_rules": [
+                {
+                    "condition": "Status Kalender: WAITING NEWS (> 3 Hari)",
+                    "trigger": "Tidak ada rilis NFP / PPI / CPI / FOMC / PMI dalam 72 jam ke depan",
+                    "dxy_yield_reaction": "DXY dan Yield US 10Y bergerak mengikuti sentimen sesi harian & teknikal",
+                    "xau_reaction": "⏳ Menunggu Jendela Analisa H-3",
+                    "expected_pips": "Normal Intraday",
+                    "action": "Gunakan analisis teknikal & pantau Tab Berita Harian"
+                }
+            ],
+            "key_watch_factors": [
+                {
+                    "factor": "Jadwal High Impact Berikutnya",
+                    "benchmark": f"{next_sched_group} ({next_sched_wib})" if next_sched_group else "Menunggu Jadwal Baru",
+                    "importance": "Analisa AI Quant Keluar Otomatis pada H-3 (3 Hari Sebelum Rilis)"
+                },
+                {
+                    "factor": "Filter Berita Aktif",
+                    "benchmark": "Hanya NFP • PPI • CPI • FOMC • PMI",
+                    "importance": "Berita minor/mingguan diabaikan agar sinyal tetap presisi"
+                }
+            ],
+            "tactical_guidance": "Saat status WAITING NEWS aktif, hindari asumsi bias berita terlalu dini. Tunggu hasil analisa resmi keluar pada H-3 sebelum rilis."
+        }
+
         return {
-            "expected_bias": "XAU NEUTRAL",
-            "context_percent": 50,
+            "expected_bias": "WAITING NEWS",
+            "context_percent": 0,
             "xau_score": 0.00,
-            "spike_potential": 50,
-            "one_way": 50,
-            "two_way": 50,
-            "reasoning": "Belum ada rilis berita High Impact yang terdeteksi.",
-            "why_bias_reason": "Belum ada rilis berita High Impact mendatang.",
-            "market_interpretation": "Menunggu konfirmasi kalender ekonomi High Impact.",
-            "consensus_rules": [],
-            "key_watch_factors": [],
-            "tactical_guidance": "Gunakan manajemen risiko standar.",
-            "fundamental_dossier": {}
+            "spike_potential": 0,
+            "one_way": 0,
+            "two_way": 0,
+            "ai_reasoning": why_wait,
+            "geo_sentiment": ai_analysis.get("geopolitical_sentiment", "neutral") if ai_analysis else "neutral",
+            "analysis_mode": "WAITING H-3",
+            "why_bias_reason": why_wait,
+            "market_interpretation": waiting_dossier["market_interpretation"],
+            "consensus_rules": waiting_dossier["consensus_rules"],
+            "key_watch_factors": waiting_dossier["key_watch_factors"],
+            "tactical_guidance": waiting_dossier["tactical_guidance"],
+            "fundamental_dossier": waiting_dossier
         }
 
     group_name = next_event.get("group_name", "USD News")

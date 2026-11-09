@@ -49,27 +49,40 @@ def is_speech_or_testimony(title_lower: str) -> bool:
     """Checks if an event title is a central bank official speech or testimony rather than a data release."""
     return any(w in title_lower for w in ["speaks", "testifies", "speech", "remarks", "panel"])
 
+ALLOWED_GROUPS = {"NFP", "PPI", "CPI", "FOMC", "PMI"}
+H3_WINDOW_SECONDS = 3 * 86400  # 3 days (72 hours = 259,200 seconds)
+
 def classify_event_group(title: str) -> str:
-    """Maps a raw USD economic indicator title to its canonical institutional event group without false positives."""
+    """
+    Strictly maps a raw USD economic indicator title to one of the 5 allowed High Impact groups:
+    NFP, PPI, CPI, FOMC, PMI (plus NFP_COMPONENT for same-timestamp NFP companion metrics).
+    Returns empty string "" for any other news event so it is excluded.
+    """
     t = title.strip().lower()
 
-    # 1. Speeches & Testimonies (Never classify speeches as FOMC Rate Decision or NFP)
+    # 1. Exclude all individual speeches, testimonies, and FOMC Meeting Minutes
     if is_speech_or_testimony(t):
-        if any(w in t for w in ["chair", "powell", "warsh"]):
-            return "Fed Chair Speech"
-        return title.strip()
+        return ""
+    if "minutes" in t:
+        return ""
 
-    # 2. FOMC Meeting Minutes vs Official FOMC Rate Decision
-    if "fomc meeting minutes" in t or "fomc minutes" in t or ("minutes" in t and "fomc" in t):
-        return "FOMC Meeting Minutes"
-    if "fomc press conference" in t:
-        return "FOMC Press Conference"
-    if any(w in t for w in ["federal funds rate", "fomc statement", "fomc economic projections", "fed interest rate", "interest rate decision"]) or t == "interest rate":
+    # 2. Official FOMC Rate Decision Cluster ONLY
+    if any(
+        w in t
+        for w in [
+            "federal funds rate",
+            "fomc statement",
+            "fomc economic projections",
+            "fomc press conference",
+            "fed interest rate",
+            "interest rate decision"
+        ]
+    ) or t == "interest rate":
         return "FOMC"
 
-    # 3. ADP Employment vs Official BLS Non-Farm Payrolls (NFP)
+    # 3. Official BLS Non-Farm Payrolls (NFP) & Same-Timestamp Companion Metrics
     if "adp" in t:
-        return "ADP Non-Farm Employment"
+        return ""
     if (
         ("non-farm" in t or "non farm" in t or "nfp" in t or "jobs report" in t or "payrolls" in t)
         and "adp" not in t
@@ -77,109 +90,43 @@ def classify_event_group(title: str) -> str:
         and "weekly" not in t
     ):
         return "NFP"
+    if "unemployment rate" in t or "average hourly earnings" in t:
+        return "NFP_COMPONENT"
 
-    # 4. Other Labor Market Releases
-    if "unemployment claims" in t or "jobless claims" in t or "initial claims" in t:
-        return "Initial Jobless Claims"
-    if "unemployment rate" in t:
-        return "Unemployment Rate"
-    if "average hourly earnings" in t:
-        return "Average Hourly Earnings"
-    if "jolts" in t or "job openings" in t:
-        return "JOLTS Job Openings"
-    if "employment cost index" in t:
-        return "Employment Cost Index"
-
-    # 5. Inflation Releases (CPI, PPI, Core PCE)
-    if ("cpi" in t or "inflation rate" in t) and "expectation" not in t:
+    # 4. Consumer Price Index (CPI)
+    if (
+        ("cpi" in t or "inflation rate" in t)
+        and "expectation" not in t
+        and "cpi-w" not in t
+        and "nsa" not in t
+    ):
         return "CPI"
+
+    # 5. Producer Price Index (PPI)
     if "ppi" in t or "producer price" in t:
         return "PPI"
-    if "pce" in t:
-        return "Core PCE"
 
-    # 6. Growth, Activity & Sentiment
-    if "retail sales" in t and "inventories" not in t:
-        return "Retail Sales"
-    if "gdp" in t:
-        return "GDP"
-    if "ism" in t and ("pmi" in t or "manufacturing" in t or "services" in t or "prices" in t):
-        return "ISM PMI"
-    if "consumer confidence" in t or "consumer sentiment" in t:
-        return "Consumer Confidence"
+    # 6. Purchasing Managers' Index (PMI - ISM & Flash/S&P Global US PMI)
+    if "pmi" in t and "chicago" not in t:
+        return "PMI"
+    if ("ism manufacturing" in t or "ism services" in t or "ism non-manufacturing" in t) and "prices" not in t and "employment" not in t:
+        return "PMI"
 
-    return title.strip()
+    return ""
 
 def is_high_impact_event(event: Dict[str, Any]) -> bool:
-    """Strictly filters for genuine High Impact USD market-moving macroeconomic releases."""
+    """Strictly filters for ONLY the 5 High Impact USD groups: NFP, PPI, CPI, FOMC, PMI."""
     if event.get("country") != "USD":
         return False
 
     impact = str(event.get("impact", "")).strip().lower()
-    title = str(event.get("title", "")).strip().lower()
+    title = str(event.get("title", "")).strip()
 
-    if impact in ["low", "holiday", ""]:
+    if impact not in ["high", "medium"]:
         return False
 
-    # Exclude routine FOMC member speeches and low/medium noise
-    if is_speech_or_testimony(title):
-        if "fomc member" in title or impact != "high":
-            return False
-        # Only allow High-impact Fed Chair speeches/testimonies
-        return any(w in title for w in ["chair", "powell", "warsh"])
-
-    # Exclude minor/weekly/regional reports that are never Tier-1 catalysts
-    excluded_phrases = [
-        "weekly", "auction", "inventories", "storage", "rig count",
-        "mba ", "nahb", "philly fed", "philadelphia fed", "richmond fed",
-        "chicago fed", "empire state", "challenger", "export sales",
-        "wasde", "budget", "delinquencies", "cpi-w", "nsa", "seasonally adjusted",
-        "machinery manufacturing", "existing home sales", "new home sales",
-        "pending home sales", "housing starts", "building permits", "durable goods"
-    ]
-    if any(ex in title for ex in excluded_phrases):
-        return False
-
-    # Red folder / High impact
-    if impact == "high":
-        return True
-
-    # Medium impact: ONLY allow core macroeconomic releases that some feeds classify as Medium
-    if impact == "medium":
-        allowed_medium_exact = [
-            "unemployment claims",
-            "initial jobless claims",
-            "jobless claims",
-            "core cpi m/m",
-            "core cpi y/y",
-            "cpi m/m",
-            "cpi y/y",
-            "core ppi m/m",
-            "core ppi y/y",
-            "ppi m/m",
-            "ppi y/y",
-            "core pce price index m/m",
-            "core pce price index y/y",
-            "non-farm employment change",
-            "adp non-farm employment change",
-            "unemployment rate",
-            "average hourly earnings m/m",
-            "federal funds rate",
-            "fomc statement",
-            "fomc meeting minutes",
-            "advance gdp q/q",
-            "prelim gdp q/q",
-            "final gdp q/q",
-            "retail sales m/m",
-            "core retail sales m/m",
-            "ism manufacturing pmi",
-            "ism services pmi",
-            "jolts job openings"
-        ]
-        if any(kw in title for kw in allowed_medium_exact):
-            return True
-
-    return False
+    group = classify_event_group(title)
+    return group in ALLOWED_GROUPS or group == "NFP_COMPONENT"
 
 def fetch_from_forexfactory_xml() -> List[Dict[str, Any]]:
     req = urllib.request.Request(FF_XML_URL, headers=HEADERS)
@@ -267,7 +214,7 @@ def _format_tv_figure(val: Any, unit: Optional[str], scale: Optional[str]) -> st
     return f"{num_str}{s}{u}"
 
 def _map_tradingview_title(raw_title: str) -> Optional[str]:
-    """Maps TradingView economic calendar indicator names to canonical ForexFactory-compatible USD titles."""
+    """Maps TradingView economic calendar indicator names strictly to the 5 allowed USD groups (NFP, PPI, CPI, FOMC, PMI)."""
     t = raw_title.strip()
     tl = t.lower()
 
@@ -281,33 +228,22 @@ def _map_tradingview_title(raw_title: str) -> Optional[str]:
         "core ppi mom": "Core PPI m/m",
         "core ppi yoy": "Core PPI y/y",
         "non farm payrolls": "Non-Farm Employment Change",
-        "adp employment change": "ADP Non-Farm Employment Change",
         "unemployment rate": "Unemployment Rate",
         "average hourly earnings mom": "Average Hourly Earnings m/m",
         "average hourly earnings yoy": "Average Hourly Earnings y/y",
-        "initial jobless claims": "Unemployment Claims",
-        "jolts job openings": "JOLTS Job Openings",
-        "retail sales mom": "Retail Sales m/m",
-        "retail sales ex autos mom": "Core Retail Sales m/m",
-        "core pce price index mom": "Core PCE Price Index m/m",
-        "core pce price index yoy": "Core PCE Price Index y/y",
         "ism manufacturing pmi": "ISM Manufacturing PMI",
         "ism services pmi": "ISM Services PMI",
+        "ism non-manufacturing pmi": "ISM Services PMI",
+        "s&p global manufacturing pmi flash": "Flash Manufacturing PMI",
+        "s&p global services pmi flash": "Flash Services PMI",
+        "s&p global manufacturing pmi": "S&P Global Manufacturing PMI",
+        "s&p global services pmi": "S&P Global Services PMI",
         "fed interest rate decision": "Federal Funds Rate",
         "interest rate": "Federal Funds Rate",
-        "fomc minutes": "FOMC Meeting Minutes",
         "fomc economic projections": "FOMC Economic Projections",
         "fed press conference": "FOMC Press Conference"
     }
-    if tl in mapping:
-        return mapping[tl]
-    if tl.startswith("gdp growth rate qoq"):
-        if "adv" in tl:
-            return "Advance GDP q/q"
-        if "2nd" in tl or "prelim" in tl:
-            return "Prelim GDP q/q"
-        return "Final GDP q/q"
-    return None
+    return mapping.get(tl)
 
 def fetch_from_tradingview_calendar() -> List[Dict[str, Any]]:
     """Fetches multi-week official US economic calendar events from TradingView to ensure continuous upcoming coverage."""
@@ -444,25 +380,14 @@ def fetch_raw_events() -> List[Dict[str, Any]]:
 GROUP_PRIORITY = {
     "NFP": 100,
     "FOMC": 95,
-    "FOMC Press Conference": 92,
     "CPI": 90,
-    "Core PCE": 85,
-    "FOMC Meeting Minutes": 82,
-    "GDP": 80,
-    "PPI": 75,
-    "Retail Sales": 70,
-    "ISM PMI": 65,
-    "JOLTS Job Openings": 60,
-    "ADP Non-Farm Employment": 58,
-    "Initial Jobless Claims": 55,
-    "Unemployment Rate": 52,
-    "Average Hourly Earnings": 51,
-    "Consumer Confidence": 50,
-    "Fed Chair Speech": 45
+    "PPI": 80,
+    "PMI": 75,
+    "NFP_COMPONENT": 10
 }
 
 def group_events_by_time(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Groups events happening at the same datetime and assigns the exact canonical group name."""
+    """Groups events happening at the same datetime and assigns one of the 5 allowed canonical group names (NFP, PPI, CPI, FOMC, PMI)."""
     grouped: Dict[str, Dict[str, Any]] = {}
     now = datetime.now(timezone.utc)
 
@@ -475,6 +400,8 @@ def group_events_by_time(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         time_key = ev_time.isoformat()
         ev_title = ev.get("title", "USD News")
         candidate_group = classify_event_group(ev_title)
+        if not candidate_group:
+            continue
 
         if time_key not in grouped:
             grouped[time_key] = {
@@ -488,7 +415,7 @@ def group_events_by_time(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             }
         else:
             curr_group = grouped[time_key]["group_name"]
-            if GROUP_PRIORITY.get(candidate_group, 10) > GROUP_PRIORITY.get(curr_group, 10):
+            if GROUP_PRIORITY.get(candidate_group, 0) > GROUP_PRIORITY.get(curr_group, 0):
                 grouped[time_key]["group_name"] = candidate_group
 
         # Prevent duplicate items inside the same timestamp cluster
@@ -514,23 +441,20 @@ def group_events_by_time(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "actual": ev.get("actual", "") or ""
             })
 
-    # Sort chronologically
-    sorted_clusters = sorted(grouped.values(), key=lambda x: x["timestamp"])
+    # Sort chronologically and strictly retain ONLY the 5 allowed groups (NFP, PPI, CPI, FOMC, PMI)
+    sorted_clusters = [
+        c for c in sorted(grouped.values(), key=lambda x: x["timestamp"])
+        if c["group_name"] in ALLOWED_GROUPS
+    ]
 
     # Deduplicate same-day clusters that have the exact same major group_name
-    # (e.g., if two feeds reported the same release with a 1-hour DST offset on the same date)
     deduped_clusters: List[Dict[str, Any]] = []
     seen_day_groups: Dict[tuple, Dict[str, Any]] = {}
-    unique_daily_groups = {
-        "NFP", "FOMC", "FOMC Meeting Minutes", "CPI", "PPI", "Core PCE",
-        "GDP", "Retail Sales", "Initial Jobless Claims", "ADP Non-Farm Employment",
-        "ISM PMI", "JOLTS Job Openings"
-    }
 
     for cluster in sorted_clusters:
         g_name = cluster["group_name"]
         day_str = cluster["datetime"][:10]
-        if g_name in unique_daily_groups:
+        if g_name in ALLOWED_GROUPS:
             day_key = (day_str, g_name)
             if day_key in seen_day_groups:
                 primary = seen_day_groups[day_key]
@@ -545,7 +469,11 @@ def group_events_by_time(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return deduped_clusters
 
 def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
-    """Returns parsed economic calendar and the next high-impact USD news cluster."""
+    """
+    Returns parsed economic calendar filtered strictly to NFP, PPI, CPI, FOMC, PMI.
+    Enforces the H-3 (3 days = 259,200s) rule: if no allowed news is within 3 days,
+    returns 'WAITING NEWS' as the active reading.
+    """
     CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc)
 
@@ -600,6 +528,7 @@ def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
         g["seconds_until"] = diff_sec
         g["is_past"] = diff_sec < 0
         g["datetime_wib"] = format_wib_datetime(g["datetime"])
+        g["is_within_h3"] = (0 < diff_sec <= H3_WINDOW_SECONDS)
 
         if diff_sec > 0:
             days = diff_sec // 86400
@@ -618,7 +547,37 @@ def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
             g["countdown_str"] = "Released"
             past_clusters.append(g)
 
-    next_event = upcoming_clusters[0] if upcoming_clusters else None
+    first_upcoming = upcoming_clusters[0] if upcoming_clusters else None
+
+    # Enforce H-3 (3 Days = 259,200 seconds) Rule:
+    # If there is an allowed event within 3 days, activate it and release H-3 analysis.
+    # Otherwise, set active reading to WAITING NEWS until H-3 before the next allowed event.
+    if first_upcoming and first_upcoming["seconds_until"] <= H3_WINDOW_SECONDS:
+        next_event = dict(first_upcoming)
+        next_event["is_waiting"] = False
+        next_event["h3_active"] = True
+    else:
+        next_sched_group = first_upcoming["group_name"] if first_upcoming else None
+        next_sched_wib = first_upcoming["datetime_wib"] if first_upcoming else None
+        seconds_to_h3 = max(0, first_upcoming["seconds_until"] - H3_WINDOW_SECONDS) if first_upcoming else 0
+        next_event = {
+            "group_name": "WAITING NEWS",
+            "is_waiting": True,
+            "h3_active": False,
+            "datetime": first_upcoming["datetime"] if first_upcoming else "",
+            "datetime_wib": (
+                f"Tidak ada news 3 hari ke depan • Berikutnya: {next_sched_group} ({next_sched_wib})"
+                if first_upcoming else "Tidak ada jadwal NFP / PPI / CPI / FOMC / PMI dalam 3 hari ke depan"
+            ),
+            "timestamp": first_upcoming["timestamp"] if first_upcoming else 0,
+            "is_past": False,
+            "seconds_until": first_upcoming["seconds_until"] if first_upcoming else 0,
+            "seconds_until_h3": seconds_to_h3,
+            "countdown_str": first_upcoming["countdown_str"] if first_upcoming else "Waiting News",
+            "next_scheduled_group": next_sched_group,
+            "next_scheduled_wib": next_sched_wib,
+            "items": []
+        }
 
     return {
         "next_event": next_event,
@@ -629,26 +588,60 @@ def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
     }
 
 def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
-    """Returns secondary/lead-in indicators tailored specifically to the upcoming major news event."""
+    """Returns secondary/lead-in indicators tailored specifically to the 5 allowed major news events (or WAITING NEWS)."""
     mg = main_group.strip().upper()
 
-    if mg == "NFP" or "ADP" in mg:
+    if mg == "WAITING NEWS" or not mg:
         return [
             {
-                "title": "ADP Non-Farm Employment Change (Sektor Swasta)",
-                "category": "Tenaga Kerja Swasta",
-                "status": "Leading Indicator NFP",
+                "title": "Protokol H-3 Kalender High Impact (NFP • PPI • CPI • FOMC • PMI)",
+                "category": "Protokol Sistem",
+                "status": "Mode Standby (Waiting News)",
+                "latest_data": "Menunggu Jendela H-3 (72 Jam Sebelum Rilis)",
+                "relation_note": "Saat tidak ada jadwal rilis NFP, PPI, CPI, FOMC, atau PMI dalam 3 hari ke depan, terminal berada pada mode WAITING NEWS. Hasil analisa AI Quant akan keluar otomatis tepat pada H-3 sebelum rilis berita.",
+                "bias_impact": "Fokus pada struktur teknikal & berita harian makro",
+                "impact_type": "neutral",
+                "importance": "Aturan H-3 Aktif"
+            },
+            {
+                "title": "US 10-Year Treasury Yield & Dollar Index (DXY)",
+                "category": "Pasar Obligasi & Valas",
+                "status": "Barometer Intermarket Harian",
+                "latest_data": "Korelasi Terbalik dengan XAU/USD",
+                "relation_note": "Di luar jendela H-3 berita kalender, pergerakan emas spot (XAU/USD) dikendalikan oleh fluktuasi imbal hasil obligasi AS 10 tahun dan aliran safe-haven geopolitik.",
+                "bias_impact": "Bullish XAU saat Yield & DXY melemah",
+                "impact_type": "buy",
+                "importance": "Tinggi (50% Bobot)"
+            },
+            {
+                "title": "Arus Geopolitik & Permintaan Bank Sentral",
+                "category": "Safe-Haven",
+                "status": "Pemantauan Real-Time",
+                "latest_data": "Pantau Tab Berita Harian",
+                "relation_note": "Eskalasi geopolitik atau pernyataan mendadak pejabat bank sentral dapat memicu volatilitas intraday meskipun sedang tidak ada rilis kalender dalam 3 hari ke depan.",
+                "bias_impact": "Pantau buletin makro harian di Tab 3",
+                "impact_type": "neutral",
+                "importance": "Tinggi (50% Bobot)"
+            }
+        ]
+
+    elif mg == "NFP":
+        return [
+            {
+                "title": "Non-Farm Employment Change (Penciptaan Lapangan Kerja AS)",
+                "category": "Tenaga Kerja Utama",
+                "status": "Komponen Inti NFP",
                 "latest_data": "Pantau Deviasi Aktual vs Konsensus",
-                "relation_note": "ADP mengukur penambahan tenaga kerja sektor swasta 2 hari sebelum NFP. Angka di atas ekspektasi mengindikasikan payrolls NFP kuat dan memicu reli Dolar AS.",
+                "relation_note": "Mengukur perubahan jumlah tenaga kerja di luar sektor pertanian. Deviasi >25K-30K dari konsensus memicu lonjakan volatilitas instan pada DXY dan XAU/USD.",
                 "bias_impact": "Hawkish USD / Bearish XAU jika di atas konsensus",
                 "impact_type": "sell",
-                "importance": "Sangat Tinggi (35% Bobot)"
+                "importance": "Sangat Tinggi (45% Bobot)"
             },
             {
                 "title": "Average Hourly Earnings m/m & y/y (Pertumbuhan Upah)",
                 "category": "Inflasi Upah",
                 "status": "Pemicu Inflasi Jasa",
-                "latest_data": "Komponen Utama Laporan Tenaga Kerja",
+                "latest_data": "Komponen Utama Laporan NFP",
                 "relation_note": "Kenaikan upah rata-rata per jam adalah bahan bakar utama inflasi jasa (sticky inflation). Jika upah naik tajam, The Fed enggan memangkas suku bunga secara agresif.",
                 "bias_impact": "Hawkish USD / Bearish XAU jika naik",
                 "impact_type": "sell",
@@ -663,20 +656,10 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
                 "bias_impact": "Dovish USD / Bullish XAU jika pengangguran naik",
                 "impact_type": "buy",
                 "importance": "Tinggi (25% Bobot)"
-            },
-            {
-                "title": "Initial Jobless Claims (Klaim Pengangguran Mingguan)",
-                "category": "Klaim Mingguan",
-                "status": "Indikator Frekuensi Tinggi",
-                "latest_data": "Rilis Rutin Hari Kamis",
-                "relation_note": "Klaim pengangguran yang rendah menunjukkan gelombang PHK masih minim di perusahaan AS, memberikan bantalan bagi The Fed untuk menjaga suku bunga ketat.",
-                "bias_impact": "Mendukung Dolar AS / Menekan Emas jika klaim rendah",
-                "impact_type": "sell",
-                "importance": "Sedang (10% Bobot)"
             }
         ]
 
-    elif "CPI" in mg or "INFLATION" in mg:
+    elif mg == "CPI":
         return [
             {
                 "title": "Core CPI m/m & y/y (Inflasi Inti Tanpa Pangan & Energi)",
@@ -710,7 +693,7 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
             }
         ]
 
-    elif "PPI" in mg:
+    elif mg == "PPI":
         return [
             {
                 "title": "Core PPI m/m (Inflasi Produsen Inti)",
@@ -744,41 +727,41 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
             }
         ]
 
-    elif "JOBLESS" in mg or "CLAIMS" in mg or "UNEMPLOYMENT" in mg or "JOLTS" in mg:
+    elif mg == "PMI":
         return [
             {
-                "title": "Initial Jobless Claims (Klaim Pengangguran Awal)",
-                "category": "Pasar Tenaga Kerja",
-                "status": "Rilis Mingguan Hari Kamis",
-                "latest_data": "Indikator Kecepatan PHK",
-                "relation_note": "Kenaikan klaim pengangguran di atas ekspektasi menandakan pelemahan pasar kerja AS, menekan DXY dan mendorong penguatan emas XAU/USD.",
-                "bias_impact": "Dovish USD / Bullish XAU jika klaim > Forecast",
+                "title": "ISM Services & Manufacturing PMI (Ambang Ekspansi 50.0)",
+                "category": "Aktivitas Ekonomi",
+                "status": "Indikator Siklus Bisnis AS",
+                "latest_data": "Batas Kritis Ekspansi vs Kontraksi: 50.0",
+                "relation_note": "Angka PMI di atas 50.0 menandakan ekspansi ekonomi yang menopang Dolar AS, sedangkan angka di bawah 50.0 mengindikasikan kontraksi dan memicu reli emas.",
+                "bias_impact": "Dovish USD / Bullish XAU jika PMI < Forecast",
                 "impact_type": "buy",
                 "importance": "Sangat Tinggi (45% Bobot)"
             },
             {
-                "title": "Continuing Jobless Claims (Klaim Berkelanjutan)",
-                "category": "Durasi Pengangguran",
-                "status": "Konfirmasi Tren Serapan Kerja",
-                "latest_data": "Pantau Tren 4-Minggu",
-                "relation_note": "Peningkatan klaim berkelanjutan menunjukkan pekerja yang terkena PHK semakin sulit mendapat pekerjaan baru, sinyal pendinginan ekonomi yang mendukung emas.",
-                "bias_impact": "Bullish XAU jika tren klaim meningkat",
-                "impact_type": "buy",
+                "title": "Flash Manufacturing & Services PMI (S&P Global)",
+                "category": "Leading Indicator PMI",
+                "status": "Survei Manajer Pembelian Awal",
+                "latest_data": "Barometer Pesanan Baru & Output",
+                "relation_note": "Memberikan gambaran awal kondisi manufaktur dan jasa AS setiap bulan sebelum rilis ISM, sangat sensitif terhadap ekspektasi pertumbuhan PDB.",
+                "bias_impact": "Hawkish USD / Bearish XAU jika > Forecast",
+                "impact_type": "sell",
                 "importance": "Tinggi (30% Bobot)"
             },
             {
-                "title": "US 10Y Treasury Yield & Indeks Dolar (DXY)",
+                "title": "US 10-Year Treasury Yield & Dollar Index (DXY)",
                 "category": "Intermarket",
-                "status": "Sensitivitas Suku Bunga",
-                "latest_data": "Reaksi Instan Algoritma",
-                "relation_note": "Data klaim yang lebih rendah dari konsensus memperkuat narasi pasar tenaga kerja ketat, menopang DXY dan menahan kenaikan emas.",
-                "bias_impact": "Bearish XAU jika klaim < Forecast",
-                "impact_type": "sell",
+                "status": "Respon Likuiditas New York",
+                "latest_data": "Korelasi Negatif XAU/USD",
+                "relation_note": "Pelemahan PMI yang diikuti penurunan yield US 10Y menjadi konfirmasi kuat bagi akumulasi beli XAU/USD di sesi New York.",
+                "bias_impact": "Bullish XAU saat Yield turun pasca PMI lemah",
+                "impact_type": "buy",
                 "importance": "Sedang (25% Bobot)"
             }
         ]
 
-    elif "FOMC" in mg or "FED" in mg or "PCE" in mg:
+    else:  # FOMC
         return [
             {
                 "title": "CME FedWatch Tool (Probabilitas Target Suku Bunga)",
@@ -791,13 +774,13 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
                 "importance": "Sangat Tinggi (40% Bobot)"
             },
             {
-                "title": "Core PCE Price Index (Indikator Favorit The Fed)",
-                "category": "Inflasi Konsumsi Pribadi",
-                "status": "Target 2.0% The Fed",
+                "title": "FOMC Statement & Dot Plot (Economic Projections)",
+                "category": "Kebijakan Moneter",
+                "status": "Panduan Suku Bunga The Fed",
                 "latest_data": "Jangkar Proyeksi Moneter",
-                "relation_note": "The Fed mendasarkan proyeksi kebijakan moneter jangka menengah pada angka PCE inti dibanding CPI umum.",
-                "bias_impact": "Hawkish USD jika PCE bertahan di atas target",
-                "impact_type": "sell",
+                "relation_note": "Pernyataan resmi FOMC dan proyeksi suku bunga (Dot Plot) menjadi penentu utama tren menengah Dolar AS dan XAU/USD.",
+                "bias_impact": "Bullish XAU jika proyeksi suku bunga dipangkas",
+                "impact_type": "buy",
                 "importance": "Tinggi (35% Bobot)"
             },
             {
@@ -809,39 +792,5 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
                 "bias_impact": "Bearish XAU / Bullish USD saat yield naik",
                 "impact_type": "sell",
                 "importance": "Tinggi (25% Bobot)"
-            }
-        ]
-
-    else:
-        return [
-            {
-                "title": "Initial Jobless Claims (Klaim Pengangguran Mingguan)",
-                "category": "Tenaga Kerja",
-                "status": "Indikator Mingguan AS",
-                "latest_data": "Pantau Tren Ketenagakerjaan",
-                "relation_note": "Kondisi ketenagakerjaan yang kuat menghilangkan kekhawatiran resesi dari The Fed saat menentukan kebijakan moneter.",
-                "bias_impact": "Hawkish USD / Bearish XAU jika klaim rendah",
-                "impact_type": "sell",
-                "importance": "Tinggi (35% Bobot)"
-            },
-            {
-                "title": "ISM Manufacturing & Services PMI",
-                "category": "Aktivitas Bisnis",
-                "status": "Batas Ekspansi 50.0",
-                "latest_data": "Barometer Siklus Ekonomi",
-                "relation_note": "Aktivitas bisnis yang solid mendukung permintaan Dolar AS, sedangkan kontraksi di bawah 50 memicu permintaan safe-haven emas.",
-                "bias_impact": "Mendukung Dolar AS jika di atas ekspektasi",
-                "impact_type": "sell",
-                "importance": "Sedang (35% Bobot)"
-            },
-            {
-                "title": "US 10Y Treasury Yield & Dollar Index (DXY)",
-                "category": "Pasar Modal & Valas",
-                "status": "Imbal Hasil Obligasi",
-                "latest_data": "Korelasi Intermarket",
-                "relation_note": "Korelasi negatif kuat antara Dolar AS / Yield Treasury dan harga emas spot XAU/USD.",
-                "bias_impact": "Bearish XAU saat DXY menguat",
-                "impact_type": "sell",
-                "importance": "Sedang (30% Bobot)"
             }
         ]
