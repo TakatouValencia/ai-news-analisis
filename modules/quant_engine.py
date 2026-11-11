@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 def parse_num_from_str(s: str) -> float:
     """Helper to extract float from string like '0.3%', '211K', '-0.3'."""
@@ -20,8 +20,133 @@ def has_valid_num(s: str) -> bool:
     except ValueError:
         return False
 
-def evaluate_event_consensus_bias(items: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Calculates directional macroeconomic bias from Forecast vs Previous in upcoming event items."""
+def evaluate_past_actuals_regime(past_events: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """
+    Evaluates the macroeconomic regime from actual released data of preceding High Impact events
+    (NFP, CPI, PPI, PMI, FOMC). Negative score = Hawkish USD / Bearish XAU (SELL);
+    Positive score = Dovish USD / Bullish XAU (BUY).
+    """
+    if not past_events:
+        return {
+            "regime_score": 0.0,
+            "regime_label": "NEUTRAL",
+            "summary_text": ""
+        }
+
+    total_weighted = 0.0
+    total_weights = 0.0
+    event_summaries = []
+
+    recent_events = past_events[-6:]
+    total_ev = len(recent_events)
+
+    for idx, ev in enumerate(recent_events):
+        g_name = ev.get("group_name", "USD")
+        recency_mult = 1.35 if idx >= total_ev - 2 else 1.0
+        ev_details = []
+
+        for it in ev.get("items", []):
+            title_orig = it.get("title", "")
+            title = title_orig.lower()
+            a_str = str(it.get("actual", "")).strip()
+            f_str = str(it.get("forecast", "-")).strip()
+            p_str = str(it.get("previous", "-")).strip()
+
+            if not has_valid_num(a_str):
+                continue
+            bench_str = f_str if has_valid_num(f_str) else (p_str if has_valid_num(p_str) else "")
+            if not bench_str:
+                continue
+
+            a_val = parse_num_from_str(a_str)
+            b_val = parse_num_from_str(bench_str)
+            diff = a_val - b_val
+
+            w = 2.0 * recency_mult
+            dir_score = 0.0
+
+            if "unemployment rate" in title:
+                w = 2.4 * recency_mult
+                if diff < -0.001:
+                    dir_score = -1.25  # Lower unemployment = Hawkish USD = Bearish XAU
+                elif diff > 0.001:
+                    dir_score = 1.25
+            elif "non-farm" in title or "nfp" in title or "payrolls" in title:
+                w = 3.2 * recency_mult
+                if diff > 0:
+                    dir_score = -1.65 if diff >= 25 else -1.2
+                elif diff < 0:
+                    dir_score = 1.65 if diff <= -25 else 1.2
+            elif "hourly earnings" in title:
+                w = 2.6 * recency_mult
+                if diff > 0.001:
+                    dir_score = -1.4  # Hot wage inflation = Bearish XAU
+                elif diff < -0.001:
+                    dir_score = 1.3
+            elif "cpi" in title or "inflation" in title:
+                w = (3.4 if "core" in title or "m/m" in title else 2.5) * recency_mult
+                if diff > 0.001:
+                    dir_score = -1.75  # Hot CPI surprise = Strong Bearish XAU
+                elif diff < -0.001:
+                    dir_score = 1.75
+                else:
+                    dir_score = -0.6 if a_val >= 0.3 else 0.2
+            elif "ppi" in title:
+                w = 2.5 * recency_mult
+                if diff > 0.001:
+                    dir_score = -1.45
+                elif diff < -0.001:
+                    dir_score = 1.45
+            elif "pmi" in title or "ism" in title:
+                w = 2.0 * recency_mult
+                if diff > 0.001:
+                    dir_score = -1.1
+                elif diff < -0.001:
+                    dir_score = 1.1
+            elif "funds rate" in title or "fomc" in title:
+                w = 3.5 * recency_mult
+                if diff > 0.001:
+                    dir_score = -1.8
+                elif diff < -0.001:
+                    dir_score = 1.8
+
+            if abs(dir_score) > 0.01:
+                total_weighted += dir_score * w
+                total_weights += w
+                ev_details.append(f"{title_orig} Aktual {a_str} vs Forecast {bench_str}")
+
+        if ev_details:
+            event_summaries.append(f"{g_name} ({', '.join(ev_details[:2])})")
+
+    if total_weights == 0:
+        return {
+            "regime_score": 0.0,
+            "regime_label": "NEUTRAL",
+            "summary_text": ""
+        }
+
+    norm = total_weighted / max(1.0, total_weights)
+    regime_score = max(-4.8, min(4.8, round(norm * 3.0, 2)))
+    if regime_score <= -1.0:
+        regime_label = "SELL"
+    elif regime_score >= 1.0:
+        regime_label = "BUY"
+    else:
+        regime_label = "NEUTRAL"
+
+    summary_text = "; ".join(event_summaries[-2:])
+    return {
+        "regime_score": regime_score,
+        "regime_label": regime_label,
+        "summary_text": summary_text
+    }
+
+def evaluate_event_consensus_bias(items: List[Dict[str, Any]], past_regime_score: float = 0.0) -> Dict[str, Any]:
+    """
+    Calculates directional macroeconomic bias from Forecast vs Previous in upcoming event items,
+    incorporating Fed inflation target thresholds (0.2% m/m) and preceding actual releases regime
+    to prevent false BUY signals when Previous had an extreme one-off spike.
+    """
     macro_shift = 0.0
     weights_sum = 0.0
     signals_concordant = 0
@@ -46,12 +171,36 @@ def evaluate_event_consensus_bias(items: List[Dict[str, Any]]) -> Dict[str, Any]
             weight = 3.5
             direction = -1.0 if diff >= 0 else 1.0
         elif "cpi" in title or "inflation" in title:
-            weight = 3.0 if "core" in title or "m/m" in title else 2.2
-            # Higher inflation = Hawkish USD = Bearish Gold; Lower inflation = Dovish USD = Bullish Gold
-            direction = -1.0 if diff > 0 else (1.0 if diff < 0 else -0.3)
+            is_mom = "m/m" in title or "mom" in title
+            weight = 3.2 if ("core" in title and is_mom) else (2.8 if is_mom else 2.2)
+            if diff > 0:
+                direction = -1.0
+            elif diff < 0:
+                # Guard against mean-reversion illusion: >=0.3% m/m is still >=3.7% annualized sticky inflation
+                if is_mom and f_val >= 0.3:
+                    direction = -0.65 if past_regime_score <= -1.0 else -0.25
+                elif is_mom and f_val >= 0.2 and past_regime_score <= -1.2:
+                    # Preceding NFP/Wages came out hot, so 0.2% m/m forecast faces high upside surprise risk
+                    direction = -0.45
+                else:
+                    direction = 1.0
+            else:
+                direction = -0.4 if (is_mom and f_val >= 0.3) else -0.3
         elif "ppi" in title:
-            weight = 2.5
-            direction = -1.0 if diff > 0 else (1.0 if diff < 0 else -0.3)
+            is_mom = "m/m" in title or "mom" in title
+            weight = 2.8 if "core" in title else 2.5
+            if diff > 0:
+                direction = -1.0
+            elif diff < 0:
+                # Guard against high base-effect illusion (e.g. Forecast 0.3%-0.4% after 0.7%-1.3% spike)
+                if is_mom and f_val >= 0.3:
+                    direction = -0.75 if past_regime_score <= -1.0 else -0.30
+                elif is_mom and f_val >= 0.2 and past_regime_score <= -1.2:
+                    direction = -0.45
+                else:
+                    direction = 1.0
+            else:
+                direction = -0.3
         elif "pce" in title:
             weight = 2.8
             direction = -1.0 if diff > 0 else (1.0 if diff < 0 else -0.3)
@@ -149,7 +298,8 @@ def generate_fundamental_dossier(
     items: List[Dict[str, Any]],
     expected_bias: str,
     final_score: float,
-    spike_potential: int
+    spike_potential: int,
+    past_regime: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Generates institutional macroeconomic fundamental reasoning, transmission mechanisms,
@@ -158,6 +308,8 @@ def generate_fundamental_dossier(
     name_clean = group_name.strip()
     name_lower = name_clean.lower()
     items_summary = _format_items_summary(items)
+    regime_summary = (past_regime or {}).get("summary_text", "")
+    regime_score = (past_regime or {}).get("regime_score", 0.0)
 
     # 1. OFFICIAL NON-FARM PAYROLLS (NFP) ONLY
     if name_lower == "nfp":
@@ -349,9 +501,11 @@ def generate_fundamental_dossier(
             )
         elif "SELL" in expected_bias:
             why_bias = (
-                f"Model AI Quant menetapkan bias **XAU SELL (Skor {final_score:+.2f})** berdasarkan konsensus rilis PPI AS ({items_summary}). "
-                f"Kenaikan biaya produsen mengindikasikan tekanan harga hulu yang berpotensi diteruskan ke konsumen (CPI/PCE), "
-                f"memperkuat ekspektasi sikap hawkish The Fed dan menekan harga emas (XAU/USD)."
+                f"Model AI Quant menetapkan bias **XAU SELL (Skor {final_score:+.2f})** berdasarkan konsensus rilis PPI AS ({items_summary})"
+                + (f" serta korelasi langsung dari data aktual sebelumnya yang keluar panas ({regime_summary}). " if regime_summary else ". ")
+                + f"Meskipun Forecast bulanan terlihat lebih rendah dari lonjakan ekstrem periode lalu ({core_ppi_p} / {ppi_p}), "
+                f"laju inflasi produsen {core_ppi_f}–{ppi_f} m/m masih berada di atas ambang stabilitas The Fed (0.2% m/m) dan berisiko kembali meleset naik mengikuti panasnya CPI & NFP, "
+                f"sehingga memperkuat siklus Hawkish USD dan tekanan jual pada emas (XAU/USD)."
             )
         else:
             why_bias = (
@@ -551,12 +705,14 @@ H3_WINDOW_SECONDS = 3 * 86400  # 3 days (72 hours = 259,200 seconds)
 
 def compute_full_quant_signal(
     next_event: Dict[str, Any],
-    ai_analysis: Dict[str, Any]
+    ai_analysis: Dict[str, Any],
+    past_events: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
     """
     Produces the complete quantitative signal matched to the upcoming economic calendar event.
     Enforces the H-3 rule: if there is no allowed High Impact event (NFP, PPI, CPI, FOMC, PMI)
     within the next 3 days (259,200 seconds), returns 'WAITING NEWS' standby status.
+    Incorporates preceding actual macro releases (NFP, CPI, etc.) so hot actuals prevent false BUY signals.
     """
     is_waiting = (
         not next_event
@@ -635,16 +791,21 @@ def compute_full_quant_signal(
     group_name = next_event.get("group_name", "USD News")
     items = next_event.get("items", [])
 
-    # 1. Event consensus deviation
-    consensus = evaluate_event_consensus_bias(items)
+    # 1. Preceding actual releases macro regime (NFP, CPI, PPI, PMI, FOMC)
+    past_regime = evaluate_past_actuals_regime(past_events)
+    regime_score = past_regime["regime_score"]
+    regime_summary = past_regime["summary_text"]
+
+    # 2. Event consensus deviation (incorporating Fed inflation thresholds & past actuals regime)
+    consensus = evaluate_event_consensus_bias(items, past_regime_score=regime_score)
     event_score = consensus["event_score"]
 
-    # 2. AI Macro & Geopolitical Sentiment
+    # 3. AI Macro & Geopolitical Sentiment
     geo_score = ai_analysis.get("geo_score", 0.0)
     macro_score = ai_analysis.get("macro_score", 0.0)
 
     # Composite score calculation: -10.0 to +10.0
-    raw_score = (event_score * 1.35) + (macro_score * 0.5) + (geo_score * 0.4)
+    raw_score = (event_score * 1.15) + (regime_score * 0.90) + (macro_score * 0.55) + (geo_score * 0.35)
     final_score = max(-9.90, min(9.90, round(raw_score, 2)))
 
     # Determine Bias
@@ -666,7 +827,22 @@ def compute_full_quant_signal(
     trajectory = calculate_trajectory(spike, consensus["agreement"], final_score)
 
     # Generate in-depth fundamental reasoning and market interpretation dossier
-    dossier = generate_fundamental_dossier(group_name, items, expected_bias, final_score, spike)
+    dossier = generate_fundamental_dossier(
+        group_name, items, expected_bias, final_score, spike, past_regime=past_regime
+    )
+    if regime_summary and regime_summary not in dossier.get("why_bias_reason", ""):
+        dossier["why_bias_reason"] = (
+            dossier.get("why_bias_reason", "")
+            + f" Korelasi Siklus Aktual Sebelumnya: {regime_summary} (Skor Rezim {regime_score:+.2f})."
+        )
+    if regime_summary:
+        dossier["key_watch_factors"] = [
+            {
+                "factor": "Korelasi Data Aktual Sebelumnya (NFP & CPI)",
+                "benchmark": regime_summary,
+                "importance": f"Pemberat Rezim Makro Berjalan ({past_regime['regime_label']} XAU)"
+            }
+        ] + dossier.get("key_watch_factors", [])
 
     return {
         "expected_bias": expected_bias,

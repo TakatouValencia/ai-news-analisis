@@ -76,7 +76,11 @@ class NewsMonitoringScheduler:
             self.last_ai_time = now_ts
             self.last_ai_group = group_name
         
-        signal = compute_full_quant_signal(next_ev, ai_res)
+        signal = compute_full_quant_signal(
+            next_ev,
+            ai_res,
+            past_events=calendar_data.get("past_events", [])
+        )
         self.last_signal = signal
         
         return {

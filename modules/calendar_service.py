@@ -246,16 +246,26 @@ def _map_tradingview_title(raw_title: str) -> Optional[str]:
     return mapping.get(tl)
 
 def fetch_from_tradingview_calendar() -> List[Dict[str, Any]]:
-    """Fetches multi-week official US economic calendar events from TradingView to ensure continuous upcoming coverage."""
+    """Fetches past 12 days (for actuals memory) and upcoming 35 days of official US economic calendar events from TradingView."""
     now = datetime.now(timezone.utc)
-    start_str = (now - timedelta(days=2)).strftime("%Y-%m-%dT00:00:00.000Z")
-    end_str = (now + timedelta(days=35)).strftime("%Y-%m-%dT00:00:00.000Z")
-    url = f"{TRADINGVIEW_CALENDAR_URL}?from={urllib.parse.quote(start_str)}&to={urllib.parse.quote(end_str)}&countries=US"
+    windows = [
+        (now - timedelta(days=12), now + timedelta(days=2)),
+        (now + timedelta(days=2), now + timedelta(days=18)),
+        (now + timedelta(days=18), now + timedelta(days=35)),
+    ]
 
-    req = urllib.request.Request(url, headers=TV_HEADERS)
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-        raw_events = data.get("result", [])
+    raw_events = []
+    for w_start, w_end in windows:
+        start_str = w_start.strftime("%Y-%m-%dT00:00:00.000Z")
+        end_str = w_end.strftime("%Y-%m-%dT00:00:00.000Z")
+        url = f"{TRADINGVIEW_CALENDAR_URL}?from={urllib.parse.quote(start_str)}&to={urllib.parse.quote(end_str)}&countries=US"
+        try:
+            req = urllib.request.Request(url, headers=TV_HEADERS)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                raw_events.extend(data.get("result", []))
+        except Exception as e:
+            print(f"[CalendarService] TradingView window fetch warning ({start_str[:10]}): {e}")
 
     mapped = []
     for e in raw_events:
@@ -278,6 +288,12 @@ def fetch_from_tradingview_calendar() -> List[Dict[str, Any]]:
 
         unit = e.get("unit")
         scale = e.get("scale")
+        # Default scale 'K' for Non-Farm Employment Change if TradingView omits unit/scale on raw payrolls count
+        if canonical_title == "Non-Farm Employment Change" and not scale and not unit:
+            scale = "K"
+        elif canonical_title in ["Core CPI m/m", "Core CPI y/y", "CPI m/m", "CPI y/y", "Core PPI m/m", "Core PPI y/y", "PPI m/m", "PPI y/y", "Unemployment Rate", "Average Hourly Earnings m/m", "Average Hourly Earnings y/y", "Federal Funds Rate"] and not unit:
+            unit = "%"
+
         forecast = _format_tv_figure(e.get("forecast"), unit, scale)
         previous = _format_tv_figure(e.get("previous"), unit, scale)
         actual_val = e.get("actual")
@@ -466,6 +482,25 @@ def group_events_by_time(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             seen_day_groups[day_key] = cluster
         deduped_clusters.append(cluster)
 
+    def _item_sort_priority(it: Dict[str, Any]) -> int:
+        tl = it.get("title", "").lower()
+        if "non-farm" in tl or "payrolls" in tl:
+            return 0
+        if "unemployment rate" in tl:
+            return 1
+        if "average hourly earnings m/m" in tl:
+            return 2
+        if "core" in tl and "m/m" in tl:
+            return 3
+        if "m/m" in tl:
+            return 4
+        if it.get("impact") == "High":
+            return 5
+        return 6
+
+    for cluster in deduped_clusters:
+        cluster["items"].sort(key=_item_sort_priority)
+
     return deduped_clusters
 
 def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
@@ -497,7 +532,11 @@ def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
             parse_utc_datetime(e["date"]).timestamp() > now.timestamp()
             for e in cached_raw if "date" in e
         )
-        if has_future:
+        has_recent_past_actuals = any(
+            parse_utc_datetime(e["date"]).timestamp() <= now.timestamp() and bool(e.get("actual"))
+            for e in cached_raw if "date" in e
+        )
+        if has_future and has_recent_past_actuals:
             raw_events = cached_raw
 
     if not raw_events:
@@ -582,14 +621,82 @@ def get_economic_calendar(force_refresh: bool = False) -> Dict[str, Any]:
     return {
         "next_event": next_event,
         "upcoming_events": upcoming_clusters[:12],
-        "past_events": past_clusters[-5:],
-        "correlated_news": get_correlated_lead_news(next_event.get("group_name", "") if next_event else ""),
+        "past_events": past_clusters[-8:],
+        "correlated_news": get_correlated_lead_news(
+            next_event.get("group_name", "") if next_event else "",
+            past_clusters[-8:]
+        ),
         "last_updated": datetime.now(timezone.utc).isoformat()
     }
 
-def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
+def _build_past_actuals_card(past_events: Optional[List[Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+    """Builds a live summary card of the most recent released NFP, CPI, PPI, PMI, or FOMC actual figures."""
+    if not past_events:
+        return None
+    recent_summaries = []
+    hawkish_hits = 0
+    dovish_hits = 0
+    for ev in reversed(past_events):
+        g_name = ev.get("group_name", "")
+        items_with_actual = [it for it in ev.get("items", []) if it.get("actual") and it.get("actual") != "-"]
+        if not items_with_actual:
+            continue
+        item_strs = []
+        for it in items_with_actual[:3]:
+            t = it.get("title", "")
+            a = it.get("actual", "-")
+            f = it.get("forecast", "-")
+            item_strs.append(f"{t}: Actual {a} (vs Forecast {f})")
+            try:
+                a_num = float(str(a).replace("%", "").replace("K", "").replace("M", "").replace("B", "").strip())
+                f_num = float(str(f).replace("%", "").replace("K", "").replace("M", "").replace("B", "").strip())
+                if "unemployment rate" in t.lower():
+                    if a_num < f_num:
+                        hawkish_hits += 1
+                    elif a_num > f_num:
+                        dovish_hits += 1
+                else:
+                    if a_num > f_num:
+                        hawkish_hits += 1
+                    elif a_num < f_num:
+                        dovish_hits += 1
+            except Exception:
+                pass
+        recent_summaries.append(f"[{g_name}] " + ", ".join(item_strs))
+        if len(recent_summaries) >= 2:
+            break
+
+    if not recent_summaries:
+        return None
+
+    if hawkish_hits > dovish_hits:
+        impact_type = "sell"
+        status_lbl = "Data Aktual Sebelumnya Panas (Hawkish USD)"
+        bias_lbl = "Bearish XAU / Tekanan Jual Lanjutan (SELL)"
+    elif dovish_hits > hawkish_hits:
+        impact_type = "buy"
+        status_lbl = "Data Aktual Sebelumnya Melandai (Dovish USD)"
+        bias_lbl = "Bullish XAU / Dorongan Beli Lanjutan (BUY)"
+    else:
+        impact_type = "neutral"
+        status_lbl = "Data Aktual Sebelumnya Seimbang"
+        bias_lbl = "Netral / Menunggu Konfirmasi"
+
+    return {
+        "title": "Rekam Jejak Data Aktual Terakhir (NFP & CPI Siklus Berjalan)",
+        "category": "Korelasi Aktual",
+        "status": status_lbl,
+        "latest_data": " • ".join(recent_summaries),
+        "relation_note": "Hasil aktual berita High Impact sebelumnya menentukan rezim makroekonomi berjalan. Ketika NFP/Upah dan CPI aktual keluar di atas Forecast (panas), angka Forecast rendah pada rilis berikutnya rawan meleset naik (upside surprise).",
+        "bias_impact": bias_lbl,
+        "impact_type": impact_type,
+        "importance": "Pemberat Utama (45% Bobot)"
+    }
+
+def get_correlated_lead_news(main_group: str, past_events: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
     """Returns secondary/lead-in indicators tailored specifically to the 5 allowed major news events (or WAITING NEWS)."""
     mg = main_group.strip().upper()
+    past_card = _build_past_actuals_card(past_events)
 
     if mg == "WAITING NEWS" or not mg:
         return [
@@ -626,7 +733,7 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
         ]
 
     elif mg == "NFP":
-        return [
+        base_cards = [
             {
                 "title": "Non-Farm Employment Change (Penciptaan Lapangan Kerja AS)",
                 "category": "Tenaga Kerja Utama",
@@ -660,7 +767,7 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
         ]
 
     elif mg == "CPI":
-        return [
+        base_cards = [
             {
                 "title": "Core CPI m/m & y/y (Inflasi Inti Tanpa Pangan & Energi)",
                 "category": "Inflasi Inti",
@@ -694,15 +801,15 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
         ]
 
     elif mg == "PPI":
-        return [
+        base_cards = [
             {
                 "title": "Core PPI m/m (Inflasi Produsen Inti)",
                 "category": "Inflasi Hulu",
                 "status": "Indikator Biaya Produksi",
                 "latest_data": "Komponen Input PCE",
-                "relation_note": "Biaya produsen inti mengalir langsung ke perhitungan Core PCE (indikator inflasi favorit The Fed). Penurunan PPI membuka ruang pelonggaran moneter.",
-                "bias_impact": "Dovish USD / Bullish XAU jika PPI melandai",
-                "impact_type": "buy",
+                "relation_note": "Biaya produsen inti mengalir langsung ke perhitungan Core PCE (indikator inflasi favorit The Fed). Namun jika NFP & CPI sebelumnya keluar panas, PPI m/m >= 0.3% tetap menandakan inflasi hulu yang lengket.",
+                "bias_impact": "Hawkish USD / Bearish XAU jika >= 0.3% atau > Forecast",
+                "impact_type": "sell",
                 "importance": "Sangat Tinggi (40% Bobot)"
             },
             {
@@ -721,14 +828,14 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
                 "status": "Reaksi Suku Bunga",
                 "latest_data": "Konfirmasi Arah Sesi New York",
                 "relation_note": "Respon langsung pasar obligasi terhadap rilis PPI menentukan apakah pergerakan awal emas akan berlanjut searah (one-way) atau berbalik.",
-                "bias_impact": "Bullish XAU jika Yield turun pasca rilis",
-                "impact_type": "buy",
+                "bias_impact": "Bearish XAU saat Yield bertahan tinggi pasca CPI",
+                "impact_type": "sell",
                 "importance": "Sedang (25% Bobot)"
             }
         ]
 
     elif mg == "PMI":
-        return [
+        base_cards = [
             {
                 "title": "ISM Services & Manufacturing PMI (Ambang Ekspansi 50.0)",
                 "category": "Aktivitas Ekonomi",
@@ -762,7 +869,7 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
         ]
 
     else:  # FOMC
-        return [
+        base_cards = [
             {
                 "title": "CME FedWatch Tool (Probabilitas Target Suku Bunga)",
                 "category": "Ekspektasi Pasar",
@@ -794,3 +901,7 @@ def get_correlated_lead_news(main_group: str) -> List[Dict[str, Any]]:
                 "importance": "Tinggi (25% Bobot)"
             }
         ]
+
+    if past_card:
+        return [past_card] + base_cards
+    return base_cards

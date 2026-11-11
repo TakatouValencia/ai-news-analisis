@@ -7,11 +7,19 @@ from config import load_settings
 
 def rule_based_sentiment_analysis(headlines: List[Dict[str, Any]]) -> Dict[str, Any]:
     """High-accuracy rule-based NLP fallback for market and geopolitical sentiment."""
-    geo_bullish_words = ["war", "strike", "attack", "missile", "escalat", "conflict", "crisis", "threat", "sanction", "military", "tensions", "safe-haven", "rally", "surges"]
-    geo_bearish_words = ["ceasefire", "peace", "truce", "de-escalat", "agreement", "diplomacy", "calm", "easing"]
+    geo_bullish_words = ["war", "strike", "attack", "missile", "escalat", "conflict", "crisis", "threat", "sanction", "military", "tensions", "safe-haven"]
+    geo_bearish_words = ["ceasefire", "peace", "truce", "de-escalat", "agreement", "diplomacy", "calm", "easing", "downplays", "no need for further"]
     
-    usd_hawkish_words = ["hike", "hawkish", "inflation rise", "strong jobs", "yields surge", "dollar gains", "rate pause", "higher for longer", "patient on cuts"]
-    usd_dovish_words = ["cut", "dovish", "slowdown", "cooling", "recession", "weak jobs", "rate cut", "easing policy", "dollar drops"]
+    usd_hawkish_words = [
+        "hike", "hawkish", "inflation rise", "hot us inflation", "inflation worsens", "persistent",
+        "strong jobs", "yields surge", "yields above", "dollar gains", "dollar bulls", "best day",
+        "rate pause", "higher for longer", "patient on cuts", "weight of usd", "gold crashes",
+        "gold falls", "gold drops", "falling behind on inflation"
+    ]
+    usd_dovish_words = [
+        "cut", "dovish", "slowdown", "cooling", "recession", "weak jobs", "rate cut",
+        "easing policy", "dollar drops", "dollar weakens", "yields fall", "gold climbs", "gold surges"
+    ]
     
     geo_score = 0.0
     macro_score = 0.0
