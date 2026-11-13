@@ -178,19 +178,16 @@ function renderQuantNewsFeed(data) {
     item.innerHTML = `
       <div class="wire-item-head">
         <span class="wire-headline">${_escapeHtml(entry.title)}</span>
-        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
-          ${entry.is_important ? '<span class="status-chip chip-red font-mono blink-badge" style="font-size:9px;padding:1px 5px;">PENTING</span>' : ""}
-          <span class="status-chip ${impactClass} font-mono">${_escapeHtml(bias)}</span>
-        </div>
+        <span class="status-chip ${impactClass} font-mono" style="flex-shrink:0;">${_escapeHtml(bias)}</span>
       </div>
-      ${noteText ? `<div class="news-ai-note font-mono">${_escapeHtml(noteText)}</div>` : ""}
+      ${noteText ? `<div class="news-ai-note">${_escapeHtml(noteText)}</div>` : ""}
       <div class="wire-quant-bar">
-        ${pillars.slice(0, 2).map(p => `<span class="wire-q-pill font-mono">📊 ${_escapeHtml(p)}</span>`).join("")}
+        ${pillars.slice(0, 2).map(p => `<span class="wire-q-pill font-mono">${_escapeHtml(p)}</span>`).join("")}
         <span class="wire-q-delta ${deltaClass} font-mono">Quant ${deltaStr}${entry.age_label ? ` • ${entry.age_label}` : ""}</span>
       </div>
       <div class="wire-foot">
         <span class="font-mono">${_escapeHtml(srcText)} • ${_escapeHtml(pubText)}</span>
-        <span class="wire-read-cta font-mono">Baca Isi &amp; Quant Detail →</span>
+        <span class="wire-read-cta font-mono">Baca Isi &amp; Quant →</span>
       </div>
     `;
     item.addEventListener("click", () => openNewsDetailModal(entry));
