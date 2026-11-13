@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="static/css/style.css?v=5.5.0">
+  <link rel="stylesheet" href="static/css/style.css?v=5.6.0">
   <link rel="icon" type="image/jpeg" href="static/img/novaire_logo.jpg">
 </head>
 <body class="terminal-body">
@@ -525,8 +525,16 @@
           </div>
 
           <div class="wire-feed-title-bar">
-            <span class="wire-title">BERITA BREAKING & WIRE GLOBAL TERBARU</span>
-            <span class="wire-sub font-mono">REUTERS / BLOOMBERG WIRE</span>
+            <span class="wire-title">BERITA TERKINI &amp; KORELASI QUANTITATIVE</span>
+            <span class="wire-sub font-mono">KLIK BERITA UNTUK BACA ISI LENGKAP</span>
+          </div>
+
+          <div class="quant-wire-filter-row" id="quant-wire-filters">
+            <button class="qwf-pill active font-mono" data-qkey="all">Semua</button>
+            <button class="qwf-pill font-mono" data-qkey="yields">US10Y / Fed</button>
+            <button class="qwf-pill font-mono" data-qkey="dxy">DXY</button>
+            <button class="qwf-pill font-mono" data-qkey="inflation">Inflasi / Oil</button>
+            <button class="qwf-pill font-mono" data-qkey="geopolitical">Geopolitik</button>
           </div>
           
           <div id="geopolitical-news-container" class="news-feed-stack">
@@ -807,9 +815,48 @@
     </div>
   </div>
 
+  <!-- News Detail & Quantitative Reader Modal -->
+  <div class="modal-backdrop" id="news-detail-modal" role="dialog" aria-modal="true">
+    <div class="modal-window news-modal-window">
+      <div class="modal-head">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+              <path d="M10 6h8v4h-8V6Z"/>
+              <path d="M18 14h-8"/>
+              <path d="M15 18h-5"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="modal-head-title" id="ndm-modal-source">Quantitative News Intelligence</h4>
+            <span class="modal-head-sub font-mono" id="ndm-modal-meta">Korelasi AI Quant v2 &amp; Isi Berita Lengkap</span>
+          </div>
+        </div>
+        <button class="modal-close-cross" id="btn-close-news-modal" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body news-modal-body" id="ndm-body">
+        <!-- Populated dynamically when a news card/wire item is clicked -->
+      </div>
+
+      <div class="modal-foot news-modal-foot">
+        <button class="btn-cancel font-mono" id="btn-ndm-copy">Salin Analisis</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a class="btn-open-source-link font-mono hidden" id="btn-ndm-source-link" href="#" target="_blank" rel="noopener noreferrer">Buka Sumber Asli ↗</a>
+          <button class="btn-save" id="btn-ndm-close-foot">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification System -->
   <div class="toast-shelf" id="toast-container" aria-live="polite"></div>
 
-  <script src="static/js/app.js?v=5.5.0"></script>
+  <script src="static/js/app.js?v=5.6.0"></script>
 </body>
 </html>

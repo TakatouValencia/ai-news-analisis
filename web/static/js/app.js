@@ -4,6 +4,199 @@
 
 let state = null;
 let secondsRemaining = 0;
+let activeQuantWireFilter = "all";
+let activeModalNewsItem = null;
+
+function _escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function openNewsDetailModal(item) {
+  const modal = document.getElementById("news-detail-modal");
+  const body = document.getElementById("ndm-body");
+  const sourceEl = document.getElementById("ndm-modal-source");
+  const metaEl = document.getElementById("ndm-modal-meta");
+  const linkBtn = document.getElementById("btn-ndm-source-link");
+  if (!modal || !body || !item) return;
+
+  activeModalNewsItem = item;
+  const interp = item.interpretation || {};
+  const bias = interp.bias || item.impact_xau || "NEUTRAL";
+  const biasClass = bias.includes("BUY") ? "chip-cyan" : (bias.includes("SELL") ? "chip-red" : "chip-amber");
+  const pillars = item.quant_pillars || ["Makro & XAU/USD"];
+  const delta = typeof item.quant_impact_delta === "number" ? item.quant_impact_delta : 0;
+  const deltaStr = `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`;
+  const decayStr = item.decay_weight ? `${Number(item.decay_weight).toFixed(2)}x` : "1.00x";
+  const pubTime = item.published_time || item.published || "Terbaru";
+  const srcName = item.source || item.channel || "Novaire Desk";
+
+  if (sourceEl) sourceEl.textContent = `${srcName} • Quantitative Reader`;
+  if (metaEl) metaEl.textContent = `${pubTime}${item.age_label ? ` (${item.age_label})` : ""} • Time-Decay Weight: ${decayStr}`;
+
+  const qf = (state && state.signal && state.signal.quant_factors) ? state.signal.quant_factors : {};
+  const liveMarketLine = qf.yield_10y
+    ? `Snapshot Live Quant: US10Y ${Number(qf.yield_10y).toFixed(2)}% | DXY ${Number(qf.dxy_price || 0).toFixed(2)} | XAU ${Number(qf.xau_price || 0).toFixed(2)} (ATR H1 ${qf.xau_atr_h1_pips || 160} pips)`
+    : "Terhubung langsung ke mesin penilaian AI Quant v2";
+
+  const paragraphs = (item.paragraphs && item.paragraphs.length > 0)
+    ? item.paragraphs
+    : [
+        item.impact_note || interp.headline_analysis || "Berita makroekonomi global yang dipantau oleh mesin AI Quant untuk pergerakan XAU/USD.",
+        item.summary_snippet ? `Ringkasan Rilis Asli (${srcName}): ${item.summary_snippet}` : ""
+      ].filter(Boolean);
+
+  const im = interp.intermarket_matrix || {};
+  const transLines = (interp.transmission_mechanism || "")
+    .split("\n")
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  body.innerHTML = `
+    <div class="ndm-badges-row">
+      <span class="status-chip ${biasClass} font-mono">${_escapeHtml(bias)}</span>
+      <span class="status-chip chip-amber font-mono">${_escapeHtml(item.category || "Makro & Quant")}</span>
+      ${pillars.map(p => `<span class="wire-q-pill font-mono">📊 ${_escapeHtml(p)}</span>`).join("")}
+      <span class="wire-q-delta ${delta > 0 ? "pos" : (delta < 0 ? "neg" : "")} font-mono">Skor AI/Makro: ${deltaStr} (Decay ${decayStr})</span>
+    </div>
+
+    <div>
+      <h3 class="ndm-headline">${_escapeHtml(item.title)}</h3>
+      ${item.original_title && item.original_title.toLowerCase() !== String(item.title || "").toLowerCase()
+        ? `<div class="ndm-orig-title font-mono">Headline Asli: ${_escapeHtml(item.original_title)}</div>`
+        : ""}
+    </div>
+
+    <div class="ndm-quant-box">
+      <span class="ndm-quant-title font-mono">⚡ KORELASI LANGSUNG KE AI QUANT V2</span>
+      <p class="ndm-quant-text">${_escapeHtml(item.quant_connection || interp.headline_analysis || "")}</p>
+      <div class="font-mono" style="font-size:10.5px;color:#94a3b8;">${_escapeHtml(liveMarketLine)}</div>
+    </div>
+
+    <div class="ndm-section-box">
+      <span class="ndm-section-label font-mono">📰 ISI &amp; INFORMASI LENGKAP BERITA</span>
+      ${paragraphs.map(p => `<p class="ndm-para">${_escapeHtml(p)}</p>`).join("")}
+      ${item.summary_snippet && !paragraphs.some(p => p.includes(item.summary_snippet.slice(0, 25)))
+        ? `<p class="ndm-para" style="color:#cbd5e1;border-left:2px solid rgba(212,175,55,0.4);padding-left:9px;">${_escapeHtml(item.summary_snippet)}</p>`
+        : ""}
+    </div>
+
+    ${transLines.length > 0 ? `
+      <div class="ndm-section-box">
+        <span class="ndm-section-label font-mono">🔄 MEKANISME TRANSMISI MAKRO (DXY • US 10Y • XAU/USD)</span>
+        <ul class="flow-points-list">
+          ${transLines.map(l => `<li>${_escapeHtml(l)}</li>`).join("")}
+        </ul>
+      </div>
+    ` : ""}
+
+    ${(im.oil || im.yields || im.dxy || im.xau) ? `
+      <div class="intermarket-matrix-box">
+        <span class="matrix-box-label font-mono">DAMPAK ANTAR-PASAR DARI BERITA INI:</span>
+        <div class="matrix-pills-row">
+          ${im.oil ? `<div class="asset-pill"><span class="asset-k font-mono">MINYAK:</span> <span class="asset-v">${_escapeHtml(im.oil)}</span></div>` : ""}
+          ${im.yields ? `<div class="asset-pill"><span class="asset-k font-mono">US 10Y:</span> <span class="asset-v">${_escapeHtml(im.yields)}</span></div>` : ""}
+          ${im.dxy ? `<div class="asset-pill"><span class="asset-k font-mono">DXY:</span> <span class="asset-v">${_escapeHtml(im.dxy)}</span></div>` : ""}
+          ${im.xau ? `<div class="asset-pill asset-pill-highlight"><span class="asset-k font-mono">XAU/USD:</span> <span class="asset-v">${_escapeHtml(im.xau)}</span></div>` : ""}
+        </div>
+      </div>
+    ` : ""}
+
+    ${interp.tactical_action ? `
+      <div class="tactical-action-box">
+        <span class="action-box-label font-mono">🎯 PANDUAN TAKTIS TRADER:</span>
+        <p class="action-text">${_escapeHtml(interp.tactical_action)}</p>
+      </div>
+    ` : ""}
+  `;
+
+  if (linkBtn) {
+    if (item.link && String(item.link).startsWith("http")) {
+      linkBtn.href = item.link;
+      linkBtn.classList.remove("hidden");
+    } else {
+      linkBtn.classList.add("hidden");
+    }
+  }
+
+  modal.classList.add("active");
+}
+
+function closeNewsDetailModal() {
+  const modal = document.getElementById("news-detail-modal");
+  if (modal) modal.classList.remove("active");
+}
+
+function renderQuantNewsFeed(data) {
+  const newsFeedContainer = document.getElementById("geopolitical-news-container");
+  if (!newsFeedContainer || !data) return;
+
+  const bulletins = (data.daily_bulletins || []).map(b => ({ ...b, _kind: "bulletin" }));
+  const wires = (data.news || []).map(n => ({ ...n, _kind: "wire" }));
+
+  // Merge bulletins and live wires deduplicating by lowercase headline prefix
+  const combined = [];
+  const seen = new Set();
+  [...bulletins, ...wires].forEach(it => {
+    const key = String(it.original_title || it.title || "").toLowerCase().trim().slice(0, 42);
+    if (key && !seen.has(key)) {
+      seen.add(key);
+      combined.push(it);
+    }
+  });
+
+  // Sort freshest first
+  combined.sort((a, b) => (b.published_ts || 0) - (a.published_ts || 0));
+
+  const filtered = activeQuantWireFilter === "all"
+    ? combined
+    : combined.filter(it => (it.quant_factor_key || "xau") === activeQuantWireFilter);
+
+  newsFeedContainer.innerHTML = "";
+  if (filtered.length === 0) {
+    newsFeedContainer.innerHTML = `<div class="table-loading-row font-mono">Belum ada berita untuk pilar Quant ini dalam 48 jam terakhir.</div>`;
+    return;
+  }
+
+  filtered.slice(0, 7).forEach(entry => {
+    const item = document.createElement("div");
+    item.className = "wire-item wire-item-clickable" + (entry.is_important ? " wire-item-important" : "");
+    const interp = entry.interpretation || {};
+    const bias = interp.bias || entry.impact_xau || "NEUTRAL";
+    const impactClass = bias.includes("BUY") ? "chip-cyan" : (bias.includes("SELL") ? "chip-red" : "chip-amber");
+    const pillars = entry.quant_pillars || ["Makro & XAU/USD"];
+    const delta = typeof entry.quant_impact_delta === "number" ? entry.quant_impact_delta : 0;
+    const deltaClass = delta > 0 ? "pos" : (delta < 0 ? "neg" : "");
+    const deltaStr = `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`;
+    const noteText = interp.headline_analysis || entry.impact_note || entry.summary_snippet || "";
+    const pubText = entry.published_time || entry.published || "Terbaru";
+    const srcText = entry.source || entry.category || "Novaire Desk";
+
+    item.innerHTML = `
+      <div class="wire-item-head">
+        <span class="wire-headline">${_escapeHtml(entry.title)}</span>
+        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+          ${entry.is_important ? '<span class="status-chip chip-red font-mono blink-badge" style="font-size:9px;padding:1px 5px;">PENTING</span>' : ""}
+          <span class="status-chip ${impactClass} font-mono">${_escapeHtml(bias)}</span>
+        </div>
+      </div>
+      ${noteText ? `<div class="news-ai-note font-mono">${_escapeHtml(noteText)}</div>` : ""}
+      <div class="wire-quant-bar">
+        ${pillars.slice(0, 2).map(p => `<span class="wire-q-pill font-mono">📊 ${_escapeHtml(p)}</span>`).join("")}
+        <span class="wire-q-delta ${deltaClass} font-mono">Quant ${deltaStr}${entry.age_label ? ` • ${entry.age_label}` : ""}</span>
+      </div>
+      <div class="wire-foot">
+        <span class="font-mono">${_escapeHtml(srcText)} • ${_escapeHtml(pubText)}</span>
+        <span class="wire-read-cta font-mono">Baca Isi &amp; Quant Detail →</span>
+      </div>
+    `;
+    item.addEventListener("click", () => openNewsDetailModal(entry));
+    newsFeedContainer.appendChild(item);
+  });
+}
 
 // Countdown parts helper
 function getCountdownParts(sec) {
@@ -495,87 +688,17 @@ function updateUI(data) {
         else biasBox.classList.add("neutral");
       }
 
-      // Jump button to Tab 3
+      // Open full inside details & Quant linkage in modal directly from Tab 1 banner
       const jumpBtn = document.getElementById("btn-view-breaking-dossier");
       if (jumpBtn) {
-        jumpBtn.onclick = () => {
-          const tabBtn = document.querySelector('.tab-btn[data-tab="tab-intelligence"]');
-          if (tabBtn) tabBtn.click();
-          setTimeout(() => {
-            const cardEl = document.getElementById(`bulletin-${importantBulletin.id}`);
-            if (cardEl) {
-              cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
-              cardEl.classList.add("card-highlight-pulse");
-              setTimeout(() => cardEl.classList.remove("card-highlight-pulse"), 2500);
-            }
-          }, 150);
-        };
+        jumpBtn.onclick = () => openNewsDetailModal(importantBulletin);
       }
     } else {
       breakingBanner.classList.add("hidden");
     }
   }
 
-  const newsFeedContainer = document.getElementById("geopolitical-news-container");
-  if (newsFeedContainer) {
-    newsFeedContainer.innerHTML = "";
-    // Display top daily bulletins with rich tags on Tab 1
-    const topBulletins = (data.daily_bulletins || []).slice(0, 3);
-    topBulletins.forEach(b => {
-      const item = document.createElement("div");
-      item.className = "wire-item wire-item-bulletin" + (b.is_important ? " wire-item-important" : "");
-      const interp = b.interpretation || {};
-      const bias = interp.bias || "NEUTRAL";
-      const impactClass = bias.includes("BUY") ? "chip-cyan" : (bias.includes("SELL") ? "chip-red" : "chip-amber");
-
-      item.innerHTML = `
-        <div class="wire-item-head">
-          <span class="wire-headline">${b.title}</span>
-          <div style="display:flex;gap:4px;align-items:center;">
-            ${b.is_important ? '<span class="status-chip chip-red font-mono blink-badge" style="font-size:9px;padding:1px 5px;">PENTING</span>' : ''}
-            <span class="status-chip ${impactClass} font-mono">${bias}</span>
-          </div>
-        </div>
-        ${interp.headline_analysis ? `<div class="news-ai-note font-mono">${interp.headline_analysis}</div>` : ''}
-        <div class="wire-foot">
-          <span class="font-mono">${b.category || 'Makro'}</span>
-          <span class="font-mono">${b.published_time || 'Hari ini'}</span>
-        </div>
-      `;
-      item.onclick = () => {
-        const tabBtn = document.querySelector('.tab-btn[data-tab="tab-intelligence"]');
-        if (tabBtn) tabBtn.click();
-        setTimeout(() => {
-          const cardEl = document.getElementById(`bulletin-${b.id}`);
-          if (cardEl) cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 150);
-      };
-      newsFeedContainer.appendChild(item);
-    });
-
-    // Also display remaining live wire items
-    if (data.news) {
-      data.news.slice(0, 3).forEach(news => {
-        const item = document.createElement("div");
-        item.className = "wire-item";
-        const impact = news.impact_xau || "NEUTRAL";
-        const impactClass = impact.includes("BUY") ? "chip-cyan" : (impact.includes("SELL") ? "chip-red" : "chip-amber");
-        
-        item.innerHTML = `
-          <div class="wire-item-head">
-            <span class="wire-headline">${news.title}</span>
-            <span class="status-chip ${impactClass}">${impact}</span>
-          </div>
-          ${news.impact_note ? `<div class="news-ai-note font-mono">${news.impact_note}</div>` : ''}
-          <div class="wire-foot">
-            <span class="font-mono">${news.source || 'Wire'}</span>
-            <span class="font-mono">${news.published || 'Terbaru'}</span>
-          </div>
-        `;
-        newsFeedContainer.appendChild(item);
-      });
-    }
-  }
+  renderQuantNewsFeed(data);
 
   // 9. Daily Macro Bulletins (JA Journal Ars Feed)
   if (data.daily_bulletins) {
@@ -1060,11 +1183,17 @@ function renderDailyBulletins(bulletins) {
         ` : ''}
 
         <div class="bulletin-actions-foot">
-          <button class="btn-copy-bulletin font-mono" data-id="${item.id}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            <span>SALIN BERITA &amp; INTERPRETASI</span>
-          </button>
-          <span class="foot-disclaimer font-mono">EANews Novaire Macro Desk</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button class="btn-copy-bulletin font-mono" data-id="${item.id}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>SALIN</span>
+            </button>
+            <button class="btn-copy-bulletin btn-read-quant-detail font-mono" data-id="${item.id}">
+              <span>🔍 DETAIL QUANT &amp; ISI</span>
+            </button>
+            ${item.link && String(item.link).startsWith("http") ? `<a class="btn-open-source-link font-mono" href="${item.link}" target="_blank" rel="noopener noreferrer">SUMBER ↗</a>` : ""}
+          </div>
+          <span class="foot-disclaimer font-mono">${(item.quant_pillars || ["Quant Macro"]).join(" • ")}${item.decay_weight ? ` • Decay ${Number(item.decay_weight).toFixed(2)}x` : ""}</span>
         </div>
       </div>
     `;
@@ -1072,11 +1201,18 @@ function renderDailyBulletins(bulletins) {
     container.appendChild(card);
   });
 
-  // Attach copy listeners
-  container.querySelectorAll(".btn-copy-bulletin").forEach(btn => {
+  // Attach copy & detail listeners
+  container.querySelectorAll(".btn-copy-bulletin:not(.btn-read-quant-detail)").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-id");
       copyBulletinToClipboard(id);
+    });
+  });
+  container.querySelectorAll(".btn-read-quant-detail").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const found = currentBulletins.find(b => b.id === id);
+      if (found) openNewsDetailModal(found);
     });
   });
 }
@@ -1325,6 +1461,42 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("settings-modal").addEventListener("click", (e) => {
     if (e.target.id === "settings-modal") closeSettingsModal();
   });
+
+  // Quantitative News Filter Pills (Tab 1)
+  document.querySelectorAll("#quant-wire-filters .qwf-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#quant-wire-filters .qwf-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeQuantWireFilter = btn.getAttribute("data-qkey") || "all";
+      if (state) renderQuantNewsFeed(state);
+    });
+  });
+
+  // News Detail Quantitative Reader Modal Handlers
+  const closeNewsX = document.getElementById("btn-close-news-modal");
+  const closeNewsFoot = document.getElementById("btn-ndm-close-foot");
+  const copyNewsBtn = document.getElementById("btn-ndm-copy");
+  const newsModalEl = document.getElementById("news-detail-modal");
+  if (closeNewsX) closeNewsX.addEventListener("click", closeNewsDetailModal);
+  if (closeNewsFoot) closeNewsFoot.addEventListener("click", closeNewsDetailModal);
+  if (newsModalEl) {
+    newsModalEl.addEventListener("click", (e) => {
+      if (e.target.id === "news-detail-modal") closeNewsDetailModal();
+    });
+  }
+  if (copyNewsBtn) {
+    copyNewsBtn.addEventListener("click", () => {
+      if (!activeModalNewsItem) return;
+      if (activeModalNewsItem.id && currentBulletins.some(b => b.id === activeModalNewsItem.id)) {
+        copyBulletinToClipboard(activeModalNewsItem.id);
+      } else {
+        const text = `${activeModalNewsItem.title}\n\n${activeModalNewsItem.quant_connection || ""}\n${activeModalNewsItem.impact_note || ""}\nSumber: ${activeModalNewsItem.source || ""} ${activeModalNewsItem.link || ""}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => showToast("Berita & korelasi Quant disalin!"));
+        }
+      }
+    });
+  }
   
   // Initial data load
   fetchState(false);

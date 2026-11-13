@@ -1,4 +1,5 @@
 import json
+import html
 import re
 import hashlib
 import urllib.request
@@ -223,6 +224,128 @@ def format_published_wib(pub_str: str) -> str:
     wib = dt.astimezone(timezone(timedelta(hours=7)))
     return f"{wib.day:02d} {months[wib.month - 1]} {wib.year} • {wib.strftime('%H.%M')} WIB"
 
+def _clean_rss_snippet(raw_desc: str, title: str) -> str:
+    """Extracts clean readable text from RSS description, omitting exact title duplicates."""
+    if not raw_desc:
+        return ""
+    txt = re.sub(r"<[^>]+>", " ", html.unescape(raw_desc))
+    txt = re.sub(r"\s+", " ", txt).strip()
+    if not txt or len(txt) < 25:
+        return ""
+    if txt.lower().startswith(title[:35].lower()) and len(txt) <= len(title) + 35:
+        return ""
+    return txt[:480]
+
+
+def annotate_quant_relevance(item: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Attaches direct AI Quant v2 pillar linkage, time-decay weight, and directional contribution
+    so the UI can display how each news item maps to quantitative factors.
+    """
+    title_raw = str(item.get("original_title") or item.get("title") or "")
+    snippet = str(item.get("summary_snippet") or "")
+    text_low = (title_raw + " " + snippet).lower()
+
+    pillars = []
+    primary_key = "xau"
+    if any(k in text_low for k in ["yield", "treasury", "bond", "10y", "10-year", "fed", "fomc", "powell", "rate cut", "rate hike", "suku bunga", "obligasi"]):
+        pillars.append("US10Y & The Fed")
+        primary_key = "yields"
+    if any(k in text_low for k in ["dollar", "dxy", "greenback", "usd", "dolar as"]):
+        pillars.append("DXY & USD")
+        if primary_key == "xau":
+            primary_key = "dxy"
+    if any(k in text_low for k in ["cpi", "ppi", "pce", "inflation", "inflasi", "oil", "crude", "minyak", "opec", "energy", "energi"]):
+        pillars.append("Inflasi & Energi")
+        if primary_key == "xau":
+            primary_key = "inflation"
+    if any(k in text_low for k in ["war", "iran", "israel", "middle east", "russia", "ukraine", "tariff", "strike", "missile", "conflict", "sanction", "geopolit", "safe-haven", "timur tengah"]):
+        pillars.append("Safe-Haven Geopolitik")
+        if primary_key == "xau":
+            primary_key = "geopolitical"
+    if not pillars:
+        pillars.append("XAU Spot & Likuiditas")
+
+    now_ts = datetime.now(timezone.utc).timestamp()
+    pub_ts = float(item.get("published_ts") or now_ts)
+    age_hours = max(0.0, (now_ts - pub_ts) / 3600.0)
+    decay_w = round(max(0.25, 1.0 - (age_hours / MAX_ARTICLE_AGE_HOURS) * 0.75), 2)
+    age_label = f"{int(age_hours * 60)}m lalu" if age_hours < 1.0 else f"{int(round(age_hours))}j lalu"
+
+    interp = item.get("interpretation") or {}
+    bias = str(interp.get("bias") or item.get("impact_xau") or "NEUTRAL").upper()
+    if "BUY" in bias or "BULLISH" in bias:
+        raw_pts = 0.80 if primary_key in ("yields", "dxy", "inflation") else 0.60
+    elif "SELL" in bias or "BEARISH" in bias:
+        raw_pts = -0.80 if primary_key in ("yields", "dxy", "inflation") else -0.60
+    else:
+        raw_pts = 0.0
+
+    quant_delta = round(raw_pts * decay_w, 2)
+    pillar_str = " • ".join(pillars)
+
+    if quant_delta > 0:
+        dir_desc = f"Memberi dorongan positif ({quant_delta:+.2f}) pada faktor AI/Makro untuk XAU BUY"
+    elif quant_delta < 0:
+        dir_desc = f"Memberi tekanan negatif ({quant_delta:+.2f}) pada faktor AI/Makro yang mendukung XAU SELL"
+    else:
+        dir_desc = "Kontribusi netral (0.00); berfungsi sebagai pemantau volatilitas & konteks pasar"
+
+    quant_connection = (
+        f"Terhubung ke pilar AI Quant [{pillar_str}] dengan bobot kesegaran Time-Decay {decay_w:.2f}x ({age_label}). "
+        f"{dir_desc}."
+    )
+
+    item["quant_pillars"] = pillars
+    item["quant_factor_key"] = primary_key
+    item["decay_weight"] = decay_w
+    item["age_label"] = age_label
+    item["quant_impact_delta"] = quant_delta
+    item["quant_connection"] = quant_connection
+    return item
+
+
+def _fetch_yahoo_macro_feed() -> List[Dict[str, Any]]:
+    """Fetches recent Yahoo Finance macro/yield/dollar/oil RSS articles with rich descriptions."""
+    url = "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5ETNX,DX-Y.NYB,CL=F&region=US&lang=en-US"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    req = urllib.request.Request(url, headers=headers)
+    now_utc = datetime.now(timezone.utc)
+    allow_kw = ["gold", "xau", "dollar", "dxy", "yield", "treasury", "fed", "fomc", "powell", "cpi", "ppi", "inflation", "oil", "crude", "iran", "tariff", "rate", "jobs", "payrolls"]
+    articles = []
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            root = ET.fromstring(resp.read())
+            for item in root.findall(".//item")[:15]:
+                title = (item.findtext("title") or "").strip()
+                pub = (item.findtext("pubDate") or "").strip()
+                link = (item.findtext("link") or "").strip()
+                desc = _clean_rss_snippet(item.findtext("description") or "", title)
+                if not title or not any(k in title.lower() for k in allow_kw):
+                    continue
+                pub_dt = parse_pub_datetime(pub)
+                if not pub_dt:
+                    continue
+                age_hours = (now_utc - pub_dt).total_seconds() / 3600.0
+                if age_hours > MAX_ARTICLE_AGE_HOURS or age_hours < -2.0:
+                    continue
+                is_geo = any(w in title.lower() for w in ["war", "tension", "conflict", "iran", "israel", "russia", "china", "strike", "sanction", "military", "oil"])
+                art = {
+                    "title": title,
+                    "summary_snippet": desc,
+                    "source": "Yahoo Finance",
+                    "published": format_published_wib(pub),
+                    "published_raw": pub,
+                    "published_ts": int(pub_dt.timestamp()),
+                    "link": link,
+                    "category": "geopolitical" if is_geo else "macro",
+                }
+                articles.append(ensure_news_impact(art))
+    except Exception as e:
+        print(f"[GeopoliticalService] Yahoo macro RSS warning: {e}")
+    return articles
+
+
 def fetch_feed(query: str) -> List[Dict[str, Any]]:
     """Fetches recent Google News RSS feed items (strictly <= 48 hours old) for a given query."""
     q_str = query.strip()
@@ -243,10 +366,12 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
                 title_elem = item.find("title")
                 pub_elem = item.find("pubDate")
                 link_elem = item.find("link")
+                desc_elem = item.find("description")
 
                 title = title_elem.text if title_elem is not None else ""
                 pub = pub_elem.text if pub_elem is not None else ""
                 link = link_elem.text if link_elem is not None else ""
+                raw_desc = desc_elem.text if desc_elem is not None else ""
 
                 pub_dt = parse_pub_datetime(pub)
                 if not pub_dt:
@@ -263,6 +388,7 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
                     title = parts[0].strip()
                     source = parts[1].strip()
 
+                snippet = _clean_rss_snippet(raw_desc, title)
                 is_geo = any(w in title.lower() for w in ["war", "tension", "conflict", "iran", "israel", "russia", "china", "strike", "sanction", "military"])
                 category = "geopolitical" if is_geo else "macro"
 
@@ -283,8 +409,9 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
                     impact_color = "neutral"
                     impact_note = "Pengaruh terbatas, pelaku pasar mencermati rilis data kalender ekonomi AS berikutnya."
 
-                articles.append({
+                art = {
                     "title": title,
+                    "summary_snippet": snippet,
                     "source": source,
                     "published": format_published_wib(pub),
                     "published_raw": pub,
@@ -294,7 +421,8 @@ def fetch_feed(query: str) -> List[Dict[str, Any]]:
                     "impact_xau": impact_xau,
                     "impact_color": impact_color,
                     "impact_note": impact_note
-                })
+                }
+                articles.append(annotate_quant_relevance(art))
     except Exception as e:
         print(f"[GeopoliticalService] Error fetching feed {query}: {e}")
 
@@ -327,18 +455,23 @@ def generate_bulletin_from_feed_item(item: Dict[str, Any]) -> Dict[str, Any]:
         p2 = "Dari perspektif makroekonomi terpadu, penyesuaian portofolio global antar kelas aset memicu reposisi likuiditas pasar modal dan komoditas utama."
         p3 = "Dampaknya pada emas (XAU/USD): Volatilitas harga spot emas diperkirakan bergerak dalam rentang likuiditas teratur menjelang rilis katalis berikutnya."
 
-    paragraphs = [p1, p2, p3]
+    snippet = str(item.get("summary_snippet") or "").strip()
+    paragraphs = [p1]
+    if snippet:
+        paragraphs.append(f"Ringkasan Rilis Asli ({source}): {snippet}")
+    paragraphs.extend([p2, p3])
 
-    full_text_for_ai = f"{original_title}. Kategori: {category}. Sumber: {source}."
+    full_text_for_ai = f"{original_title}. {snippet} Kategori: {category}. Sumber: {source}."
     interpretation = interpret_single_news_item(full_text_for_ai)
 
     title_hash = hashlib.md5(original_title.encode("utf-8")).hexdigest()[:8]
     bulletin_id = f"novaire-wire-{title_hash}"
 
-    return {
+    bulletin = {
         "id": bulletin_id,
         "title": indonesian_title,
         "original_title": original_title,
+        "summary_snippet": snippet,
         "source": source,
         "link": item.get("link", ""),
         "channel": "Novaire Macro Wire",
@@ -350,6 +483,7 @@ def generate_bulletin_from_feed_item(item: Dict[str, Any]) -> Dict[str, Any]:
         "paragraphs": paragraphs,
         "interpretation": interpretation
     }
+    return annotate_quant_relevance(bulletin)
 
 def _is_bulletin_fresh(b: Dict[str, Any], now_ts: float) -> bool:
     """Checks that a cached bulletin has an explicit timestamp within the last 48 hours."""
@@ -377,10 +511,15 @@ def get_daily_macro_bulletins(force_refresh: bool = False) -> List[Dict[str, Any
             print(f"[GeopoliticalService] Error reading daily bulletins cache: {e}")
 
     if not force_refresh and cached_bulletins and (now_ts - cache_time < 120):
-        return cached_bulletins
+        return [annotate_quant_relevance(b) for b in cached_bulletins]
 
     raw_articles = []
     seen_titles = set()
+    for it in _fetch_yahoo_macro_feed():
+        t_clean = it["title"].strip().lower()
+        if t_clean not in seen_titles and len(t_clean) > 15:
+            seen_titles.add(t_clean)
+            raw_articles.append(it)
     for q in MACRO_FEED_QUERIES:
         items = fetch_feed(q)
         for it in items:
@@ -421,6 +560,7 @@ def get_daily_macro_bulletins(force_refresh: bool = False) -> List[Dict[str, Any
 
     if not merged_bulletins:
         merged_bulletins = get_fallback_bulletins()
+    merged_bulletins = [annotate_quant_relevance(b) for b in merged_bulletins]
 
     try:
         with open(BULLETINS_FILE, "w", encoding="utf-8") as f:
@@ -438,7 +578,7 @@ def ensure_news_impact(item: Dict[str, Any]) -> Dict[str, Any]:
     if "proyeksi FOMC" in str(item.get("impact_note", "")) or "konsensus FOMC" in str(item.get("impact_note", "")):
         item["impact_note"] = "Pengaruh terbatas, pelaku pasar mencermati rilis data kalender ekonomi AS berikutnya."
     if "impact_xau" in item and item.get("impact_note") and item.get("interpretation"):
-        return item
+        return annotate_quant_relevance(item)
     title_lower = item.get("title", "").lower()
     bullish_triggers = ["war", "tension", "strike", "attack", "conflict", "cut", "dovish", "safe-haven", "rally", "crisis", "surges", "gold rises"]
     bearish_triggers = ["peace", "ceasefire", "truce", "hike", "hawkish", "dollar gains", "rate pause", "strong jobs", "yields rise", "dollar strengthens", "plunge", "plunges"]
@@ -476,7 +616,7 @@ def ensure_news_impact(item: Dict[str, Any]) -> Dict[str, Any]:
         },
         "tactical_action": "Pantau reaksi level teknikal utama pada grafik M15-H1."
     }
-    return item
+    return annotate_quant_relevance(item)
 
 def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, Any]]:
     CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -499,6 +639,12 @@ def get_latest_geopolitical_news(force_refresh: bool = False) -> List[Dict[str, 
 
     all_news = []
     seen_titles = set()
+
+    for it in _fetch_yahoo_macro_feed():
+        clean_title = it["title"].strip().lower()
+        if clean_title not in seen_titles and len(clean_title) > 15:
+            seen_titles.add(clean_title)
+            all_news.append(it)
 
     for q in QUERIES:
         feed_items = fetch_feed(q)

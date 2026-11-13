@@ -65,7 +65,9 @@ def test_daily_news():
 
     top = bulletins[0]
     print(f"   -> Top Bulletin: '{top['title'][:60]}...'")
-    print(f"      Category: {top.get('category')} | Time: {top.get('published_time')}")
+    print(f"      Category: {top.get('category')} | Pillars: {top.get('quant_pillars')} | Decay: {top.get('decay_weight')}x | Time: {top.get('published_time')}")
+    assert top.get("quant_pillars"), "Missing quant_pillars linkage!"
+    assert top.get("quant_connection"), "Missing quant_connection explanation!"
     interp = top.get("interpretation", {})
     assert "bias" in interp, "Missing bias in interpretation!"
     assert "transmission_mechanism" in interp, "Missing transmission mechanism!"
