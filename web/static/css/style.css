@@ -3547,4 +3547,88 @@ body.terminal-body {
   }
 }
 
+/* AI Quant v2 Multi-Factor Telemetry Matrix */
+.quant-factor-matrix {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: rgba(8, 12, 21, 0.72);
+  border: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+.qfm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.qfm-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-mid);
+}
+
+.qfm-entry-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.14);
+  color: var(--gold-light);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+}
+
+.qfm-entry-badge.warn {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.qfm-entry-badge.flash {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.qfm-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.qfm-cell {
+  background: rgba(15, 21, 34, 0.75);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qfm-cell span {
+  font-size: 8.5px;
+  color: var(--text-low);
+  letter-spacing: 0.04em;
+}
+
+.qfm-cell strong {
+  font-size: 11px;
+  color: var(--text-high);
+  font-weight: 700;
+}
+
+.qfm-cell strong.neg { color: #f87171; }
+.qfm-cell strong.pos { color: #34d399; }
+
+@media (max-width: 640px) {
+  .qfm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 

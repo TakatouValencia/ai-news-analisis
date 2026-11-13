@@ -13,6 +13,9 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
     context_pct = signal.get("context_percent", 50)
     xau_score = signal.get("xau_score", 0.0)
     spike = signal.get("spike_potential", 50)
+    spike_pips = signal.get("spike_pips_label", "±145 - 255 pips")
+    entry_mode = signal.get("entry_mode", "")
+    qf = signal.get("quant_factors", {})
     one_way = signal.get("one_way", 50)
     two_way = signal.get("two_way", 50)
     reasoning = signal.get("ai_reasoning", "Analisis konsensus fundamental dan geopolitik.")
@@ -88,16 +91,28 @@ def format_embed(signal: Dict[str, Any], next_event: Optional[Dict[str, Any]], s
             "inline": False
         },
         {
-            "name": "⚡ POTENSI SPIKE (VOLATILITAS)",
-            "value": f"**{spike}%**" + (" 🚨 [EXTREME VOLATILITY]" if spike >= 90 else " ⚠️ [HIGH VOLATILITY]"),
+            "name": "⚡ POTENSI SPIKE & ATR RANGE",
+            "value": f"**{spike}%** (`{spike_pips}`)" + (" 🚨 [EXTREME]" if spike >= 90 else " ⚠️ [HIGH]"),
             "inline": True
         },
         {
-            "name": "🔄 PROBABILITAS TRAJEKTORI",
-            "value": f"**One-Way:** `{one_way}%`\n**Two-Way:** `{two_way}%`",
+            "name": "🔄 TRAJEKTORI & ENTRY GUARD",
+            "value": f"**One-Way:** `{one_way}%` | **Two-Way:** `{two_way}%`" + (f"\n🛡️ `{entry_mode}`" if entry_mode else ""),
             "inline": True
         }
     ]
+
+    if qf and qf.get("source_status") in ("live", "stale_cache"):
+        w = qf.get("weights", {})
+        fields.append({
+            "name": "📊 INTERMARKET QUANT MATRIX (LIVE)",
+            "value": (
+                f"• **US 10Y:** `{qf.get('yield_10y')}%` (`{qf.get('yield_10y_5d_pct'):+.1f}%` 5D) | **DXY:** `{qf.get('dxy_price')}`\n"
+                f"• **XAU/USD:** `{qf.get('xau_price')}` | **RSI:** `{qf.get('xau_rsi')}` | **Stretch Z:** `{qf.get('xau_stretch_z'):+.2f}`\n"
+                f"• **Faktor:** Event `{w.get('consensus_or_actual', 0):+.2f}` • Regime `{w.get('past_regime', 0):+.2f}` • Intermarket `{w.get('intermarket', 0):+.2f}` • AI `{w.get('ai_geo', 0):+.2f}`"
+            ),
+            "inline": False
+        })
 
     if why_reason:
         fields.append({

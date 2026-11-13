@@ -79,6 +79,8 @@ def test_daily_news():
         state_data = json.loads(res_state.body.decode("utf-8"))
         assert state_data.get("next_event") is not None, "State next_event missing!"
         assert state_data["signal"]["fundamental_dossier"]["event_type"] != "", "Dossier event_type missing!"
+        assert "quant_factors" in state_data["signal"], "quant_factors breakdown missing from signal!"
+        assert state_data.get("market_factors") is not None, "market_factors missing from /api/state!"
 
         res = await get_daily_news_api(force=False)
         data = json.loads(res.body.decode("utf-8"))

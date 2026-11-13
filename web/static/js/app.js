@@ -248,7 +248,43 @@ function updateUI(data) {
   }
   
   if (engineModeTag) {
-    engineModeTag.textContent = isWaiting ? "WAITING H-3" : (signal.analysis_mode || "QUANT").toUpperCase().replace("LLM_", "AI ");
+    if (isWaiting) {
+      engineModeTag.textContent = "WAITING H-3";
+    } else {
+      const phaseTag = signal.phase === "FLASH_RELEASE" ? "FLASH RELEASE" : "PRE-NEWS";
+      const aiTag = (signal.analysis_mode || "QUANT").toUpperCase().replace("LLM_", "AI ");
+      engineModeTag.textContent = `${phaseTag} • ${aiTag}`;
+    }
+  }
+
+  // Update AI Quant v2 Intermarket Matrix & Entry Guard
+  const qf = signal.quant_factors || data.market_factors || {};
+  const entryBadge = document.getElementById("quant-entry-badge");
+  const quantGrid = document.getElementById("quant-factor-grid");
+  if (entryBadge) {
+    const modeLabel = signal.entry_mode || (isWaiting ? "STANDBY H-3" : "QUANT ACTIVE");
+    entryBadge.textContent = modeLabel;
+    entryBadge.classList.remove("warn", "flash");
+    if (modeLabel.includes("WAIT") || modeLabel.includes("FAKEOUT")) {
+      entryBadge.classList.add("warn");
+    } else if (signal.phase === "FLASH_RELEASE" || modeLabel.includes("FLASH")) {
+      entryBadge.classList.add("flash");
+    }
+  }
+  if (quantGrid) {
+    const y10 = qf.yield_10y ? `${Number(qf.yield_10y).toFixed(2)}%` : "--";
+    const y5d = qf.yield_10y_5d_pct !== undefined ? ` (${qf.yield_10y_5d_pct >= 0 ? "+" : ""}${qf.yield_10y_5d_pct}%)` : "";
+    const dxy = qf.dxy_price ? `${Number(qf.dxy_price).toFixed(2)}` : "--";
+    const atr = qf.xau_atr_h1_pips ? `${qf.xau_atr_h1_pips} pips` : "--";
+    const zVal = qf.xau_stretch_z !== undefined ? Number(qf.xau_stretch_z) : 0;
+    const zStr = `${zVal >= 0 ? "+" : ""}${zVal.toFixed(2)}σ`;
+    const yClass = (qf.yield_10y_5d_pct || 0) > 1.0 ? "neg" : ((qf.yield_10y_5d_pct || 0) < -1.0 ? "pos" : "");
+    quantGrid.innerHTML = `
+      <div class="qfm-cell"><span>US 10Y YIELD</span><strong class="${yClass}">${y10}${y5d}</strong></div>
+      <div class="qfm-cell"><span>DXY INDEX</span><strong>${dxy}</strong></div>
+      <div class="qfm-cell"><span>ATR H1 XAU</span><strong>${atr}</strong></div>
+      <div class="qfm-cell"><span>STRETCH Z</span><strong>${zStr}</strong></div>
+    `;
   }
 
   // 4. Primary Event Focus Card
@@ -298,6 +334,7 @@ function updateUI(data) {
   const spikeValEl = document.getElementById("spike-value");
   const spikeBar = document.getElementById("spike-bar");
   const spikeTierBadge = document.getElementById("spike-tier-badge");
+  const spikeRangeDesc = document.getElementById("spike-range-desc");
   const onewayValEl = document.getElementById("oneway-value");
   const onewayBar = document.getElementById("oneway-bar");
   const twowayValEl = document.getElementById("twoway-value");
@@ -307,6 +344,7 @@ function updateUI(data) {
     spikeValEl.textContent = "H-3";
     spikeBar.style.width = "0%";
     if (spikeTierBadge) spikeTierBadge.textContent = "WAITING NEWS";
+    if (spikeRangeDesc) spikeRangeDesc.textContent = `Estimasi ATR: ${signal.spike_pips_label || "Standby H-3"}`;
     onewayValEl.textContent = "H-3";
     onewayBar.style.width = "0%";
     twowayValEl.textContent = "H-3";
@@ -317,6 +355,9 @@ function updateUI(data) {
     spikeBar.style.width = `${spike}%`;
     if (spikeTierBadge) {
       spikeTierBadge.textContent = spike >= 90 ? "EXTREME" : (spike >= 80 ? "VERY HIGH" : "HIGH");
+    }
+    if (spikeRangeDesc) {
+      spikeRangeDesc.textContent = `Potensi sapuan ${signal.spike_pips_label || "±145 - 255 pips"}`;
     }
     
     const oneway = signal.one_way || 70;

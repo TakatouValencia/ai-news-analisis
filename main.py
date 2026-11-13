@@ -137,7 +137,7 @@ async def get_settings():
         "discord_webhook_url": s.get("discord_webhook_url", ""),
         "ai_api_key_masked": masked_key,
         "ai_base_url": s.get("ai_base_url", "https://generativelanguage.googleapis.com/v1beta/openai"),
-        "ai_model": s.get("ai_model", "gemini-3.8-flash")
+        "ai_model": s.get("ai_model", "gemini-3.1-flash-lite")
     })
 
 @app.post("/api/settings")

@@ -2,11 +2,11 @@ import json
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from config import load_settings
 
 def rule_based_sentiment_analysis(headlines: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """High-accuracy rule-based NLP fallback for market and geopolitical sentiment."""
+    """High-accuracy rule-based NLP fallback with 48h time-decay weighting."""
     geo_bullish_words = ["war", "strike", "attack", "missile", "escalat", "conflict", "crisis", "threat", "sanction", "military", "tensions", "safe-haven"]
     geo_bearish_words = ["ceasefire", "peace", "truce", "de-escalat", "agreement", "diplomacy", "calm", "easing", "downplays", "no need for further"]
     
@@ -23,29 +23,36 @@ def rule_based_sentiment_analysis(headlines: List[Dict[str, Any]]) -> Dict[str, 
     
     geo_score = 0.0
     macro_score = 0.0
+    now_ts = datetime.now(timezone.utc).timestamp()
     
     for h in headlines:
         title = h.get("title", "").lower()
+        pub_ts = h.get("published_ts")
+        if pub_ts:
+            age_hours = max(0.0, (now_ts - float(pub_ts)) / 3600.0)
+            decay_w = max(0.25, 1.0 - (age_hours / 48.0) * 0.75)
+        else:
+            decay_w = 0.70
         
         for w in geo_bullish_words:
             if w in title:
-                geo_score += 0.6
+                geo_score += 0.6 * decay_w
         for w in geo_bearish_words:
             if w in title:
-                geo_score -= 0.6
+                geo_score -= 0.6 * decay_w
                 
         # Hawkish USD = Bearish Gold (negative for XAU)
         for w in usd_hawkish_words:
             if w in title:
-                macro_score -= 0.8
+                macro_score -= 0.8 * decay_w
         # Dovish USD = Bullish Gold (positive for XAU)
         for w in usd_dovish_words:
             if w in title:
-                macro_score += 0.8
+                macro_score += 0.8 * decay_w
                 
     # Clamp scores
-    geo_score = max(-3.0, min(3.0, round(geo_score, 2)))
-    macro_score = max(-4.0, min(4.0, round(macro_score, 2)))
+    geo_score = round(max(-3.0, min(3.0, geo_score)), 2)
+    macro_score = round(max(-4.0, min(4.0, macro_score)), 2)
     
     if geo_score > 0.5:
         geo_sentiment = "bullish"
@@ -67,19 +74,22 @@ def rule_based_sentiment_analysis(headlines: List[Dict[str, Any]]) -> Dict[str, 
         "mode": "rule_based_engine"
     }
 
-_llm_cooldown_until = 0
+_llm_cooldown_until = 0.0
+_model_cooldowns: Dict[str, float] = {}
 
-def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, timeout: int = 8) -> Dict[str, Any] | None:
+def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, timeout: int = 10) -> Dict[str, Any] | None:
     global _llm_cooldown_until
     now_ts = datetime.now(timezone.utc).timestamp()
     if now_ts < _llm_cooldown_until:
-        # Avoid retrying during quota exhaustion cooldown
+        return None
+    if now_ts < _model_cooldowns.get(model_name, 0.0):
         return None
 
     payload = {
         "model": model_name,
         "messages": messages,
-        "temperature": 0.2
+        "temperature": 0.2,
+        "max_tokens": 600
     }
     try:
         req = urllib.request.Request(
@@ -97,30 +107,47 @@ def _request_llm(base_url: str, model_name: str, messages: list, headers: dict, 
     except Exception as e:
         err_msg = str(e)
         if "429" in err_msg or "too many requests" in err_msg.lower() or "quota" in err_msg.lower():
-            # Activate 10-minute cooldown
             _llm_cooldown_until = now_ts + 600
-            print(f"[AI Analyzer] Quota 429 pada {model_name}, cooldown 10 menit aktif. Beralih ke mesin analisa instan.")
-        elif "timed out" in err_msg.lower() or "timeout" in err_msg.lower():
-            _llm_cooldown_until = now_ts + 180
-            print(f"[AI Analyzer] Timeout pada {model_name}, cooldown 3 menit aktif. Beralih ke mesin analisa instan.")
+            print(f"[AI Analyzer] Quota 429 pada {model_name}, cooldown 10 menit aktif. Beralih ke rule-based engine.")
+        elif "503" in err_msg or "timed out" in err_msg.lower() or "timeout" in err_msg.lower():
+            # Put only this overloaded/slow model on cooldown so fallbacks still run
+            _model_cooldowns[model_name] = now_ts + 180
+            print(f"[AI Analyzer] Model '{model_name}' sibuk/timeout ({e}), mencoba fallback berikutnya...")
         else:
-            print(f"[AI Analyzer] Model '{model_name}' tidak merespons ({e}), mencoba fallback...")
+            _model_cooldowns[model_name] = now_ts + 300
+            print(f"[AI Analyzer] Model '{model_name}' error ({e}), mencoba fallback berikutnya...")
         return None
 
-def analyze_with_llm(headlines: List[Dict[str, Any]], next_event_title: str) -> Dict[str, Any]:
-    """Attempts LLM analysis with configured model (gemini-3.8-flash) and automated smart fallback."""
+def analyze_with_llm(
+    headlines: List[Dict[str, Any]],
+    next_event_title: str,
+    market_factors: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Attempts LLM analysis with working Gemini models + live intermarket context and smart fallback."""
     settings = load_settings()
     api_key = settings.get("ai_api_key", "").strip()
     base_url = settings.get("ai_base_url", "https://generativelanguage.googleapis.com/v1beta/openai").rstrip("/")
-    primary_model = settings.get("ai_model", "gemini-3.8-flash").strip()
+    primary_model = settings.get("ai_model", "gemini-3.1-flash-lite").strip() or "gemini-3.1-flash-lite"
     
     if not api_key:
         return rule_based_sentiment_analysis(headlines)
         
     titles_summary = "\n".join([f"- {h.get('title')} ({h.get('source')})" for h in headlines[:8]])
+
+    mf_block = ""
+    if market_factors and market_factors.get("source_status") in ("live", "stale_cache"):
+        mf_block = (
+            f"\nData Kuantitatif Pasar Live:\n"
+            f"- XAU/USD: {market_factors.get('xau_price')} | RSI: {market_factors.get('xau_rsi')} | "
+            f"EMA20 Stretch Z: {market_factors.get('xau_stretch_z'):+.2f} | ATR H1: {market_factors.get('xau_atr_h1_pips')} pips\n"
+            f"- US 10Y Yield: {market_factors.get('yield_10y')}% (5D: {market_factors.get('yield_10y_5d_pct'):+.2f}%)\n"
+            f"- DXY Index: {market_factors.get('dxy_price')} (RSI: {market_factors.get('dxy_rsi')})\n"
+            f"- WTI Crude Oil: ${market_factors.get('oil_price')} (5D: {market_factors.get('oil_5d_pct'):+.2f}%)\n"
+        )
     
     prompt = f"""Kamu adalah Quantitative Fundamental Analyst spesialis XAU/USD (Gold) dan Macroeconomic Intelligence.
 Berikut adalah rilis berita terdekat: {next_event_title}
+{mf_block}
 Dan berita geopolitik/ekonomi terbaru:
 {titles_summary}
 
@@ -128,8 +155,8 @@ Berikan analisis terstruktur dalam format JSON murni:
 {{
   "geopolitical_sentiment": "bullish" | "bearish" | "neutral",
   "geo_score": <float antara -3.00 sampai +3.00, positif = tensi naik dorong safe-haven emas, negatif = de-eskalasi>,
-  "macro_score": <float antara -4.00 sampai +4.00, positif = dovish USD/dorong emas naik, negatif = hawkish USD/tekan emas turun>,
-  "summary_reasoning": "<1-2 kalimat padat bahasa Indonesia tentang sentimen geopolitik dan pengaruhnya ke emas>"
+  "macro_score": <float antara -4.00 sampai +4.00, positif = dovish USD/yields turun dorong emas naik, negatif = hawkish USD/yields naik tekan emas turun>,
+  "summary_reasoning": "<1-2 kalimat padat bahasa Indonesia menggabungkan sentimen geopolitik dan tekanan yields/DXY terhadap emas>"
 }}
 Hanya kembalikan JSON murni tanpa markdown formatting atau backtick.
 """
@@ -146,17 +173,22 @@ Hanya kembalikan JSON murni tanpa markdown formatting atau backtick.
         {"role": "user", "content": prompt}
     ]
 
-    # Models to attempt in priority order
-    candidate_models = [primary_model]
-    if primary_model != "gemini-3.5-flash-lite":
-        candidate_models.append("gemini-3.5-flash-lite")
+    # Candidate models verified against Gemini API in priority order (no duplicates)
+    preferred_chain = [
+        primary_model,
+        "gemini-3.1-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-3-flash-preview",
+        "gemini-3.8-flash",
+    ]
+    candidate_models = list(dict.fromkeys([m for m in preferred_chain if m]))
 
     for m in candidate_models:
-        result = _request_llm(base_url, m, messages, headers, timeout=8)
+        result = _request_llm(base_url, m, messages, headers, timeout=10)
         if result:
             return result
 
-    # If all models fail / timeout, fall back to robust rule-based NLP engine
+    # If all models fail / timeout, fall back to time-decayed rule-based NLP engine
     return rule_based_sentiment_analysis(headlines)
 
 def interpret_single_news_item(news_text: str) -> Dict[str, Any]:

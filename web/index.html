@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="static/css/style.css?v=5.4.0">
+  <link rel="stylesheet" href="static/css/style.css?v=5.5.0">
   <link rel="icon" type="image/jpeg" href="static/img/novaire_logo.jpg">
 </head>
 <body class="terminal-body">
@@ -267,7 +267,7 @@
                   <div class="meter-fill fill-gradient-spike" id="spike-bar" style="width: 97%;"></div>
                 </div>
               </div>
-              <span class="cell-desc">Peluang lonjakan &gt;60-150 pips</span>
+              <span class="cell-desc" id="spike-range-desc">Peluang lonjakan &gt;140-260 pips</span>
             </div>
 
             <!-- Metric 2: One-Way Trajectory -->
@@ -300,6 +300,20 @@
               <span class="cell-desc">Risiko fakeout sapu likuiditas</span>
             </div>
 
+          </div>
+
+          <!-- AI Quant Factor Breakdown & Live Intermarket Matrix -->
+          <div class="quant-factor-matrix" id="quant-factor-matrix">
+            <div class="qfm-header">
+              <span class="qfm-title font-mono">MULTI-FACTOR QUANT MATRIX</span>
+              <span class="qfm-entry-badge font-mono" id="quant-entry-badge">MENYINKRONKAN...</span>
+            </div>
+            <div class="qfm-grid font-mono" id="quant-factor-grid">
+              <div class="qfm-cell"><span>US10Y</span><strong>--</strong></div>
+              <div class="qfm-cell"><span>DXY</span><strong>--</strong></div>
+              <div class="qfm-cell"><span>ATR H1</span><strong>--</strong></div>
+              <div class="qfm-cell"><span>STRETCH Z</span><strong>--</strong></div>
+            </div>
           </div>
         </div>
 
@@ -781,7 +795,7 @@
 
         <div class="input-field-group">
           <label class="field-label" for="setting-ai-model">AI Model Identifier</label>
-          <input type="text" class="field-input font-mono" id="setting-ai-model" placeholder="gemini-3.8-flash">
+          <input type="text" class="field-input font-mono" id="setting-ai-model" placeholder="gemini-3.1-flash-lite">
           <span class="field-hint">Model spesialis financial reasoning via Google Gemini / OpenRouter.</span>
         </div>
       </div>
@@ -796,6 +810,6 @@
   <!-- Toast Notification System -->
   <div class="toast-shelf" id="toast-container" aria-live="polite"></div>
 
-  <script src="static/js/app.js?v=5.4.0"></script>
+  <script src="static/js/app.js?v=5.5.0"></script>
 </body>
 </html>

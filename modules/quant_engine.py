@@ -248,25 +248,125 @@ def evaluate_event_consensus_bias(items: List[Dict[str, Any]], past_regime_score
         "items_analyzed": signals_count
     }
 
-def calculate_spike_potential(group_name: str, items: List[Dict[str, Any]]) -> int:
-    """Calculates historical spike potential percentage (60% - 98%) accurately by event type."""
+def evaluate_actual_surprise_zscore(items: List[Dict[str, Any]], past_regime_score: float = 0.0) -> Dict[str, Any]:
+    """
+    Phase 2 (Flash Release): Evaluates real-time Actual vs Forecast surprises when actual prints land.
+    Returns normalized surprise score, direction, fakeout risk, and human-readable summary.
+    """
+    surprise_shift = 0.0
+    weights_sum = 0.0
+    actual_parts = []
+    valid_actuals = 0
+
+    for it in items:
+        title = it.get("title", "")
+        t_low = title.lower()
+        a_str = str(it.get("actual", "")).strip()
+        f_str = str(it.get("forecast", "")).strip()
+
+        if not a_str or a_str in ("-", "Pending") or not has_valid_num(a_str):
+            continue
+
+        a_val = parse_num_from_str(a_str)
+        actual_parts.append(f"{title}: A {a_str} vs F {f_str or '-'}")
+        valid_actuals += 1
+
+        if not has_valid_num(f_str):
+            continue
+
+        f_val = parse_num_from_str(f_str)
+        diff = a_val - f_val
+        # Scale difference to unit surprise [-1.5 .. +1.5]
+        if any(k in t_low for k in ("m/m", "mom", "y/y", "yoy", "rate", "cpi", "ppi", "pce")):
+            step_scale = 0.1 if abs(f_val) < 2.0 else 0.25
+        elif "pmi" in t_low or "ism" in t_low:
+            step_scale = 0.8
+        else:
+            step_scale = max(abs(f_val) * 0.12, 20.0)
+
+        mag = min(1.6, abs(diff) / max(step_scale, 0.05))
+        if abs(diff) < 1e-6:
+            mag = 0.0
+
+        weight = 1.5
+        # Inverse polarity metrics (Higher = Dovish USD = Bullish XAU)
+        if any(k in t_low for k in ("unemployment rate", "jobless", "initial claims")):
+            polarity = 1.0
+            weight = 2.2
+        elif any(k in t_low for k in ("core cpi", "core ppi", "non-farm", "payrolls", "nfp", "fomc", "funds rate")):
+            polarity = -1.0
+            weight = 3.2
+        else:
+            polarity = -1.0
+            weight = 2.5
+
+        if abs(diff) < 1e-6:
+            # Inline print on sticky inflation (>=0.3% m/m) stays mildly hawkish
+            dir_val = -0.25 if (("cpi" in t_low or "ppi" in t_low) and ("m/m" in t_low or "mom" in t_low) and a_val >= 0.3) else 0.0
+        else:
+            dir_val = (1.0 if diff > 0 else -1.0) * polarity * max(0.55, mag)
+
+        surprise_shift += dir_val * weight
+        weights_sum += weight
+
+    if valid_actuals == 0:
+        return {
+            "has_actual": False,
+            "surprise_score": 0.0,
+            "surprise_norm": 0.0,
+            "actual_summary": "",
+            "surprise_label": "PRE-NEWS"
+        }
+
+    if weights_sum == 0:
+        surprise_score = 0.0
+    else:
+        surprise_score = round((surprise_shift / weights_sum) * 4.5, 2)
+
+    surprise_norm = max(-1.0, min(1.0, round(surprise_score / 4.5, 3)))
+    if surprise_norm >= 0.15:
+        surprise_label = "DOVISH SURPRISE (BULLISH XAU)"
+    elif surprise_norm <= -0.15:
+        surprise_label = "HAWKISH SURPRISE (BEARISH XAU)"
+    else:
+        surprise_label = "INLINE / MIXED ACTUAL"
+
+    return {
+        "has_actual": True,
+        "surprise_score": surprise_score,
+        "surprise_norm": surprise_norm,
+        "actual_summary": " | ".join(actual_parts[:4]),
+        "surprise_label": surprise_label
+    }
+
+def calculate_spike_potential(group_name: str, items: List[Dict[str, Any]], market_factors: Optional[Dict[str, Any]] = None) -> int:
+    """Calculates spike potential percentage (60% - 98%) using event tier plus live XAU ATR H1 regime."""
     name_lower = group_name.strip().lower()
 
     if name_lower in ["fomc", "fomc press conference"]:
-        base = 96
+        base = 94
     elif name_lower == "nfp":
-        base = 95
+        base = 93
     elif name_lower == "cpi":
-        base = 92
+        base = 90
     elif name_lower == "ppi":
-        base = 85
+        base = 83
     elif name_lower in ["pmi", "ism pmi"]:
-        base = 84
+        base = 82
     else:
-        base = 75
+        base = 74
 
     if len(items) > 1:
-        base = min(98, base + 3)
+        base = min(98, base + 2)
+
+    if market_factors:
+        atr_h1 = float(market_factors.get("xau_atr_h1", 0.0) or 0.0)
+        if atr_h1 >= 20.0:
+            base = min(98, base + 5)
+        elif atr_h1 >= 14.0:
+            base = min(98, base + 3)
+        elif 0.0 < atr_h1 < 8.0:
+            base = max(65, base - 5)
 
     return int(base)
 
@@ -703,17 +803,26 @@ def generate_fundamental_dossier(
 
 H3_WINDOW_SECONDS = 3 * 86400  # 3 days (72 hours = 259,200 seconds)
 
+def _clamp_q(val: float, low: float, high: float) -> float:
+    return max(low, min(high, float(val)))
+
+
 def compute_full_quant_signal(
     next_event: Dict[str, Any],
     ai_analysis: Dict[str, Any],
-    past_events: Optional[List[Dict[str, Any]]] = None
+    past_events: Optional[List[Dict[str, Any]]] = None,
+    market_factors: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Produces the complete quantitative signal matched to the upcoming economic calendar event.
-    Enforces the H-3 rule: if there is no allowed High Impact event (NFP, PPI, CPI, FOMC, PMI)
-    within the next 3 days (259,200 seconds), returns 'WAITING NEWS' standby status.
-    Incorporates preceding actual macro releases (NFP, CPI, etc.) so hot actuals prevent false BUY signals.
+    Produces the complete multi-factor AI Quantitative signal matched to the upcoming or just-released event.
+    Phase 1 (Pre-News): Balanced Consensus + Past Actuals Regime + Live Intermarket (US10Y/DXY/Oil/XAU ATR) + AI/Geo.
+    Phase 2 (Flash Release): Evaluates Actual vs Forecast Z-score with counter-spike fakeout detection.
+    Enforces the H-3 rule when no allowed High Impact event is within 72 hours.
     """
+    mf = market_factors or {}
+    spike_pips_label = mf.get("spike_pips_label", "±145 - 255 pips")
+    xau_atr_h1_pips = int(mf.get("xau_atr_h1_pips", 160) or 160)
+
     is_waiting = (
         not next_event
         or bool(next_event.get("is_waiting"))
@@ -762,9 +871,9 @@ def compute_full_quant_signal(
                     "importance": "Analisa AI Quant Keluar Otomatis pada H-3 (3 Hari Sebelum Rilis)"
                 },
                 {
-                    "factor": "Filter Berita Aktif",
-                    "benchmark": "Hanya NFP • PPI • CPI • FOMC • PMI",
-                    "importance": "Berita minor/mingguan diabaikan agar sinyal tetap presisi"
+                    "factor": "Live Intermarket & Volatilitas XAU",
+                    "benchmark": f"US10Y {mf.get('yield_10y', '-')}% | DXY {mf.get('dxy_price', '-')} | ATR H1 {xau_atr_h1_pips} pips",
+                    "importance": mf.get("intermarket_label", "Baseline Teknis & Obligasi Intraday")
                 }
             ],
             "tactical_guidance": "Saat status WAITING NEWS aktif, hindari asumsi bias berita terlalu dini. Tunggu hasil analisa resmi keluar pada H-3 sebelum rilis."
@@ -780,6 +889,27 @@ def compute_full_quant_signal(
             "ai_reasoning": why_wait,
             "geo_sentiment": ai_analysis.get("geopolitical_sentiment", "neutral") if ai_analysis else "neutral",
             "analysis_mode": "WAITING H-3",
+            "phase": "WAITING_H3",
+            "entry_mode": "STANDBY H-3",
+            "spike_pips_label": spike_pips_label,
+            "xau_atr_h1_pips": xau_atr_h1_pips,
+            "quant_factors": {
+                "phase": "WAITING_H3",
+                "intermarket_score": round(float(mf.get("intermarket_score", 0.0) or 0.0), 3),
+                "yield_10y": mf.get("yield_10y", 0.0),
+                "yield_10y_5d_pct": mf.get("yield_10y_5d_pct", 0.0),
+                "dxy_price": mf.get("dxy_price", 0.0),
+                "dxy_rsi": mf.get("dxy_rsi", 50.0),
+                "xau_price": mf.get("xau_price", 0.0),
+                "xau_rsi": mf.get("xau_rsi", 50.0),
+                "xau_stretch_z": mf.get("xau_stretch_z", 0.0),
+                "oil_price": mf.get("oil_price", 0.0),
+                "oil_5d_pct": mf.get("oil_5d_pct", 0.0),
+                "xau_atr_h1_pips": xau_atr_h1_pips,
+                "spike_pips_label": spike_pips_label,
+                "counter_spike_risk": mf.get("counter_spike_risk", 0.35),
+                "source_status": mf.get("source_status", "offline")
+            },
             "why_bias_reason": why_wait,
             "market_interpretation": waiting_dossier["market_interpretation"],
             "consensus_rules": waiting_dossier["consensus_rules"],
@@ -793,56 +923,175 @@ def compute_full_quant_signal(
 
     # 1. Preceding actual releases macro regime (NFP, CPI, PPI, PMI, FOMC)
     past_regime = evaluate_past_actuals_regime(past_events)
-    regime_score = past_regime["regime_score"]
-    regime_summary = past_regime["summary_text"]
+    regime_score = float(past_regime.get("regime_score", 0.0) or 0.0)
+    regime_summary = past_regime.get("summary_text", "")
+    f_regime = _clamp_q(regime_score / 4.0, -1.0, 1.0)
 
-    # 2. Event consensus deviation (incorporating Fed inflation thresholds & past actuals regime)
+    # 2. Event consensus deviation (Phase 1) & Real-time Actual Surprise (Phase 2)
     consensus = evaluate_event_consensus_bias(items, past_regime_score=regime_score)
-    event_score = consensus["event_score"]
+    event_score = float(consensus.get("event_score", 0.0) or 0.0)
+    f_consensus = _clamp_q(event_score / 4.5, -1.0, 1.0)
 
-    # 3. AI Macro & Geopolitical Sentiment
-    geo_score = ai_analysis.get("geo_score", 0.0)
-    macro_score = ai_analysis.get("macro_score", 0.0)
+    actual_eval = evaluate_actual_surprise_zscore(items, past_regime_score=regime_score)
+    has_actual = bool(actual_eval.get("has_actual"))
+    f_surprise = float(actual_eval.get("surprise_norm", 0.0) or 0.0)
 
-    # Composite score calculation: -10.0 to +10.0
-    raw_score = (event_score * 1.15) + (regime_score * 0.90) + (macro_score * 0.55) + (geo_score * 0.35)
-    final_score = max(-9.90, min(9.90, round(raw_score, 2)))
+    # 3. Live Intermarket Quantitative Score (US10Y/5Y Yields, DXY Trend/RSI, Oil, XAU Stretch/ATR)
+    f_intermarket = _clamp_q(float(mf.get("intermarket_score", 0.0) or 0.0), -1.0, 1.0)
+    counter_spike_risk = float(mf.get("counter_spike_risk", 0.45) or 0.45)
+    xau_stretch_z = float(mf.get("xau_stretch_z", 0.0) or 0.0)
+
+    # 4. AI Macro & Geopolitical Sentiment
+    geo_score = float((ai_analysis or {}).get("geo_score", 0.0) or 0.0)
+    macro_score = float((ai_analysis or {}).get("macro_score", 0.0) or 0.0)
+    f_ai_geo = _clamp_q((macro_score / 4.0) * 0.60 + (geo_score / 3.0) * 0.40, -1.0, 1.0)
+
+    # Weighted Multi-Factor Score [-1.0 .. +1.0] -> [-9.90 .. +9.90]
+    if has_actual:
+        phase = "FLASH_RELEASE"
+        weighted_norm = (
+            (f_surprise * 0.45) +
+            (f_regime * 0.20) +
+            (f_intermarket * 0.20) +
+            (f_ai_geo * 0.10) +
+            (f_consensus * 0.05)
+        )
+    else:
+        phase = "PRE_NEWS"
+        weighted_norm = (
+            (f_consensus * 0.30) +
+            (f_regime * 0.25) +
+            (f_intermarket * 0.25) +
+            (f_ai_geo * 0.20)
+        )
+
+    final_score = _clamp_q(round(weighted_norm * 9.9, 2), -9.90, 9.90)
 
     # Determine Bias
-    if final_score <= -1.5:
+    if final_score <= -1.35:
         expected_bias = "XAU SELL"
-    elif final_score >= 1.5:
+    elif final_score >= 1.35:
         expected_bias = "XAU BUY"
     else:
         expected_bias = "XAU NEUTRAL"
 
-    # Context confidence % (60% - 95%)
-    confidence = int(72 + (abs(final_score) / 10.0 * 20) + (consensus["agreement"] * 6))
-    confidence = max(60, min(95, confidence))
+    # Two-Phase Entry Mode & Counter-Spike Stop-Hunt Guard
+    structural_bear = (f_regime + f_intermarket) / 2.0 <= -0.35
+    structural_bull = (f_regime + f_intermarket) / 2.0 >= 0.35
 
-    # Spike potential
-    spike = calculate_spike_potential(group_name, items)
+    if has_actual:
+        if f_surprise > 0.08 and structural_bear and final_score < 0:
+            entry_mode = "SPIKE UP FAKEOUT -> FADE SELL AFTER M5"
+        elif f_surprise < -0.08 and structural_bull and final_score > 0:
+            entry_mode = "SPIKE DOWN FAKEOUT -> FADE BUY AFTER M5"
+        elif abs(final_score) >= 2.0:
+            entry_mode = "FLASH CONFIRMED • FOLLOW ACTUAL"
+        else:
+            entry_mode = "MIXED PRINT • WAIT M5 CLOSE"
+    else:
+        overstretched_same_side = (
+            (xau_stretch_z <= -1.4 and final_score <= -1.35) or
+            (xau_stretch_z >= 1.4 and final_score >= 1.35)
+        )
+        factor_conflict = (f_consensus * f_intermarket < -0.10) or (f_regime * f_ai_geo < -0.12)
+        if counter_spike_risk >= 0.65 or overstretched_same_side or factor_conflict:
+            entry_mode = "WAIT M5 SPIKE"
+        elif abs(final_score) >= 3.2:
+            entry_mode = "FOLLOW BIAS (SL >= 1.2x ATR)"
+        else:
+            entry_mode = "LOW CONVICTION • WAIT ACTUAL"
 
-    # Trajectory
-    trajectory = calculate_trajectory(spike, consensus["agreement"], final_score)
+    # Context confidence % (55% - 95%), penalized slightly when counter-spike/conflict is high
+    factor_signs = [1 if v > 0.1 else (-1 if v < -0.1 else 0) for v in (f_surprise if has_actual else f_consensus, f_regime, f_intermarket, f_ai_geo)]
+    non_zero = [s for s in factor_signs if s != 0]
+    alignment_ratio = (abs(sum(non_zero)) / len(non_zero)) if non_zero else 0.5
+    confidence = int(60 + (abs(final_score) / 9.9 * 25) + (alignment_ratio * 10) - (5 if entry_mode == "WAIT M5 SPIKE" and not has_actual else 0))
+    confidence = max(55, min(95, confidence))
+
+    # Spike potential incorporating live ATR
+    spike = calculate_spike_potential(group_name, items, market_factors=mf)
+
+    # Trajectory (boost two_way probability when M5 counter-spike guard triggers)
+    effective_agreement = (consensus["agreement"] * 0.5 + alignment_ratio * 0.5)
+    trajectory = calculate_trajectory(spike, effective_agreement, final_score)
+    if entry_mode in ("WAIT M5 SPIKE", "SPIKE UP FAKEOUT -> FADE SELL AFTER M5", "SPIKE DOWN FAKEOUT -> FADE BUY AFTER M5"):
+        two_way = max(trajectory["two_way"], 52)
+        trajectory = {"one_way": 100 - two_way, "two_way": two_way}
 
     # Generate in-depth fundamental reasoning and market interpretation dossier
     dossier = generate_fundamental_dossier(
         group_name, items, expected_bias, final_score, spike, past_regime=past_regime
     )
-    if regime_summary and regime_summary not in dossier.get("why_bias_reason", ""):
-        dossier["why_bias_reason"] = (
-            dossier.get("why_bias_reason", "")
-            + f" Korelasi Siklus Aktual Sebelumnya: {regime_summary} (Skor Rezim {regime_score:+.2f})."
-        )
+
+    quant_note_parts = []
+    if has_actual and actual_eval.get("actual_summary"):
+        quant_note_parts.append(f"[FLASH ACTUAL] {actual_eval['actual_summary']} ({actual_eval['surprise_label']}).")
     if regime_summary:
-        dossier["key_watch_factors"] = [
-            {
-                "factor": "Korelasi Data Aktual Sebelumnya (NFP & CPI)",
-                "benchmark": regime_summary,
-                "importance": f"Pemberat Rezim Makro Berjalan ({past_regime['regime_label']} XAU)"
-            }
-        ] + dossier.get("key_watch_factors", [])
+        quant_note_parts.append(f"Rezim Aktual Sebelumnya: {regime_summary} (Skor {regime_score:+.2f}).")
+    if mf.get("source_status") == "live":
+        quant_note_parts.append(
+            f"Intermarket Quant: US10Y {mf.get('yield_10y')}% ({mf.get('yield_10y_5d_pct'):+.1f}% 5D), "
+            f"DXY {mf.get('dxy_price')}, XAU ATR H1 {xau_atr_h1_pips} pips (Estimasi Spike {spike_pips_label}), "
+            f"Stretch Z={xau_stretch_z:+.2f}, Mode={entry_mode}."
+        )
+    if quant_note_parts:
+        dossier["why_bias_reason"] = dossier.get("why_bias_reason", "") + " " + " ".join(quant_note_parts)
+
+    extra_watch = []
+    if mf.get("source_status") in ("live", "stale_cache"):
+        extra_watch.append({
+            "factor": "Intermarket & Volatilitas Live (Yields • DXY • ATR)",
+            "benchmark": f"US10Y {mf.get('yield_10y')}% ({mf.get('yield_10y_5d_pct'):+.1f}% 5D) | DXY {mf.get('dxy_price')} | ATR H1 {xau_atr_h1_pips} pips",
+            "importance": f"{mf.get('intermarket_label', 'Intermarket Quant')} • Potensi Sapuan {spike_pips_label} ({entry_mode})"
+        })
+    if regime_summary:
+        extra_watch.append({
+            "factor": "Korelasi Data Aktual Sebelumnya (NFP & CPI/PPI)",
+            "benchmark": regime_summary,
+            "importance": f"Pemberat Rezim Makro Berjalan ({past_regime['regime_label']} XAU)"
+        })
+    if extra_watch:
+        dossier["key_watch_factors"] = extra_watch + dossier.get("key_watch_factors", [])
+
+    if entry_mode == "WAIT M5 SPIKE":
+        dossier["tactical_guidance"] = (
+            f"SPIKE GUARD AKTIF ({spike_pips_label}): Posisi XAU saat ini sudah terstretch (Z={xau_stretch_z:+.2f}) "
+            f"atau menghadapi risiko stop-hunt dua arah tinggi. Hindari entry sebelum rilis; tunggu candle M5 pertama "
+            f"menyapu likuiditas terlebih dahulu, baru eksekusi mengikuti konfirmasi arah aktual + yields."
+        )
+    elif has_actual and "FAKEOUT" in entry_mode:
+        dossier["tactical_guidance"] = (
+            f"FLASH FAKEOUT GUARD ({actual_eval.get('surprise_label')}): Angka aktual headline memicu spike awal melawan "
+            f"tekanan makro utama (Yields {mf.get('yield_10y')}% / DXY {mf.get('dxy_price')}). Tunggu rejection candle M5 ({spike_pips_label}) sebelum entry."
+        )
+
+    quant_factors = {
+        "phase": phase,
+        "entry_mode": entry_mode,
+        "has_actual": has_actual,
+        "actual_summary": actual_eval.get("actual_summary", ""),
+        "surprise_label": actual_eval.get("surprise_label", "PRE-NEWS"),
+        "spike_pips_label": spike_pips_label,
+        "xau_atr_h1_pips": xau_atr_h1_pips,
+        "counter_spike_risk": counter_spike_risk,
+        "intermarket_score": round(f_intermarket, 3),
+        "yield_10y": mf.get("yield_10y", 0.0),
+        "yield_10y_5d_pct": mf.get("yield_10y_5d_pct", 0.0),
+        "dxy_price": mf.get("dxy_price", 0.0),
+        "dxy_rsi": mf.get("dxy_rsi", 50.0),
+        "xau_price": mf.get("xau_price", 0.0),
+        "xau_rsi": mf.get("xau_rsi", 50.0),
+        "xau_stretch_z": round(xau_stretch_z, 2),
+        "oil_price": mf.get("oil_price", 0.0),
+        "oil_5d_pct": mf.get("oil_5d_pct", 0.0),
+        "source_status": mf.get("source_status", "offline"),
+        "weights": {
+            "consensus_or_actual": round(f_surprise if has_actual else f_consensus, 3),
+            "past_regime": round(f_regime, 3),
+            "intermarket": round(f_intermarket, 3),
+            "ai_geo": round(f_ai_geo, 3),
+        }
+    }
 
     return {
         "expected_bias": expected_bias,
@@ -851,9 +1100,14 @@ def compute_full_quant_signal(
         "spike_potential": spike,
         "one_way": trajectory["one_way"],
         "two_way": trajectory["two_way"],
-        "ai_reasoning": ai_analysis.get("summary_reasoning", ""),
-        "geo_sentiment": ai_analysis.get("geopolitical_sentiment", "neutral"),
-        "analysis_mode": ai_analysis.get("mode", "quant"),
+        "phase": phase,
+        "entry_mode": entry_mode,
+        "spike_pips_label": spike_pips_label,
+        "xau_atr_h1_pips": xau_atr_h1_pips,
+        "quant_factors": quant_factors,
+        "ai_reasoning": (ai_analysis or {}).get("summary_reasoning", ""),
+        "geo_sentiment": (ai_analysis or {}).get("geopolitical_sentiment", "neutral"),
+        "analysis_mode": (ai_analysis or {}).get("mode", "quant"),
         "why_bias_reason": dossier.get("why_bias_reason", ""),
         "market_interpretation": dossier.get("market_interpretation", ""),
         "consensus_rules": dossier.get("consensus_rules", []),
