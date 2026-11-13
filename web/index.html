@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="static/css/style.css?v=5.7.0">
+  <link rel="stylesheet" href="static/css/style.css?v=5.8.0">
   <link rel="icon" type="image/jpeg" href="static/img/novaire_logo.jpg">
 </head>
 <body class="terminal-body">
@@ -168,16 +168,16 @@
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
-        <span>Terminal Sinyal & Eksekusi</span>
+        <span>Terminal Sinyal</span>
       </button>
-      <button class="tab-btn" data-tab="tab-calendar" role="tab" aria-selected="false">
+      <button class="tab-btn" data-tab="tab-dossier" role="tab" aria-selected="false">
         <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
         </svg>
-        <span>Radar 24H & Kalender Lengkap</span>
+        <span>Dossier Fundamental</span>
       </button>
       <button class="tab-btn" data-tab="tab-intelligence" role="tab" aria-selected="false">
         <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -186,7 +186,16 @@
           <path d="M15 18h-5"/>
           <path d="M10 6h8v4h-8V6Z"/>
         </svg>
-        <span>Berita Harian &amp; Interpretasi</span>
+        <span>Berita &amp; Wire Quant</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-calendar" role="tab" aria-selected="false">
+        <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>Kalender Ekonomi</span>
       </button>
       <button class="tab-btn" data-tab="tab-playbook" role="tab" aria-selected="false">
         <svg class="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,7 +205,7 @@
           <line x1="12" y1="6" x2="12" y2="2"/>
           <line x1="12" y1="22" x2="12" y2="18"/>
         </svg>
-        <span id="tab-playbook-title">Skenario Trading High Impact</span>
+        <span id="tab-playbook-title">Skenario Trading</span>
       </button>
     </nav>
 
@@ -380,6 +389,51 @@
 
       </div>
 
+      <!-- Compact Breaking News Highlight (Click to read full inside details) -->
+      <div class="breaking-news-live-banner" id="featured-breaking-banner">
+        <div class="breaking-banner-left">
+          <div class="breaking-badge-cluster">
+            <span class="status-chip chip-gold font-mono blink-badge">SOROTAN BERITA QUANT</span>
+            <span class="status-chip chip-amber font-mono" id="breaking-cat-pill">GEOPOLITIK</span>
+            <span class="bulletin-time-pill font-mono" id="breaking-time-pill">--.-- WIB</span>
+          </div>
+          <h3 class="breaking-banner-title" id="breaking-headline-text">MEMUAT BERITA PENTING...</h3>
+          <p class="breaking-banner-desc" id="breaking-analysis-text">Analisis tesis makroekonomi sedang disinkronkan...</p>
+        </div>
+        <div class="breaking-banner-right">
+          <div class="breaking-bias-box" id="breaking-bias-box">
+            <span class="breaking-bias-label font-mono">BIAS XAU/USD</span>
+            <span class="breaking-bias-value font-mono" id="breaking-bias-value">NEUTRAL</span>
+          </div>
+          <button class="btn-jump-dossier font-mono" id="btn-view-breaking-dossier">
+            <span>BACA ISI BERITA</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Workspace Shortcuts (Clean Separation Instead of Crowding Overview) -->
+      <div class="overview-shortcuts-row">
+        <button class="shortcut-nav-card" id="btn-goto-dossier-tab" type="button">
+          <div>
+            <span class="shortcut-tag font-mono">ANALISA FUNDAMENTAL</span>
+            <strong class="shortcut-title">Buka Dossier Bias, Transmisi &amp; Indikator Lead-In</strong>
+          </div>
+          <span class="shortcut-arrow font-mono">BUKA TAB →</span>
+        </button>
+        <button class="shortcut-nav-card" id="btn-goto-daily-news" type="button">
+          <div>
+            <span class="shortcut-tag font-mono">WIRE &amp; INTERPRETASI</span>
+            <strong class="shortcut-title">Buka Feed Berita Terkini &amp; Korelasi Quantitative</strong>
+          </div>
+          <span class="shortcut-arrow font-mono">BUKA TAB →</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: DOSSIER FUNDAMENTAL & SINTESIS INTERMARKET -->
+    <section class="tab-panel" id="tab-dossier" role="tabpanel">
       <!-- DEDICATED FUNDAMENTAL DOSSIER: Alasan Bias & Interpretasi Pasar (NFP / CPI / FOMC) -->
       <section class="card-fundamental-dossier" id="card-fundamental-dossier">
         <div class="card-top-bar">
@@ -471,33 +525,8 @@
 
       </section>
 
-      <!-- FEATURED BREAKING NEWS & MACRO WIRE BANNER (LIVE WEB RADAR) -->
-      <div class="breaking-news-live-banner" id="featured-breaking-banner">
-        <div class="breaking-banner-left">
-          <div class="breaking-badge-cluster">
-            <span class="status-chip chip-red font-mono blink-badge">🚨 BERITA PENTING TERBARU</span>
-            <span class="status-chip chip-amber font-mono" id="breaking-cat-pill">GEOPOLITIK</span>
-            <span class="bulletin-time-pill font-mono" id="breaking-time-pill">--.-- WIB</span>
-          </div>
-          <h3 class="breaking-banner-title" id="breaking-headline-text">MEMUAT BERITA PENTING...</h3>
-          <p class="breaking-banner-desc" id="breaking-analysis-text">Analisis tesis makroekonomi sedang disinkronkan...</p>
-        </div>
-        <div class="breaking-banner-right">
-          <div class="breaking-bias-box" id="breaking-bias-box">
-            <span class="breaking-bias-label font-mono">BIAS XAU/USD</span>
-            <span class="breaking-bias-value font-mono" id="breaking-bias-value">NEUTRAL</span>
-          </div>
-          <button class="btn-jump-dossier font-mono" id="btn-view-breaking-dossier">
-            <span>BACA INTERPRETASI LENGKAP</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Bottom Overview Split: Correlated Indicators & AI Intelligence -->
+      <!-- Lead-In Indicators & Macro AI Synthesis -->
       <div class="overview-split-grid">
-        
-        <!-- Left: Correlated Indicators -->
         <div class="terminal-card">
           <div class="card-top-bar">
             <span class="card-tagline" id="correlated-card-label">BERITA PENDUKUNG & INDIKATOR TERKAIT</span>
@@ -508,13 +537,11 @@
           </div>
         </div>
 
-        <!-- Right: Geopolitical & AI Intelligence -->
         <div class="terminal-card">
           <div class="card-top-bar">
-            <span class="card-tagline">GEOPOLITICAL & MACRO AI SYNTHESIS</span>
+            <span class="card-tagline">GEOPOLITICAL &amp; MACRO AI SYNTHESIS</span>
             <span class="status-chip font-mono" id="geo-sentiment-tag">GEOPOLITIK: MEMUAT...</span>
           </div>
-          
           <div class="executive-synthesis-card">
             <div class="quote-mark">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
@@ -523,38 +550,8 @@
               Sedang menganalisis sentimen makroekonomi, tensi geopolitik Timur Tengah, dan proyeksi rilis data High Impact...
             </p>
           </div>
-
-          <div class="wire-feed-title-bar">
-            <span class="wire-title">BERITA TERKINI &amp; KORELASI QUANTITATIVE</span>
-            <span class="wire-sub font-mono">KLIK BERITA UNTUK BACA ISI LENGKAP</span>
-          </div>
-
-          <div class="quant-wire-filter-row" id="quant-wire-filters">
-            <button class="qwf-pill active font-mono" data-qkey="all">Semua</button>
-            <button class="qwf-pill font-mono" data-qkey="yields">US10Y / Fed</button>
-            <button class="qwf-pill font-mono" data-qkey="dxy">DXY</button>
-            <button class="qwf-pill font-mono" data-qkey="inflation">Inflasi / Oil</button>
-            <button class="qwf-pill font-mono" data-qkey="geopolitical">Geopolitik</button>
-          </div>
-          
-          <div id="geopolitical-news-container" class="news-feed-stack">
-            <!-- Dynamically populated -->
-          </div>
-
-          <div class="channel-promo-box">
-            <div class="promo-text-wrap">
-              <span class="promo-title">Kanal Berita Harian Novaire</span>
-              <span class="promo-sub">Baca bulletin lengkap multi-paragraf &amp; interpretasi XAU/USD</span>
-            </div>
-            <button class="btn-promo-go font-mono" id="btn-goto-daily-news">
-              <span>BUKA FEED</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </button>
-          </div>
         </div>
-
       </div>
-
     </section>
 
     <!-- TAB 2: RADAR 24 JAM & KALENDER LENGKAP -->
@@ -623,19 +620,6 @@
         </div>
       </div>
 
-      <!-- Quick Category Filter Pills -->
-      <div class="news-category-bar">
-        <span class="category-bar-label font-mono">FILTER:</span>
-        <div class="category-pills-list" id="news-category-filters">
-          <button class="cat-pill active" data-cat="all">Semua Berita</button>
-          <button class="cat-pill" data-cat="Energi">Minyak &amp; Geopolitik</button>
-          <button class="cat-pill" data-cat="Obligasi">Obligasi &amp; Treasury</button>
-          <button class="cat-pill" data-cat="Kebijakan">The Fed &amp; Inflasi</button>
-          <button class="cat-pill" data-cat="Perbankan">Perbankan &amp; Likuiditas</button>
-          <button class="cat-pill" data-cat="Rantai Pasok">Rantai Pasok Global</button>
-        </div>
-      </div>
-
       <!-- Collapsible Custom News AI Interpreter -->
       <div class="custom-interpreter-panel hidden" id="custom-interpreter-box">
         <div class="interpreter-header-bar">
@@ -669,6 +653,48 @@
         <!-- Dynamic Output Container -->
         <div class="custom-interpret-result-card hidden" id="custom-interpret-result">
           <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+
+      <!-- SECTION A: LIVE QUANTITATIVE WIRE FEED (TERKINI & KORELASI ASET) -->
+      <div class="terminal-card intelligence-wire-card">
+        <div class="card-top-bar">
+          <div>
+            <span class="card-tagline">LIVE WIRE &amp; QUANTITATIVE CORRELATION</span>
+            <h3 class="section-subtitle">Berita Makro Terkini &amp; Kaitannya dengan Quantitative Model</h3>
+          </div>
+          <span class="status-chip chip-gold font-mono" id="geo-sentiment-tag-wire">KLIK BERITA UNTUK BACA PENUH</span>
+        </div>
+
+        <div class="quant-wire-filter-bar" id="quant-wire-filters">
+          <button class="qwf-pill active" data-qkey="all">Semua Wire</button>
+          <button class="qwf-pill" data-qkey="gold">XAU / Emas</button>
+          <button class="qwf-pill" data-qkey="rates">Yields &amp; Fed</button>
+          <button class="qwf-pill" data-qkey="dxy">DXY &amp; USD</button>
+          <button class="qwf-pill" data-qkey="geo">Geopolitik &amp; Oil</button>
+        </div>
+
+        <div class="geopolitics-feed" id="geopolitical-news-container">
+          <div class="feed-loading font-mono">Menghubungkan live quantitative wire...</div>
+        </div>
+      </div>
+
+      <!-- SECTION B: NOVAIRE MACRO WIRE BULLETINS -->
+      <div class="intelligence-bulletin-header">
+        <span class="card-tagline">TRANSMISSION BULLETINS</span>
+        <h3 class="section-subtitle">Buletin Analisis Harian Novaire Macro Desk</h3>
+      </div>
+
+      <!-- Quick Category Filter Pills -->
+      <div class="news-category-bar">
+        <span class="category-bar-label font-mono">FILTER:</span>
+        <div class="category-pills-list" id="news-category-filters">
+          <button class="cat-pill active" data-cat="all">Semua Berita</button>
+          <button class="cat-pill" data-cat="Energi">Minyak &amp; Geopolitik</button>
+          <button class="cat-pill" data-cat="Obligasi">Obligasi &amp; Treasury</button>
+          <button class="cat-pill" data-cat="Kebijakan">The Fed &amp; Inflasi</button>
+          <button class="cat-pill" data-cat="Perbankan">Perbankan &amp; Likuiditas</button>
+          <button class="cat-pill" data-cat="Rantai Pasok">Rantai Pasok Global</button>
         </div>
       </div>
 
@@ -857,6 +883,6 @@
   <!-- Toast Notification System -->
   <div class="toast-shelf" id="toast-container" aria-live="polite"></div>
 
-  <script src="static/js/app.js?v=5.7.0"></script>
+  <script src="static/js/app.js?v=5.8.0"></script>
 </body>
 </html>

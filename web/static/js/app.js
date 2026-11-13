@@ -1430,6 +1430,16 @@ function setupDailyNewsEvents() {
     });
   }
 
+  // Jump from Tab 1 to Tab 2 Fundamental Dossier
+  const gotoDossierBtn = document.getElementById("btn-goto-dossier-tab");
+  if (gotoDossierBtn) {
+    gotoDossierBtn.addEventListener("click", () => {
+      const dossierTabBtn = document.querySelector('.tab-btn[data-tab="tab-dossier"]');
+      if (dossierTabBtn) dossierTabBtn.click();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
   // Jump from Tab 1 to Tab 3 Daily News
   const gotoNewsBtn = document.getElementById("btn-goto-daily-news");
   if (gotoNewsBtn) {
