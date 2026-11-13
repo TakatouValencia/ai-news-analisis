@@ -22,7 +22,8 @@ DEFAULT_SETTINGS = {
     "high_impact_only": True,
     "target_currencies": ["USD"],
     "target_events": ["NFP", "PPI", "CPI", "FOMC", "PMI"],
-    "analysis_window_days": 3
+    "analysis_window_days": 3,
+    "ea_api_key": os.getenv("EA_API_KEY", "novaire-demo-2026")
 }
 
 def load_settings() -> dict:
@@ -43,7 +44,11 @@ def load_settings() -> dict:
     env_api_key = os.getenv("AI_API_KEY")
     if env_api_key:
         settings["ai_api_key"] = env_api_key
-        
+
+    env_ea_key = os.getenv("EA_API_KEY")
+    if env_ea_key:
+        settings["ea_api_key"] = env_ea_key
+
     return settings
 
 def save_settings(new_settings: dict) -> dict:

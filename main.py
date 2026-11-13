@@ -3,17 +3,19 @@ import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from config import load_settings, save_settings
 from modules.scheduler_service import scheduler
 from modules.calendar_service import get_economic_calendar
 from modules.geopolitical_service import get_latest_geopolitical_news, get_daily_macro_bulletins
+from modules.market_quant_service import get_market_quant_factors
 from modules.ai_analyzer import analyze_with_llm, interpret_single_news_item
 from modules.quant_engine import compute_full_quant_signal
+from modules.ea_bridge_service import build_ea_macro_signal, format_ea_kv, update_ea_heartbeat, get_ea_heartbeat
 
 BASE_DIR = Path(__file__).resolve().parent
 WEB_DIR = BASE_DIR / "web"
@@ -152,6 +154,63 @@ async def update_settings(payload: SettingsPayload):
         to_update["ai_api_key"] = payload.ai_api_key.strip()
     saved = save_settings(to_update)
     return JSONResponse(content={"status": "success", "message": "Pengaturan berhasil disimpan!"})
+
+
+class EAHeartbeatPayload(BaseModel):
+    account_mode: str = "DEMO"
+    symbol: str = "XAUUSD"
+    balance: float = 0.0
+    equity: float = 0.0
+    daily_pnl_pct: float = 0.0
+    open_positions: int = 0
+    spread_points: int = 0
+    last_action: str = "IDLE"
+    confluence_score: int = 0
+    broker_server: str = ""
+
+
+def _verify_ea_auth(api_key: str, x_ea_key: str) -> None:
+    expected = str(load_settings().get("ea_api_key", "novaire-demo-2026")).strip()
+    provided = (x_ea_key or api_key or "").strip()
+    if expected and provided != expected:
+        raise HTTPException(status_code=401, detail="Invalid EA API Key")
+
+
+@app.get("/api/ea/signal")
+async def get_ea_signal_api(
+    format: str = "json",
+    api_key: str = "",
+    x_ea_key: str = Header(default=""),
+):
+    """24/7 Institutional Macro & Volatility signal bridge for MT5 XAUUSD Expert Advisor."""
+    _verify_ea_auth(api_key, x_ea_key)
+    cal = scheduler.last_calendar if scheduler.last_calendar else get_economic_calendar(force_refresh=False)
+    news = scheduler.last_news if scheduler.last_news else get_latest_geopolitical_news(force_refresh=False)
+    mf = get_market_quant_factors(force_refresh=False)
+    flash = getattr(scheduler, "last_flash_alert", None)
+
+    sig = build_ea_macro_signal(cal, news, mf, flash_alert=flash)
+    if format.lower() == "kv":
+        return PlainTextResponse(content=format_ea_kv(sig))
+    return JSONResponse(content=sig)
+
+
+@app.post("/api/ea/heartbeat")
+async def post_ea_heartbeat_api(
+    payload: EAHeartbeatPayload,
+    api_key: str = "",
+    x_ea_key: str = Header(default=""),
+):
+    """Receives live telemetry from the running MT5 Demo EA."""
+    _verify_ea_auth(api_key, x_ea_key)
+    saved = update_ea_heartbeat(payload.model_dump())
+    return JSONResponse(content={"status": "ok", "telemetry": saved})
+
+
+@app.get("/api/ea/status")
+async def get_ea_status_api():
+    """Returns last known MT5 EA heartbeat status."""
+    return JSONResponse(content=get_ea_heartbeat())
 
 if __name__ == "__main__":
     import uvicorn
